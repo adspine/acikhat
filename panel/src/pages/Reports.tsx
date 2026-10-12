@@ -49,11 +49,12 @@ export function ReportsPage() {
             <p className="hero-note">Tahmini tutar, iptal edilmeyen randevuların hizmet fiyatlarından hesaplanır.</p>
           </section>
 
+          <p className="muted small stat-note">▲ ▼ işaretleri, aynı uzunluktaki önceki döneme göre farkı gösterir.</p>
           <div className="stat-row">
-            <Stat label="Gelen arama" value={r.totals.incoming} />
-            <Stat label="Cevaplanan" value={r.totals.answered} />
-            <Stat label="Kaçan" value={r.totals.missed} sub={r.totals.incoming ? percent(r.totals.missedRate) : undefined} attention={r.totals.missed > 0} />
-            <Stat label="Randevuya dönüşen" value={percent(r.totals.conversionRate)} sub="cevaplanan çağrıların" />
+            <Stat label="Gelen arama" value={r.totals.incoming} delta={pctDelta(r.totals.incoming, r.previous.incoming)} />
+            <Stat label="Cevaplanan" value={r.totals.answered} delta={pctDelta(r.totals.answered, r.previous.answered)} />
+            <Stat label="Kaçan" value={r.totals.missed} sub={r.totals.incoming ? percent(r.totals.missedRate) : undefined} attention={r.totals.missed > 0} delta={pctDelta(r.totals.missed, r.previous.missed, true)} />
+            <Stat label="Randevuya dönüşen" value={percent(r.totals.conversionRate)} sub="cevaplanan çağrıların" delta={pointDelta(r.totals.conversionRate, r.previous.conversionRate)} />
             <Stat label="Ortalama görüşme" value={duration(r.totals.avgDurationSecs)} />
             <Stat label="Panelden girilen" value={r.totals.panelBookings} sub="randevu" />
           </div>
@@ -100,6 +101,53 @@ export function ReportsPage() {
             </section>
           </div>
 
+          <div className="grid-2-wide">
+            <section className="card" aria-labelledby="hizmetler">
+              <div className="card-head"><h2 id="hizmetler">En çok randevu alınan hizmetler</h2></div>
+              {r.topServices.length ? (
+                <>
+                  <RankBars rows={r.topServices.map((s) => ({ label: s.name, value: s.count }))} />
+                  {r.topServices.some((s) => s.revenue > 0) && (
+                    <p className="muted small">Tahmini ciro: {r.topServices.filter((s) => s.revenue > 0).map((s) => `${s.name} ${tl(s.revenue)}`).join(" · ")}</p>
+                  )}
+                </>
+              ) : (
+                <p className="muted">Bu dönemde randevu yok.</p>
+              )}
+            </section>
+
+            <section className="card" aria-labelledby="gunler">
+              <div className="card-head"><h2 id="gunler">Haftanın günlerine göre çağrılar</h2></div>
+              <RankBars rows={r.byWeekday.map((d) => ({ label: WEEKDAYS[d.day - 1]!, value: d.calls }))} />
+            </section>
+          </div>
+
+          <div className="grid-2-wide">
+            <section className="card" aria-labelledby="arayanlar">
+              <div className="card-head"><h2 id="arayanlar">Arayanlar</h2></div>
+              {r.callers.unique ? (
+                <>
+                  <RankBars rows={[{ label: "İlk kez arayan", value: r.callers.fresh }, { label: "Tekrar arayan", value: r.callers.returning }]} />
+                  <p className="muted small">{r.callers.unique} farklı kişi aradı. Tekrar arayanlar, daha önce de ulaşmış ya da bu dönemde birden çok kez aramış kişilerdir.</p>
+                </>
+              ) : (
+                <p className="muted">Bu dönemde arayan numara kaydı yok.</p>
+              )}
+              {r.totals.answered > 0 && (
+                <p className="muted small">Cevaplanan çağrıların {percent(r.afterHoursCalls / r.totals.answered)}'i mesai dışında geldi ({r.afterHoursCalls} çağrı).</p>
+              )}
+            </section>
+
+            <section className="card" aria-labelledby="kacan">
+              <div className="card-head"><h2 id="kacan">Kaçan çağrıların nedeni</h2></div>
+              {r.missedReasons.length ? (
+                <RankBars rows={r.missedReasons.map((m) => ({ label: m.label, value: m.count }))} />
+              ) : (
+                <p className="muted">Bu dönemde kaçan çağrı yok.</p>
+              )}
+            </section>
+          </div>
+
           <section className="card" aria-labelledby="dakika">
             <div className="card-head">
               <h2 id="dakika">Kullanılan dakika</h2>
@@ -119,12 +167,30 @@ export function ReportsPage() {
   );
 }
 
-function Stat({ label, value, sub, attention }: { label: string; value: number | string; sub?: string | undefined; attention?: boolean }) {
+/** Önceki dönemle fark: sayılarda yüzde, oranlarda puan. lowerIsBetter: kaçan çağrı gibi azalması iyi olanlar */
+type Delta = { text: string; tone: "good" | "bad" | "neutral" } | null;
+function pctDelta(cur: number, prev: number, lowerIsBetter = false): Delta {
+  if (prev === 0) return cur === 0 ? null : { text: "yeni", tone: "neutral" };
+  const change = Math.round(((cur - prev) / prev) * 100);
+  if (change === 0) return { text: "değişmedi", tone: "neutral" };
+  const good = lowerIsBetter ? change < 0 : change > 0;
+  return { text: `${change > 0 ? "▲" : "▼"} %${Math.abs(change)}`, tone: good ? "good" : "bad" };
+}
+function pointDelta(cur: number, prev: number): Delta {
+  const change = Math.round((cur - prev) * 100);
+  if (change === 0) return null;
+  return { text: `${change > 0 ? "▲" : "▼"} ${Math.abs(change)} puan`, tone: change > 0 ? "good" : "bad" };
+}
+
+const WEEKDAYS = ["Pazartesi", "Salı", "Çarşamba", "Perşembe", "Cuma", "Cumartesi", "Pazar"];
+
+function Stat({ label, value, sub, attention, delta }: { label: string; value: number | string; sub?: string | undefined; attention?: boolean; delta?: Delta | undefined }) {
   return (
     <div className={`stat${attention ? " is-attention" : ""}`}>
       <p className="stat-label">{label}</p>
       <p className="stat-value">{value}</p>
       {sub && <p className="stat-sub">{sub}</p>}
+      {delta && <p className={`stat-delta is-${delta.tone}`} title="Önceki döneme göre fark">{delta.text}</p>}
     </div>
   );
 }

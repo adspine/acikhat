@@ -1,3 +1,4 @@
+import type { Mail } from "../src/integrations/mail.ts";
 import { readFileSync } from "node:fs";
 import { TenantSchema, type Tenant } from "../src/domain/tenant.ts";
 import { Store } from "../src/store/db.ts";
@@ -10,6 +11,7 @@ import { BookingService } from "../src/booking/service.ts";
 import { TenantStore } from "../src/store/tenant-store.ts";
 import { Users } from "../src/auth/users.ts";
 import type { AgentPushResult } from "../src/agent/sync.ts";
+import type { FirebaseVerifier } from "../src/auth/firebase.ts";
 
 export const demoTenant: Tenant = TenantSchema.parse(
   JSON.parse(readFileSync(new URL("../tenants/demo-spa.json", import.meta.url), "utf8")),
@@ -20,7 +22,7 @@ export const MONDAY_9AM = Temporal.ZonedDateTime.from("2026-10-12T09:00[Europe/I
 
 export function makeApp(
   now = MONDAY_9AM,
-  opts: { tenant?: Tenant; tenants?: Tenant[]; google?: CalendarApi; publishAgent?: (t: Tenant) => Promise<AgentPushResult> } = {},
+  opts: { tenant?: Tenant; tenants?: Tenant[]; google?: CalendarApi; publishAgent?: (t: Tenant) => Promise<AgentPushResult>; firebase?: FirebaseVerifier; paymentTestMode?: boolean; adminEmails?: string[]; voices?: () => Promise<import("../src/integrations/voices.ts").Voice[]> } = {},
 ) {
   const store = new Store(":memory:");
   const sms = new ConsoleChannel("sms");
@@ -30,6 +32,7 @@ export function makeApp(
   const tenantStore = new TenantStore(store.db);
   for (const t of tenantList) tenantStore.create(t);
   const published: Tenant[] = [];
+  const mailbox: Mail[] = [];
   const deps = {
     store,
     notifier,
@@ -40,6 +43,12 @@ export function makeApp(
     users: new Users(store.db),
     publishAgent:
       opts.publishAgent ?? (async (t: Tenant) => (published.push(t), { ok: true as const, agentId: t.agentIds[0] ?? "agent_test", created: false })),
+    firebase: opts.firebase ?? null,
+    paymentTestMode: opts.paymentTestMode ?? false,
+    adminEmails: opts.adminEmails ?? [],
+    voices: opts.voices ?? null,
+    mailer: { send: async (m: Mail) => void mailbox.push(m) },
+    baseUrl: "https://panel.test",
     toolSecret: "tool-secret",
     slotKey: "slot-key",
     webhookSecret: "wh-secret",
@@ -57,5 +66,5 @@ export function makeApp(
     const json = res.headers.get("content-type")?.includes("json") ? JSON.parse(text) : text;
     return { status: res.status, body: json as any };
   };
-  return { app, store, sms, call, deps, published };
+  return { app, store, sms, call, deps, published, mailbox };
 }

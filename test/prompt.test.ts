@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { composePrompt, parseSections, renderPrompt } from "../src/domain/prompt.ts";
 import { demoTenant } from "./helpers.ts";
+import { VERTICALS } from "../src/domain/tenant.ts";
+import { loadVertical } from "../src/domain/vertical.ts";
 
 describe("prompt birleştirme (ortak + sektör)", () => {
   const core = "<!-- yorum -->\n# Rol\n[[sector:rol]]\n# Sınırlar\n- ortak\n[[sector:sinirlar]]\nFirma: [[business_name]]";
@@ -35,5 +37,12 @@ describe("prompt birleştirme (ortak + sektör)", () => {
     expect(p).toContain("Çift masajı (60 dakika): 4800 TL (id: cift-masaj-60), 2 terapist birlikte yapar");
     expect(p).toContain("Hassas bir konu (sağlık durumu, kayıp eşya, fatura itirazı)");
     expect(p).toContain("# Hitap");
+  });
+
+  it.each(VERTICALS)("%s sektörünün şablonu okunur ve prompt'u eksiksiz oluşur", (vertical) => {
+    expect(loadVertical(vertical).label).toBeTruthy();
+    const p = renderPrompt({ ...demoTenant, vertical });
+    expect(p).not.toMatch(/\[\[|<!--/);
+    expect(p).toContain("Hassas bir konu (");
   });
 });

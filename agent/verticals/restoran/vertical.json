@@ -1,0 +1,23 @@
+{
+  "label": "Restoran / kafe",
+  "greeting": "{firma}, merhaba. Ben yapay zekâ asistanı {ajan}. Görüşmemiz hizmet kalitesi için kaydediliyor. Size nasıl yardımcı olabilirim?",
+  "confirmationTemplate": "{firma}: {isim}, {hizmet} rezervasyonunuz {zaman} için alındı. Gelemeyecekseniz lütfen bizi arayın.",
+  "staffTerm": "personel",
+  "holdMessage": "{firma}'yı aradığınız için teşekkür ederiz. Şu anda tüm hatlarımız dolu. Lütfen hattan ayrılmayın, sıradaki görüşmede size hemen bağlanacağız.",
+  "staffLabel": "Personel",
+  "roomLabel": "Masa",
+  "roomTypes": {
+    "masa": "Masa",
+    "teras": "Teras masası",
+    "ozel": "Özel salon"
+  },
+  "teamRoleLabel": "Servis sorumlusu",
+  "teamPermissions": [
+    "appointments.view",
+    "appointments.edit",
+    "calls.view",
+    "callbacks.edit"
+  ],
+  "cancellationTemplate": "{firma}: {isim}, {zaman} tarihli {hizmet} rezervasyonunuz iptal edildi. Yeni rezervasyon için bizi arayabilirsiniz.",
+  "roomLabelPlural": "Masalar"
+}

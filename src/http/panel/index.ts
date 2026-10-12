@@ -4,6 +4,7 @@ import { type PanelEnv, requirePanelHeader, requirePermission, requireSession } 
 import { appointmentRoutes } from "./appointments.ts";
 import { callRoutes } from "./calls.ts";
 import { overviewRoutes } from "./overview.ts";
+import { billingRoutes } from "./billing.ts";
 import { settingsRoutes } from "./settings.ts";
 import { userRoutes } from "./users.ts";
 import { initVariables } from "../webhooks.ts";
@@ -24,6 +25,7 @@ export function panelRoutes(deps: Deps) {
 
   app.route("/", userRoutes(deps));
   app.route("/", overviewRoutes(deps));
+  app.route("/", billingRoutes(deps));
   app.route("/", appointmentRoutes(deps));
   app.route("/", callRoutes(deps));
   app.route("/", settingsRoutes(deps));

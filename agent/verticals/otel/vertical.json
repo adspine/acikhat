@@ -1,0 +1,23 @@
+{
+  "label": "Otel / pansiyon",
+  "greeting": "{firma}, merhaba. Ben yapay zekâ asistanı {ajan}. Görüşmemiz hizmet kalitesi için kaydediliyor. Size nasıl yardımcı olabilirim?",
+  "confirmationTemplate": "{firma}: {isim}, {hizmet} rezervasyonunuz {zaman} için alındı. Değişiklik için bizi arayabilirsiniz.",
+  "staffTerm": "personel",
+  "holdMessage": "{firma}'yı aradığınız için teşekkür ederiz. Şu anda tüm hatlarımız dolu. Lütfen hattan ayrılmayın, sıradaki görüşmede size hemen bağlanacağız.",
+  "staffLabel": "Personel",
+  "roomLabel": "Oda",
+  "roomTypes": {
+    "standart": "Standart oda",
+    "deluxe": "Deluxe oda",
+    "suit": "Süit"
+  },
+  "teamRoleLabel": "Resepsiyon",
+  "teamPermissions": [
+    "appointments.view",
+    "appointments.edit",
+    "calls.view",
+    "callbacks.edit"
+  ],
+  "cancellationTemplate": "{firma}: {isim}, {zaman} tarihli {hizmet} rezervasyonunuz iptal edildi. Yeni rezervasyon için bizi arayabilirsiniz.",
+  "roomLabelPlural": "Odalar"
+}

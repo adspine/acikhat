@@ -62,6 +62,33 @@ CREATE TABLE IF NOT EXISTS onboarding_submissions (
   created_at       INTEGER NOT NULL
 );
 
+-- Müşteriye gönderilen tekrarsız bildirimler (kota uyarısı gibi): aynı uyarı aynı dönemde bir kez gider
+CREATE TABLE IF NOT EXISTS notice_log (
+  tenant_id  TEXT NOT NULL,
+  kind       TEXT NOT NULL,
+  period     TEXT NOT NULL,
+  sent_at    INTEGER NOT NULL,
+  PRIMARY KEY (tenant_id, kind, period)
+);
+
+-- Panelden yapılan satın almalar: paket yükseltme ve ek dakika paketi (ödeme sağlayıcısı bağlanınca provider_ref dolar)
+CREATE TABLE IF NOT EXISTS orders (
+  id           TEXT PRIMARY KEY,
+  tenant_id    TEXT NOT NULL,
+  user_id      TEXT,
+  kind         TEXT NOT NULL,                 -- plan | addon
+  item         TEXT NOT NULL,                 -- paket kimliği
+  label        TEXT NOT NULL,
+  minutes      INTEGER NOT NULL DEFAULT 0,    -- ek paketlerde eklenen dakika
+  amount_usd   REAL NOT NULL,
+  status       TEXT NOT NULL DEFAULT 'pending', -- pending | paid | failed
+  period       TEXT NOT NULL,                 -- YYYY-MM: ek dakikanın geçerli olduğu fatura dönemi
+  provider_ref TEXT,
+  created_at   INTEGER NOT NULL,
+  paid_at      INTEGER
+);
+CREATE INDEX IF NOT EXISTS orders_tenant ON orders (tenant_id, created_at);
+
 -- Firma ayarları: canlı (asistanın kullandığı) ve taslak (panelde düzenlenen, yayınlanmamış)
 CREATE TABLE IF NOT EXISTS tenants (
   id               TEXT PRIMARY KEY,
@@ -183,6 +210,9 @@ export class Store {
       appointment_id: "TEXT",
       after_hours: "INTEGER",
     });
+    this.addColumns("users", { firebase_uid: "TEXT", plan: "TEXT", plan_paid_at: "INTEGER", onboarding_ref: "TEXT" });
+    this.addColumns("onboarding_submissions", { user_id: "TEXT", plan: "TEXT", tenant_id: "TEXT", admin_note: "TEXT" });
+    this.db.exec("CREATE UNIQUE INDEX IF NOT EXISTS users_firebase_uid ON users (firebase_uid) WHERE firebase_uid IS NOT NULL");
     this.db.exec("CREATE INDEX IF NOT EXISTS calls_tenant_time ON calls (tenant_id, started_at)");
     this.db.exec("CREATE INDEX IF NOT EXISTS callbacks_tenant ON callback_requests (tenant_id, status, created_at)");
   }
@@ -369,7 +399,7 @@ export class Store {
     return rows;
   }
 
-  saveOnboarding(s: { businessName: string; contactPhone: string; payload: unknown }): string {
+  saveOnboarding(s: { businessName: string; contactPhone: string; payload: unknown; userId?: string | undefined; plan?: string | undefined }): string {
     // Telefonda okunabilir kısa referans: VR-7K3Q gibi
     const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
     const code = Array.from(crypto.getRandomValues(new Uint8Array(4)), (b) => alphabet[b % alphabet.length]).join("");
@@ -377,10 +407,10 @@ export class Store {
     const reference = `${prefix}-${code}`;
     this.db
       .prepare(
-        `INSERT INTO onboarding_submissions (reference, business_name, contact_phone, payload_json, created_at)
-         VALUES (?, ?, ?, ?, ?)`,
+        `INSERT INTO onboarding_submissions (reference, business_name, contact_phone, payload_json, created_at, user_id, plan)
+         VALUES (?, ?, ?, ?, ?, ?, ?)`,
       )
-      .run(reference, s.businessName, s.contactPhone, JSON.stringify(s.payload), Date.now());
+      .run(reference, s.businessName, s.contactPhone, JSON.stringify(s.payload), Date.now(), s.userId ?? null, s.plan ?? null);
     return reference;
   }
 

@@ -1,12 +1,15 @@
+import { mailMembershipPaid } from "../../notify/emails.ts";
 import { Hono, type Context, type MiddlewareHandler } from "hono";
 import { getCookie, setCookie, deleteCookie } from "hono/cookie";
 import { z } from "zod";
 import type { Deps } from "../deps.ts";
 import type { User } from "../../auth/users.ts";
 import { MIN_PASSWORD } from "../../auth/users.ts";
+import { FirebaseAuthError, type FirebaseIdentity } from "../../auth/firebase.ts";
 import { permissionsFor, type Permission } from "../../domain/permissions.ts";
 import type { Tenant } from "../../domain/tenant.ts";
 import { loadVertical } from "../../domain/vertical.ts";
+import { PLANS, isPlanId } from "../../domain/plans.ts";
 
 export type PanelEnv = {
   Variables: {
@@ -19,6 +22,12 @@ export type PanelEnv = {
 };
 
 const cookieName = (secure: boolean) => (secure ? "__Host-oturum" : "oturum");
+
+/** Çerezdeki oturumun kullanıcısı (tanıtım sitesi uçları için; firma gerektirmez) */
+export function userFromCookie(c: Context, deps: Deps): User | null {
+  const token = getCookie(c, cookieName(deps.secureCookies));
+  return token ? deps.users.userForSession(token) : null;
+}
 
 /** Değişiklik isteklerinde başka siteden gelen form gönderimlerini engeller (SameSite=Strict'e ek) */
 export const requirePanelHeader: MiddlewareHandler = async (c, next) => {
@@ -89,6 +98,19 @@ export function authRoutes(deps: Deps) {
   const limiter = loginLimiter();
   app.use("*", requirePanelHeader);
 
+  /** Oturumu kaydeder ve çerezi yazar (şifreli ve Firebase girişi ortak) */
+  const startSession = (c: Context, userId: string) => {
+    const session = deps.users.createSession(userId);
+    setCookie(c, cookieName(deps.secureCookies), session.token, {
+      httpOnly: true,
+      secure: deps.secureCookies,
+      sameSite: "Strict",
+      path: "/",
+      expires: new Date(session.expiresAt),
+    });
+  };
+  const clientIp = (c: Context) => c.req.header("fly-client-ip") ?? c.req.header("x-forwarded-for") ?? "local";
+
   app.post("/login", async (c) => {
     const parsed = Login.safeParse(await c.req.json().catch(() => ({})));
     if (!parsed.success) return c.json({ error: "E-posta ve şifrenizi yazın" }, 400);
@@ -101,15 +123,98 @@ export function authRoutes(deps: Deps) {
       return c.json({ error: "E-posta veya şifre hatalı" }, 401);
     }
     limiter.reset(key);
-    const session = deps.users.createSession(user.id);
-    setCookie(c, cookieName(deps.secureCookies), session.token, {
-      httpOnly: true,
-      secure: deps.secureCookies,
-      sameSite: "Strict",
-      path: "/",
-      expires: new Date(session.expiresAt),
-    });
+    startSession(c, user.id);
     return c.json({ ok: true, mustChangePassword: user.mustChangePassword });
+  });
+
+  /**
+   * Firebase ile giriş (Google veya e-posta/şifre): tarayıcı Firebase'den aldığı kimlik belgesini gönderir,
+   * biz imzasını doğrulayıp kendi oturum çerezimizi açarız. Rol ve firma bağlantısı kendi veritabanımızda kalır.
+   */
+  const firebaseLimiter = loginLimiter();
+  app.post("/firebase", async (c) => {
+    if (!deps.firebase) return c.json({ error: "Bu giriş yöntemi şu an kapalı" }, 503);
+    const parsed = z.object({ idToken: z.string().min(20).max(8192) }).safeParse(await c.req.json().catch(() => ({})));
+    if (!parsed.success) return c.json({ error: "Giriş belgesi eksik" }, 400);
+    const key = `firebase|${clientIp(c)}`;
+    if (firebaseLimiter.blocked(key)) return c.json({ error: "Çok fazla hatalı deneme. 15 dakika sonra tekrar deneyin." }, 429);
+
+    let identity: FirebaseIdentity;
+    try {
+      identity = await deps.firebase.verify(parsed.data.idToken);
+    } catch (err) {
+      if (err instanceof FirebaseAuthError) {
+        firebaseLimiter.fail(key);
+        return c.json({ error: "Giriş doğrulanamadı. Lütfen tekrar deneyin." }, 401);
+      }
+      return c.json({ error: "Giriş şu an doğrulanamıyor. Biraz sonra tekrar deneyin." }, 503);
+    }
+    // Doğrulanmamış e-posta başkasının adına hesap açmak için kullanılabilir: kabul etmeyiz
+    if (!identity.emailVerified) {
+      return c.json({ error: "E-posta adresinizi doğrulamanız gerekiyor. Gelen kutunuzdaki bağlantıya tıklayın.", needsVerification: true }, 403);
+    }
+
+    let user = deps.users.findByFirebaseUid(identity.uid);
+    if (!user) {
+      const existing = deps.users.findByEmail(identity.email);
+      if (existing) {
+        // Aynı (doğrulanmış) e-posta: mevcut panel hesabına bağlanır. Başka bir Firebase hesabına bağlıysa reddedilir.
+        if (existing.firebaseUid && existing.firebaseUid !== identity.uid) return c.json({ error: "Bu e-posta başka bir hesaba bağlı" }, 409);
+        deps.users.linkFirebase(existing.id, identity.uid);
+        user = existing;
+      } else {
+        user = deps.users.createFromFirebase({ uid: identity.uid, email: identity.email, name: identity.name ?? identity.email.split("@")[0]! });
+      }
+    }
+    if (user.disabled) return c.json({ error: "Bu hesap kapatılmış. Bizimle iletişime geçin." }, 403);
+    // Yönetici e-postaları: Firebase'in doğruladığı adres listede ise hesap yönetici olur (şifre veya rol elle girilmez)
+    if (user.role !== "agency" && deps.adminEmails?.includes(identity.email.toLowerCase())) {
+      deps.users.update(user.id, { role: "agency" });
+      user = { ...user, role: "agency" };
+    }
+
+    firebaseLimiter.reset(key);
+    deps.users.touchLogin(user.id);
+    startSession(c, user.id);
+    return c.json({ ok: true, hasTenant: user.role === "agency" || !!user.tenantId, mustChangePassword: false });
+  });
+
+  /** Tanıtım sitesi için: giriş yapılmış mı, firması var mı, kurulum yolculuğunda hangi adımda */
+  const accountOf = (user: User) => ({
+    user: { name: user.name, email: user.email, role: user.role },
+    hasTenant: user.role === "agency" || !!user.tenantId,
+    onboarding: deps.users.onboardingOf(user.id),
+    paymentTestMode: !!deps.paymentTestMode,
+  });
+  app.get("/session", (c) => {
+    const user = userFromCookie(c, deps);
+    if (!user) return c.json({ error: "Oturum açmanız gerekiyor" }, 401);
+    return c.json(accountOf(user));
+  });
+
+  /** Paket seçimi (ödemeden önce değiştirilebilir) */
+  app.post("/plan", async (c) => {
+    const user = userFromCookie(c, deps);
+    if (!user) return c.json({ error: "Oturum açmanız gerekiyor" }, 401);
+    const body = (await c.req.json().catch(() => ({}))) as { plan?: unknown };
+    if (!isPlanId(body.plan)) return c.json({ error: "Geçersiz paket" }, 400);
+    if (!deps.users.selectPlan(user.id, body.plan)) return c.json({ error: "Paketiniz zaten ödenmiş" }, 409);
+    return c.json(accountOf(user));
+  });
+
+  /**
+   * Ödeme. Gerçek ödeme sağlayıcısı bağlanana kadar yalnızca test modunda ("ödenmiş say") çalışır;
+   * canlıda PAYMENT_TEST_MODE=1 verilmedikçe kapalıdır.
+   */
+  app.post("/pay", (c) => {
+    const user = userFromCookie(c, deps);
+    if (!user) return c.json({ error: "Oturum açmanız gerekiyor" }, 401);
+    if (!deps.paymentTestMode) return c.json({ error: "Online ödeme çok yakında. Şimdilik bizimle iletişime geçin." }, 501);
+    const o = deps.users.onboardingOf(user.id);
+    if (!o.plan) return c.json({ error: "Önce bir paket seçin" }, 400);
+    if (!o.paidAt && deps.users.markPaid(user.id)) mailMembershipPaid(deps, user, o.plan);
+    console.info(`[ödeme:test] ${user.email} → ${PLANS[o.plan].name} (test, ücret alınmadı)`);
+    return c.json(accountOf(user));
   });
 
   app.post("/logout", (c) => {

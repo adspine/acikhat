@@ -1,0 +1,22 @@
+{
+  "label": "Avukat / danışmanlık ofisi",
+  "greeting": "{firma}, merhaba. Ben yapay zekâ asistanı {ajan}. Görüşmemiz hizmet kalitesi için kaydediliyor. Size nasıl yardımcı olabilirim?",
+  "confirmationTemplate": "{firma}: {isim}, {hizmet} görüşmeniz {zaman}{personel} olarak planlandı. Değişiklik için bizi arayabilirsiniz.",
+  "staffTerm": "danışman",
+  "holdMessage": "{firma}'yı aradığınız için teşekkür ederiz. Şu anda tüm hatlarımız dolu. Lütfen hattan ayrılmayın, sıradaki görüşmede size hemen bağlanacağız.",
+  "staffLabel": "Danışmanlar",
+  "roomLabel": "Görüşme odası",
+  "roomTypes": {
+    "gorusme": "Görüşme odası",
+    "toplanti": "Toplantı odası"
+  },
+  "teamRoleLabel": "Sekreter",
+  "teamPermissions": [
+    "appointments.view",
+    "appointments.edit",
+    "calls.view",
+    "callbacks.edit"
+  ],
+  "cancellationTemplate": "{firma}: {isim}, {zaman} tarihli {hizmet} görüşmeniz iptal edildi. Yeni zaman için bizi arayabilirsiniz.",
+  "roomLabelPlural": "Görüşme odaları"
+}

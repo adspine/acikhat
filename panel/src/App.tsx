@@ -1,8 +1,9 @@
 import { createContext, lazy, Suspense, useContext, useEffect, useState, type ReactNode } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { api, ApiError, authEvents, type Me, type Permission, type Today } from "./api.ts";
+import { api, ApiError, authEvents, getAdminTenant, setAdminTenant, type Me, type Permission, type Session, type Today, type Usage } from "./api.ts";
 import { Link, useRouter } from "./router.tsx";
-import { Button, Field, Icon, Input, Loading } from "./components/ui.tsx";
+import { Sidebar, useSidebarCollapsed } from "./components/Sidebar.tsx";
+import { Button, ErrorBox, Field, Icon, Input, Loading } from "./components/ui.tsx";
 import { TodayPage } from "./pages/Today.tsx";
 import { AppointmentsPage } from "./pages/Appointments.tsx";
 import { CallsPage } from "./pages/Calls.tsx";
@@ -10,6 +11,8 @@ import { CallbacksPage } from "./pages/Callbacks.tsx";
 import { ReportsPage } from "./pages/Reports.tsx";
 import { SettingsPage } from "./pages/Settings.tsx";
 import { UsersPage } from "./pages/Users.tsx";
+import { UsagePage } from "./pages/Usage.tsx";
+import { AdminCustomersPage, AdminOverviewPage, AdminSubmissionsPage } from "./pages/Admin.tsx";
 // Ses kütüphanesi büyük: yalnızca "Asistanı dene" açılınca yüklenir
 const TestCallPage = lazy(() => import("./pages/TestCall.tsx").then((m) => ({ default: m.TestCallPage })));
 
@@ -26,21 +29,106 @@ export const useToday = () => useQuery({ queryKey: ["today"], queryFn: () => api
 
 export function App() {
   const qc = useQueryClient();
-  const me = useQuery({ queryKey: ["me"], queryFn: () => api<Me>("/me"), retry: false });
+  // Önce kim olduğuna bakılır: yönetici (agency) kendi yönetim ekranını, müşteri kendi panosunu görür
+  const session = useQuery({ queryKey: ["session"], queryFn: () => api<Session>("/api/auth/session"), retry: false });
+  const tenantId = getAdminTenant();
+  const isAgency = session.data?.user.role === "agency";
+  const me = useQuery({
+    queryKey: ["me", tenantId],
+    queryFn: () => api<Me>("/me"),
+    retry: false,
+    enabled: !!session.data && session.data.hasTenant && (!isAgency || !!tenantId),
+  });
 
   useEffect(() => {
-    const out = () => qc.setQueryData(["me"], null);
+    const out = () => {
+      qc.setQueryData(["session"], null);
+      qc.removeQueries({ queryKey: ["me"] });
+    };
     authEvents.addEventListener("logout", out);
     return () => authEvents.removeEventListener("logout", out);
   }, [qc]);
 
+  if (session.isLoading) return <Loading label="Panel açılıyor" />;
+  if (!session.data) return <LoginPage onDone={() => session.refetch()} />;
+  if (isAgency && !tenantId) return <AdminApp session={session.data} />;
+  // Giriş yapmış ama henüz bir firmaya bağlanmamış üye (paket ve kurulum bekliyor)
+  if (!session.data.hasTenant) return <NoTenantPage />;
   if (me.isLoading) return <Loading label="Panel açılıyor" />;
-  if (!me.data) return <LoginPage onDone={() => me.refetch()} />;
+  if (!me.data) {
+    return (
+      <AuthLayout title="Panel açılamadı">
+        <div className="stack">
+          <ErrorBox error={me.error} onRetry={() => me.refetch()} />
+          {isAgency && <Button type="button" variant="quiet" onClick={() => { setAdminTenant(null); location.assign("/panel/"); }}>Yönetime dön</Button>}
+        </div>
+      </AuthLayout>
+    );
+  }
   if (me.data.user.mustChangePassword) return <ChangePasswordPage forced onDone={() => me.refetch()} />;
   return (
     <MeContext.Provider value={me.data}>
       <Shell />
     </MeContext.Provider>
+  );
+}
+
+/* ---------------- yönetim ekranı (yalnızca agency) ---------------- */
+function AdminApp({ session }: { session: Session }) {
+  const { loc, navigate } = useRouter();
+  const [collapsed, toggleSide] = useSidebarCollapsed();
+  const qc = useQueryClient();
+  const overview = useQuery({ queryKey: ["admin", "overview"], queryFn: () => api<{ submissions: { new: number } }>("/api/admin/overview"), refetchInterval: 60_000 });
+  const pending = overview.data?.submissions.new ?? 0;
+  const items = [
+    { to: "/", label: "Genel bakış", icon: "chart" },
+    { to: "/basvurular", label: "Başvurular", icon: "callback", badge: pending },
+    { to: "/musteriler", label: "Müşteriler", icon: "users" },
+  ];
+  const active = (to: string) => (to === "/" ? loc.path === "/" : loc.path.startsWith(to));
+  const logout = async () => {
+    await api("/api/auth/logout", { method: "POST" }).catch(() => {});
+    qc.clear();
+    qc.setQueryData(["session"], null);
+  };
+  const page = loc.path.startsWith("/basvurular") ? (
+    <AdminSubmissionsPage initialStatus={loc.query.get("durum") ?? ""} />
+  ) : loc.path.startsWith("/musteriler") ? (
+    <AdminCustomersPage />
+  ) : (
+    <AdminOverviewPage go={navigate} />
+  );
+  return (
+    <div className={`shell${collapsed ? " is-collapsed" : ""}`}>
+      <Sidebar
+        brand="Açık Hat"
+        navLabel="Yönetim menüsü"
+        items={items}
+        isActive={active}
+        collapsed={collapsed}
+        onToggle={toggleSide}
+        user={{ name: session.user.name, email: session.user.email, role: "Yönetici" }}
+        actions={[{ label: "Çıkış yap", icon: "logout", onClick: logout, danger: true }]}
+      />
+      <header className="topbar">
+        <span className="brand-lamp" aria-hidden="true" />
+        <span className="topbar-name">Yönetim</span>
+      </header>
+      <main className="main" id="icerik">{page}</main>
+      <nav className="tabbar" aria-label="Alt menü">
+        {items.map((i) => (
+          <Link key={i.to} to={i.to} className="tab" {...(active(i.to) && { "aria-current": "page" as const })}>
+            <Icon name={i.icon} />
+            <span>{i.label}</span>
+            {!!i.badge && <span className="nav-badge">{i.badge}</span>}
+          </Link>
+        ))}
+        <button className="tab" onClick={logout}>
+          <Icon name="logout" />
+          <span>Çıkış</span>
+        </button>
+      </nav>
+    </div>
   );
 }
 
@@ -54,6 +142,23 @@ function AuthLayout({ title, children }: { title: string; children: ReactNode })
         {children}
       </div>
     </main>
+  );
+}
+
+function NoTenantPage() {
+  const qc = useQueryClient();
+  const out = async () => {
+    await api("/api/auth/logout", { method: "POST" }).catch(() => {});
+    qc.setQueryData(["session"], null);
+  };
+  return (
+    <AuthLayout title="Hesabınız hazır">
+      <div className="stack">
+        <p className="muted">Hesabınıza henüz bir firma bağlanmadı. Paketinizi seçip kurulum formunu doldurduktan sonra asistanınız hazırlanır ve panel açılır.</p>
+        <a className="btn btn-primary btn-md" href="/#/hesap">Sonraki adımlar</a>
+        <Button type="button" variant="quiet" onClick={out}>Çıkış yap</Button>
+      </div>
+    </AuthLayout>
   );
 }
 
@@ -83,6 +188,7 @@ function LoginPage({ onDone }: { onDone: () => void }) {
         {error && <p className="form-error" role="alert">{error}</p>}
         <Button type="submit" busy={busy}>Giriş yap</Button>
         <p className="muted small">Şifrenizi unuttuysanız bizi arayın; yeni geçici şifre verelim.</p>
+        <p className="muted small">Google veya yeni bir hesapla mı giriyorsunuz? <a href="/#/giris">Buradan giriş yapın</a> ya da <a href="/#/uye-ol">üye olun</a>.</p>
       </form>
     </AuthLayout>
   );
@@ -124,8 +230,41 @@ export function ChangePasswordPage({ forced, onDone }: { forced?: boolean; onDon
 /* ---------------- kabuk ---------------- */
 interface NavItem { to: string; label: string; icon: string; perm?: Permission; mobile?: boolean; badge?: number }
 
+/** Sol alt köşede, profilin hemen üstünde: bu ayın kota kullanımı */
+function SidebarUsage({ canOpen }: { canOpen: boolean }) {
+  const q = useQuery({ queryKey: ["usage"], queryFn: () => api<Usage>("/usage"), refetchInterval: 60_000, retry: false });
+  const u = q.data;
+  if (!u || u.includedMinutes === null) return null;
+  const pct = u.includedMinutes ? Math.min(100, Math.round((u.usedMinutes / u.includedMinutes) * 100)) : 0;
+  const level = u.usedMinutes > u.includedMinutes ? "over" : pct >= 90 ? "high" : "ok";
+  const nf = new Intl.NumberFormat("tr-TR");
+  const body = (
+    <>
+      <span className="side-usage-text">
+        <span className="side-usage-top">
+          <span>Bu ay</span>
+          <strong>{nf.format(u.usedMinutes)} / {nf.format(u.includedMinutes)} dk</strong>
+        </span>
+      </span>
+      <span className="side-usage-bar" role="img" aria-label={`Kotanın %${pct}'i kullanıldı`}><span style={{ width: `${pct}%` }} /></span>
+      <span className="side-usage-text">
+        <span className="side-usage-note">
+          {level === "over" ? "Kota aşıldı; ek dakika alın" : level === "high" ? "Kota dolmak üzere" : `${nf.format(u.remainingMinutes ?? 0)} dk kaldı`}
+          {u.addonMinutes > 0 && ` · +${nf.format(u.addonMinutes)} dk ek paket`}
+        </span>
+      </span>
+    </>
+  );
+  return canOpen ? (
+    <Link to="/paketim" className={`side-usage is-${level}`} aria-label="Kullanım limitleri, Paketim sayfasını aç">{body}</Link>
+  ) : (
+    <div className={`side-usage is-${level}`}>{body}</div>
+  );
+}
+
 function Shell() {
   const me = useMe();
+  const [collapsed, toggleSide] = useSidebarCollapsed();
   const { loc } = useRouter();
   const qc = useQueryClient();
   const today = useToday();
@@ -138,6 +277,7 @@ function Shell() {
     { to: "/cagrilar", label: "Çağrılar", icon: "phone", perm: "calls.view", mobile: true },
     { to: "/geri-aramalar", label: "Geri aramalar", icon: "callback", perm: "calls.view", mobile: true, badge: openCallbacks },
     { to: "/raporlar", label: "Raporlar", icon: "chart", perm: "reports.view" },
+    { to: "/paketim", label: "Paketim", icon: "gauge", perm: "settings.edit" },
     { to: "/ayarlar", label: "Ayarlar", icon: "settings", perm: "settings.edit" },
     { to: "/kullanicilar", label: "Kullanıcılar", icon: "users", perm: "users.manage" },
     { to: "/asistani-dene", label: "Asistanı dene", icon: "mic", perm: "settings.edit" },
@@ -158,6 +298,7 @@ function Shell() {
     if (p.startsWith("/cagrilar")) return <CallsPage />;
     if (p.startsWith("/geri-aramalar")) return <CallbacksPage />;
     if (p.startsWith("/raporlar")) return <ReportsPage />;
+    if (p.startsWith("/paketim")) return <UsagePage />;
     if (p.startsWith("/ayarlar")) return <SettingsPage />;
     if (p.startsWith("/kullanicilar")) return <UsersPage />;
     if (p.startsWith("/asistani-dene")) return <Suspense fallback={<Loading />}><TestCallPage /></Suspense>;
@@ -165,40 +306,42 @@ function Shell() {
     return <TodayPage />;
   })();
 
-  const roleLabel = me.user.role === "owner" ? "Sahip" : me.user.role === "agency" ? "Ajans" : me.terms.teamRoleLabel;
+  const roleLabel = me.user.role === "owner" ? "Sahip" : me.user.role === "agency" ? "Yönetici" : me.terms.teamRoleLabel;
+  const exitTenant = () => {
+    setAdminTenant(null);
+    location.assign("/panel/");
+  };
 
   return (
-    <div className="shell">
-      <aside className="sidebar">
-        <div className="sidebar-brand">
-          <span className="brand-lamp" aria-hidden="true" />
-          <span>{me.tenant.name}</span>
-        </div>
-        <nav aria-label="Panel menüsü">
-          {items.map((i) => (
-            <Link key={i.to} to={i.to} className="nav-item" {...(active(i.to) && { "aria-current": "page" as const })}>
-              <Icon name={i.icon} />
-              <span>{i.label}</span>
-              {!!i.badge && <span className="nav-badge" aria-label={`${i.badge} bekleyen`}>{i.badge}</span>}
-            </Link>
-          ))}
-        </nav>
-        <div className="sidebar-user">
-          <p className="sidebar-user-name">{me.user.name}</p>
-          <p className="sidebar-user-role">{roleLabel}</p>
-          <div className="sidebar-user-actions">
-            <Link to="/sifre" className="link-quiet">Şifre</Link>
-            <button className="link-quiet" onClick={logout}>Çıkış</button>
-          </div>
-        </div>
-      </aside>
+    <div className={`shell${collapsed ? " is-collapsed" : ""}`}>
+      <Sidebar
+        brand={me.tenant.name}
+        navLabel="Panel menüsü"
+        items={items}
+        isActive={active}
+        collapsed={collapsed}
+        onToggle={toggleSide}
+        usage={<SidebarUsage canOpen={me.permissions.includes("settings.edit")} />}
+        user={{ name: me.user.name, email: me.user.email, role: roleLabel }}
+        actions={[
+          ...(me.user.role === "agency" ? [{ label: "Yönetime dön", icon: "left", onClick: exitTenant }] : [{ label: "Şifre değiştir", icon: "lock", to: "/sifre" }]),
+          { label: "Çıkış yap", icon: "logout", onClick: logout, danger: true },
+        ]}
+      />
 
       <header className="topbar">
         <span className="brand-lamp" aria-hidden="true" />
         <span className="topbar-name">{me.tenant.name}</span>
       </header>
 
-      <main className="main" id="icerik">{page}</main>
+      <main className="main" id="icerik">
+        {me.tenant.suspended && (
+          <p className="suspended-banner" role="alert">
+            Hizmetiniz şu an askıda; asistan gelen aramaları karşılamıyor. Açılması için <a href="mailto:destek@acikhat.ai">destek@acikhat.ai</a> adresine yazın.
+          </p>
+        )}
+        {page}
+      </main>
 
       <nav className="tabbar" aria-label="Alt menü">
         {items.filter((i) => i.mobile).map((i) => (
@@ -223,6 +366,7 @@ function Shell() {
                 {i.label}
               </Link>
             ))}
+            {me.user.role === "agency" && <button className="sheet-item" onClick={exitTenant}><Icon name="chart" />Yönetime dön</button>}
             <Link to="/sifre" className="sheet-item" onClick={() => setMoreOpen(false)}><Icon name="settings" />Şifre değiştir</Link>
             <button className="sheet-item" onClick={logout}><Icon name="logout" />Çıkış yap</button>
           </div>

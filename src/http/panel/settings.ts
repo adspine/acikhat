@@ -12,7 +12,7 @@ z.config(z.locales.tr());
  * Panelden değiştirilemeyen alanlar: kurulumu bozabilecek veya plana bağlı olanlar.
  * Taslak kaydedilirken bu alanlar her zaman canlı ayardan alınır.
  */
-const PROTECTED = ["id", "vertical", "timezone", "phoneNumbers", "agentIds", "calendar", "plan", "sms", "team"] as const;
+const PROTECTED = ["id", "vertical", "timezone", "phoneNumbers", "agentIds", "calendar", "plan", "suspended", "sms", "team"] as const;
 
 /** Yayınlanmamış değişiklik özetinde kullanılan bölümler */
 const SECTIONS: { key: string; label: string; fields: string[] }[] = [
@@ -99,7 +99,19 @@ function changedSections(live: unknown, draft: unknown): string[] {
 export function settingsRoutes(deps: Deps) {
   const app = new Hono<PanelEnv>();
   app.use("/settings", requirePermission("settings.edit"));
+  app.use("/voices", requirePermission("settings.edit"));
   app.use("/settings/*", requirePermission("settings.edit"));
+
+  /** Türkçe asistan sesleri (önizleme bağlantısıyla) */
+  app.get("/voices", async (c) => {
+    const defaultId = process.env.ELEVENLABS_VOICE_ID || "MzfWWOj9g3sIKex1YFMV";
+    if (!deps.voices) return c.json({ voices: [], enabled: false, defaultId });
+    try {
+      return c.json({ voices: await deps.voices(), enabled: true, defaultId });
+    } catch {
+      return c.json({ error: "Ses listesi şu an alınamıyor. Biraz sonra tekrar deneyin." }, 502);
+    }
+  });
 
   app.get("/settings", (c) => {
     const tenant = c.get("tenant");

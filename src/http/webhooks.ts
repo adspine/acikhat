@@ -1,3 +1,4 @@
+import { checkQuotaNotices } from "./panel/billing.ts";
 import { Hono } from "hono";
 import { createHmac, timingSafeEqual } from "node:crypto";
 import type { Deps } from "./deps.ts";
@@ -61,6 +62,7 @@ export function webhookRoutes(deps: Deps) {
       calledNumber: normalizeTrPhone(body.called_number) ?? body.called_number,
     });
     if (!tenant) return c.json({ error: "unknown tenant" }, 404);
+    if (tenant.suspended) return c.json({ error: "tenant suspended" }, 403);
 
     // Her gelen çağrının kaydı: bitiş kaydı gelmezse kaçan çağrı sayılır (missed-calls.ts)
     if (body.call_sid) {
@@ -136,6 +138,13 @@ export function webhookRoutes(deps: Deps) {
       afterHours: a.afterHours,
       payload: event,
     });
+    if (tenantId) {
+      try {
+        checkQuotaNotices(deps, tenantId);
+      } catch (err) {
+        console.error(`[kota] bildirim kontrolü başarısız: ${(err as Error).message}`);
+      }
+    }
     return c.json({ ok: true });
   });
 

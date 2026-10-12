@@ -1,9 +1,14 @@
 import { serve } from "@hono/node-server";
 import { createApp } from "./http/app.ts";
+import type { Deps } from "./http/deps.ts";
+import { applyScheduledPlans } from "./http/panel/billing.ts";
 import { Store } from "./store/db.ts";
 import { TenantRegistry } from "./store/tenants.ts";
 import { TenantStore } from "./store/tenant-store.ts";
 import { Users } from "./auth/users.ts";
+import { createFirebaseVerifier } from "./auth/firebase.ts";
+import { createVoiceCatalog } from "./integrations/voices.ts";
+import { createMailer } from "./integrations/mail.ts";
 import { createNotifier } from "./integrations/notify.ts";
 import { sweepMissedCalls } from "./domain/missed-calls.ts";
 import { Calendars } from "./calendar/calendars.ts";
@@ -36,7 +41,7 @@ if (serviceAccount) console.info(`Google Takvim servis hesabı: ${serviceAccount
 const notifier = createNotifier(process.env);
 const now = () => Temporal.Now.zonedDateTimeISO("UTC");
 
-const app = createApp({
+const deps: Deps = {
   store,
   tenants,
   tenantStore,
@@ -56,9 +61,16 @@ const app = createApp({
   toolSecret: required("TOOL_SECRET"),
   slotKey: required("SLOT_SIGNING_KEY"),
   webhookSecret: process.env.ELEVENLABS_WEBHOOK_SECRET ?? "",
+  firebase: createFirebaseVerifier({ projectId: process.env.FIREBASE_PROJECT_ID ?? "acikhat-ai" }),
+  voices: process.env.ELEVENLABS_API_KEY ? createVoiceCatalog(process.env.ELEVENLABS_API_KEY) : null,
+  adminEmails: (process.env.ADMIN_EMAILS ?? "").split(",").map((e) => e.trim().toLowerCase()).filter(Boolean),
+  paymentTestMode: (process.env.PAYMENT_TEST_MODE ?? (process.env.NODE_ENV === "production" ? "0" : "1")) === "1",
+  mailer: createMailer({ apiKey: process.env.RESEND_API_KEY, from: process.env.MAIL_FROM ?? "Açık Hat <bildirim@acikhat.ai>", replyTo: "destek@acikhat.ai" }),
+  baseUrl: (process.env.PUBLIC_BASE_URL ?? `http://localhost:${process.env.PORT ?? 8787}`).replace(/\/$/, ""),
   secureCookies: process.env.NODE_ENV === "production",
   now,
-});
+};
+const app = createApp(deps);
 
 const port = Number(process.env.PORT ?? 8787);
 serve({ fetch: app.fetch, port }, () => console.info(`Resepsiyonist backend http://localhost:${port}`));
@@ -68,6 +80,12 @@ setInterval(() => {
   const n = sweepMissedCalls({ store, tenants }, Date.now());
   if (n) console.info(`[calls] ${n} kaçan çağrı işaretlendi`);
 }, 60_000).unref();
+
+// Dönemi gelen paket düşürmelerini uygula (saatte bir; panel de açıldığında ayrıca kontrol eder)
+setInterval(() => {
+  const n = applyScheduledPlans(deps);
+  if (n) console.info(`[billing] ${n} firmanın paketi yeni döneme göre değişti`);
+}, 3_600_000).unref();
 
 // Firma takvimine yazılamamış randevuları dakikada bir yeniden dene
 setInterval(() => {

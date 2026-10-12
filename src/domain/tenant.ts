@@ -17,7 +17,7 @@ const weekHours = z.object({
 });
 
 /** Sektör şablonları: her biri için agent/verticals/<ad>/ klasörü bulunur */
-export const VERTICALS = ["spa"] as const;
+export const VERTICALS = ["spa", "guzellik", "saglik", "emlak", "otel", "restoran", "fitness", "servis", "danismanlik", "diger"] as const;
 
 export const TenantSchema = z.object({
   id: z.string().regex(/^[a-z0-9-]+$/),
@@ -50,8 +50,17 @@ export const TenantSchema = z.object({
   team: z
     .object({ label: z.string().optional(), permissions: z.array(z.enum(PERMISSIONS)).optional() })
     .prefault({}),
+  /** Yönetici hizmeti askıya aldıysa asistan gelen çağrıyı karşılamaz */
+  suspended: z.boolean().default(false),
   /** Paket bilgisi: raporlarda kullanılan dakika / dahil dakika */
-  plan: z.object({ includedMinutes: z.number().int().nonnegative().optional() }).prefault({}),
+  plan: z
+    .object({
+      includedMinutes: z.number().int().nonnegative().optional(),
+      id: z.enum(["baslangic", "standart", "pro"]).optional(),
+      /** Planlanmış paket düşürme: effectiveAt (ms) gelince yeni paket devreye girer */
+      pending: z.object({ id: z.enum(["baslangic", "standart", "pro"]), effectiveAt: z.number() }).optional(),
+    })
+    .prefault({}),
   /**
    * Randevu takviminin kaynağı.
    * internal: yalnızca kendi veritabanımız.

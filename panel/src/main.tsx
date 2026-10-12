@@ -6,6 +6,7 @@ import { ToastProvider } from "./components/ui.tsx";
 import { App } from "./App.tsx";
 import "../../web/tokens.css";
 import "./styles.css";
+import "./premium.css";
 
 const queryClient = new QueryClient({
   defaultOptions: {

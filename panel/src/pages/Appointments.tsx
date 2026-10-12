@@ -1,3 +1,4 @@
+import { DatePicker } from "../components/DatePicker.tsx";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { api, type Appointment } from "../api.ts";
@@ -69,7 +70,7 @@ export function AppointmentsPage() {
           <button className="icon-btn" onClick={() => setDate(addDays(date, -step))} aria-label="Önceki"><Icon name="left" /></button>
           <Button variant="quiet" size="sm" onClick={() => setDate(todayDate)} disabled={isToday}>Bugün</Button>
           <button className="icon-btn" onClick={() => setDate(addDays(date, step))} aria-label="Sonraki"><Icon name="right" /></button>
-          <input className="input input-date" type="date" value={date} onChange={(e) => e.target.value && setDate(e.target.value)} aria-label="Tarih seç" />
+          <DatePicker className="input-date" value={date} onChange={(e) => e.target.value && setDate(e.target.value)} aria-label="Tarih seç" />
         </div>
         <Segmented
           label="Görünüm"

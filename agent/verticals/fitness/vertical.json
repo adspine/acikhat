@@ -1,0 +1,23 @@
+{
+  "label": "Spor salonu / stüdyo",
+  "greeting": "{firma}, merhaba. Ben yapay zekâ asistanı {ajan}. Görüşmemiz hizmet kalitesi için kaydediliyor. Size nasıl yardımcı olabilirim?",
+  "confirmationTemplate": "{firma}: {isim}, {hizmet} kaydınız {zaman}{personel} olarak alındı. Gelemeyecekseniz lütfen bizi arayın.",
+  "staffTerm": "eğitmen",
+  "holdMessage": "{firma}'yı aradığınız için teşekkür ederiz. Şu anda tüm hatlarımız dolu. Lütfen hattan ayrılmayın, sıradaki görüşmede size hemen bağlanacağız.",
+  "staffLabel": "Eğitmenler",
+  "roomLabel": "Salon",
+  "roomTypes": {
+    "salon": "Ana salon",
+    "studyo": "Stüdyo",
+    "havuz": "Havuz"
+  },
+  "teamRoleLabel": "Resepsiyon",
+  "teamPermissions": [
+    "appointments.view",
+    "appointments.edit",
+    "calls.view",
+    "callbacks.edit"
+  ],
+  "cancellationTemplate": "{firma}: {isim}, {zaman} tarihli {hizmet} kaydınız iptal edildi. Yeni kayıt için bizi arayabilirsiniz.",
+  "roomLabelPlural": "Salonlar"
+}

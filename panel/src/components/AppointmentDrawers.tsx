@@ -1,3 +1,4 @@
+import { DatePicker } from "./DatePicker.tsx";
 import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api, ApiError, type Appointment } from "../api.ts";
@@ -209,7 +210,7 @@ export function NewAppointmentDrawer({ open, onClose, initialDate }: { open: boo
           )}
         </Field>
         <div className="grid-2">
-          <Field label="Gün">{(id) => <Input id={id} type="date" value={date} onChange={(e) => { setDate(e.target.value); setTime(""); }} required />}</Field>
+          <Field label="Gün">{(id) => <DatePicker id={id} value={date} onChange={(e) => { setDate(e.target.value); setTime(""); }} required />}</Field>
           <Field label={me.terms.staffTerm.charAt(0).toLocaleUpperCase("tr") + me.terms.staffTerm.slice(1)} optional>
             {(id) => (
               <Select id={id} value={staffId} onChange={(e) => { setStaffId(e.target.value); setTime(""); }}>

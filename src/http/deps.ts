@@ -7,6 +7,9 @@ import type { BookingService } from "../booking/service.ts";
 import type { Users } from "../auth/users.ts";
 import type { AgentPushResult } from "../agent/sync.ts";
 import type { Tenant } from "../domain/tenant.ts";
+import type { FirebaseVerifier } from "../auth/firebase.ts";
+import type { VoiceCatalog } from "../integrations/voices.ts";
+import type { Mailer } from "../integrations/mail.ts";
 
 export interface Deps {
   store: Store;
@@ -27,6 +30,18 @@ export interface Deps {
   slotKey: string;
   /** Boşsa post-call webhook reddedilir */
   webhookSecret: string;
+  /** Firebase giriş belgesi doğrulayıcı; yoksa Firebase ile giriş kapalıdır */
+  firebase?: FirebaseVerifier | null;
+  /** Asistan sesi seçimi için Türkçe ses listesi; yoksa panelde ses seçimi kapalıdır */
+  voices?: VoiceCatalog | null;
+  /** Bu e-postalarla (Firebase'de doğrulanmış) giren hesap yönetici (agency) olur. Küçük harfle. */
+  adminEmails?: string[];
+  /** Gerçek ödeme bağlanana kadar: paketi ödenmiş saymak için test düğmesi açık mı */
+  paymentTestMode?: boolean;
+  /** Sistem e-postaları (yönetici ve müşteri bildirimleri); yoksa e-posta gönderilmez */
+  mailer?: Mailer | null;
+  /** E-postalardaki bağlantıların kök adresi (https://...) */
+  baseUrl?: string;
   /** Oturum çerezi Secure olsun mu (yerel http geliştirmede false) */
   secureCookies: boolean;
   /** Testlerde sabitlenebilsin diye enjekte edilir */

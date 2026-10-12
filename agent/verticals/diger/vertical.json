@@ -1,0 +1,21 @@
+{
+  "label": "Diğer işletmeler",
+  "greeting": "{firma}, merhaba. Ben yapay zekâ asistanı {ajan}. Görüşmemiz hizmet kalitesi için kaydediliyor. Size nasıl yardımcı olabilirim?",
+  "confirmationTemplate": "{firma}: {isim}, {hizmet} randevunuz {zaman}{personel} olarak alındı. Değişiklik için bizi arayabilirsiniz.",
+  "staffTerm": "personel",
+  "holdMessage": "{firma}'yı aradığınız için teşekkür ederiz. Şu anda tüm hatlarımız dolu. Lütfen hattan ayrılmayın, sıradaki görüşmede size hemen bağlanacağız.",
+  "staffLabel": "Personel",
+  "roomLabel": "Alan",
+  "roomTypes": {
+    "alan": "Alan"
+  },
+  "teamRoleLabel": "Resepsiyon",
+  "teamPermissions": [
+    "appointments.view",
+    "appointments.edit",
+    "calls.view",
+    "callbacks.edit"
+  ],
+  "cancellationTemplate": "{firma}: {isim}, {zaman} tarihli {hizmet} randevunuz iptal edildi. Yeni randevu için bizi arayabilirsiniz.",
+  "roomLabelPlural": "Alanlar"
+}

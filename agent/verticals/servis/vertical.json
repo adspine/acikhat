@@ -1,0 +1,22 @@
+{
+  "label": "Oto / teknik servis",
+  "greeting": "{firma}, merhaba. Ben yapay zekâ asistanı {ajan}. Görüşmemiz hizmet kalitesi için kaydediliyor. Size nasıl yardımcı olabilirim?",
+  "confirmationTemplate": "{firma}: {isim}, {hizmet} randevunuz {zaman} olarak alındı. Aracınızı/cihazınızı belirtilen saatte getirebilirsiniz.",
+  "staffTerm": "usta",
+  "holdMessage": "{firma}'yı aradığınız için teşekkür ederiz. Şu anda tüm hatlarımız dolu. Lütfen hattan ayrılmayın, sıradaki görüşmede size hemen bağlanacağız.",
+  "staffLabel": "Ustalar",
+  "roomLabel": "Lift",
+  "roomTypes": {
+    "lift": "Lift",
+    "saha": "Servis alanı"
+  },
+  "teamRoleLabel": "Servis danışmanı",
+  "teamPermissions": [
+    "appointments.view",
+    "appointments.edit",
+    "calls.view",
+    "callbacks.edit"
+  ],
+  "cancellationTemplate": "{firma}: {isim}, {zaman} tarihli {hizmet} randevunuz iptal edildi. Yeni randevu için bizi arayabilirsiniz.",
+  "roomLabelPlural": "Liftler"
+}

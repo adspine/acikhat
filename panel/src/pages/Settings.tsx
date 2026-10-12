@@ -1,4 +1,6 @@
+import { DatePicker } from "../components/DatePicker.tsx";
 import { useEffect, useRef, useState } from "react";
+import { VoicePicker } from "../components/VoicePicker.tsx";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api, ApiError, type SettingsResponse, type TenantConfig } from "../api.ts";
 import { useMe } from "../App.tsx";
@@ -252,6 +254,9 @@ export function SettingsPage() {
 
           {section === "asistan" && (
             <Group title="Asistan">
+              <Field label="Asistanın sesi" hint="Dinleyip seçin. Asistan görüşmelerde bu sesle konuşur.">
+                {() => <VoicePicker value={config.agent.voiceId} onChange={(id) => set("agent", { ...config.agent, voiceId: id })} />}
+              </Field>
               <Field label="Asistanın adı" error={issue("agent.name")}>{(id) => <Input id={id} value={config.agent.name} onChange={(e) => set("agent", { ...config.agent, name: e.target.value })} />}</Field>
               <Field label="Karşılama cümlesi" hint="Boş bırakırsanız varsayılan kullanılır. {firma} ve {ajan} yerine işletme ve asistan adı yazılır. Yapay zekâ ve kayıt bilgilendirmesi KVKK gereği kalmalıdır." optional>
                 {(id, d) => <Textarea id={id} aria-describedby={d} rows={3} value={config.agent.greeting ?? ""} placeholder={meta.defaultGreeting} onChange={(e) => set("agent", { ...config.agent, greeting: e.target.value || undefined } as TenantConfig["agent"])} />}
@@ -382,7 +387,7 @@ function ClosedDates({ dates, onChange }: { dates: string[]; onChange: (d: strin
   return (
     <div className="stack">
       <div className="inline-form">
-        <Input type="date" value={v} onChange={(e) => setV(e.target.value)} aria-label="Kapalı gün" />
+        <DatePicker value={v} onChange={(e) => setV(e.target.value)} aria-label="Kapalı gün" placeholder="Kapalı günü seç" />
         <Button type="button" variant="quiet" size="sm" disabled={!v || dates.includes(v)} onClick={() => { onChange([...dates, v].sort()); setV(""); }}>Ekle</Button>
       </div>
       {!!dates.length && (

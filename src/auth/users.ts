@@ -2,6 +2,7 @@ import type { DatabaseSync } from "node:sqlite";
 import { createHash, randomBytes, randomUUID, scrypt, timingSafeEqual } from "node:crypto";
 import { promisify } from "node:util";
 import type { Role } from "../domain/permissions.ts";
+import { isPlanId, type PlanId } from "../domain/plans.ts";
 
 const scryptAsync = promisify(scrypt) as (pw: string, salt: Buffer, len: number, opts: object) => Promise<Buffer>;
 const SCRYPT = { N: 32768, r: 8, p: 1, maxmem: 64 * 1024 * 1024 };
@@ -22,7 +23,17 @@ export interface User {
 type Row = {
   id: string; tenant_id: string | null; email: string; name: string; role: Role;
   must_change_password: number; disabled: number; last_login_at: number | null; password_hash: string;
+  firebase_uid?: string | null;
+  plan?: string | null; plan_paid_at?: number | null; onboarding_ref?: string | null;
 };
+
+/** Üyenin kurulum yolculuğu: 1 paket ve ödeme, 2 kurulum formu, 3 hazırlık */
+export interface Onboarding {
+  plan: PlanId | null;
+  paidAt: number | null;
+  reference: string | null;
+  step: 1 | 2 | 3;
+}
 const toUser = (r: Row): User => ({
   id: r.id, tenantId: r.tenant_id, email: r.email, name: r.name, role: r.role,
   mustChangePassword: !!r.must_change_password, disabled: !!r.disabled, lastLoginAt: r.last_login_at,
@@ -80,6 +91,63 @@ export class Users {
 
   listForTenant(tenantId: string): User[] {
     return (this.db.prepare("SELECT * FROM users WHERE tenant_id = ? ORDER BY created_at").all(tenantId) as Row[]).map(toUser);
+  }
+
+  // ---- Firebase ile giriş ----
+  findByFirebaseUid(uid: string): User | null {
+    const r = this.db.prepare("SELECT * FROM users WHERE firebase_uid = ?").get(uid) as Row | undefined;
+    return r ? toUser(r) : null;
+  }
+
+  findByEmail(email: string): (User & { firebaseUid: string | null }) | null {
+    const r = this.db.prepare("SELECT * FROM users WHERE email = ?").get(email.trim()) as Row | undefined;
+    return r ? { ...toUser(r), firebaseUid: r.firebase_uid ?? null } : null;
+  }
+
+  linkFirebase(userId: string, uid: string) {
+    this.db.prepare("UPDATE users SET firebase_uid = ? WHERE id = ?").run(uid, userId);
+  }
+
+  /** Kendi kendine üye olan kişi: henüz bir firmaya bağlı değil (paket ve kurulum sonrası bağlanır). Şifresi yok; yalnızca Firebase ile girer. */
+  createFromFirebase(u: { uid: string; email: string; name: string }): User {
+    const id = randomUUID();
+    this.db
+      .prepare(
+        `INSERT INTO users (id, tenant_id, email, name, role, password_hash, must_change_password, created_at, firebase_uid)
+         VALUES (?, NULL, ?, ?, 'owner', 'firebase', 0, ?, ?)`,
+      )
+      .run(id, u.email.trim(), u.name.trim(), Date.now(), u.uid);
+    return this.get(id)!;
+  }
+
+  onboardingOf(userId: string): Onboarding {
+    const r = this.db.prepare("SELECT plan, plan_paid_at, onboarding_ref FROM users WHERE id = ?").get(userId) as Row | undefined;
+    const plan = r && isPlanId(r.plan) ? r.plan : null;
+    const paidAt = r?.plan_paid_at ?? null;
+    const reference = r?.onboarding_ref ?? null;
+    return { plan, paidAt, reference, step: !paidAt ? 1 : !reference ? 2 : 3 };
+  }
+
+  /** Ödeme yapılana kadar plan değiştirilebilir */
+  selectPlan(userId: string, plan: PlanId): boolean {
+    return this.db.prepare("UPDATE users SET plan = ? WHERE id = ? AND plan_paid_at IS NULL").run(plan, userId).changes > 0;
+  }
+
+  markPaid(userId: string): boolean {
+    return this.db.prepare("UPDATE users SET plan_paid_at = ? WHERE id = ? AND plan IS NOT NULL AND plan_paid_at IS NULL").run(Date.now(), userId).changes > 0;
+  }
+
+  setOnboardingRef(userId: string, reference: string) {
+    this.db.prepare("UPDATE users SET onboarding_ref = ? WHERE id = ?").run(reference, userId);
+  }
+
+  /** Üyeyi onaylanmış firmaya bağlar: bundan sonra kendi panosunu görür */
+  assignTenant(userId: string, tenantId: string) {
+    this.db.prepare("UPDATE users SET tenant_id = ? WHERE id = ?").run(tenantId, userId);
+  }
+
+  touchLogin(userId: string) {
+    this.db.prepare("UPDATE users SET last_login_at = ? WHERE id = ?").run(Date.now(), userId);
   }
 
   /** E-posta + şifre doğruysa kullanıcıyı döner (kapatılmış hesap giremez) */

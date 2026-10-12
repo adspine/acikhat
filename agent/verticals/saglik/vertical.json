@@ -1,0 +1,22 @@
+{
+  "label": "Diş ve sağlık kliniği",
+  "greeting": "{firma}, merhaba. Ben yapay zekâ asistanı {ajan}. Görüşmemiz hizmet kalitesi için kaydediliyor. Size nasıl yardımcı olabilirim?",
+  "confirmationTemplate": "{firma}: {isim}, {hizmet} randevunuz {zaman}{personel} olarak alındı. Gelemeyecekseniz lütfen önceden bizi arayın.",
+  "staffTerm": "hekim",
+  "holdMessage": "{firma}'yı aradığınız için teşekkür ederiz. Şu anda tüm hatlarımız dolu. Lütfen hattan ayrılmayın, sıradaki görüşmede size hemen bağlanacağız.",
+  "staffLabel": "Hekimler",
+  "roomLabel": "Muayene odası",
+  "roomTypes": {
+    "muayene": "Muayene odası",
+    "koltuk": "Tedavi koltuğu"
+  },
+  "teamRoleLabel": "Sekreter",
+  "teamPermissions": [
+    "appointments.view",
+    "appointments.edit",
+    "calls.view",
+    "callbacks.edit"
+  ],
+  "cancellationTemplate": "{firma}: {isim}, {zaman} tarihli {hizmet} randevunuz iptal edildi. Yeni randevu için bizi arayabilirsiniz.",
+  "roomLabelPlural": "Muayene odaları"
+}

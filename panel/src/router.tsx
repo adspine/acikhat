@@ -52,7 +52,7 @@ export function useQueryParam(name: string, fallback: string): [string, (v: stri
   return [value, set];
 }
 
-export function Link({ to, children, className, onClick, ...rest }: { to: string; children: ReactNode; className?: string; onClick?: () => void; "aria-current"?: "page" }) {
+export function Link({ to, children, className, onClick, ...rest }: { to: string; children: ReactNode; className?: string; onClick?: () => void; "aria-current"?: "page"; "aria-label"?: string; title?: string; "data-tip"?: string }) {
   const { navigate } = useRouter();
   const handle = (e: MouseEvent<HTMLAnchorElement>) => {
     if (e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return;

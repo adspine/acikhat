@@ -7,6 +7,7 @@ import { toolRoutes } from "./tools.ts";
 import { webhookRoutes } from "./webhooks.ts";
 import { testUiRoutes } from "./test-ui.ts";
 import { onboardingRoutes } from "./onboarding.ts";
+import { adminRoutes } from "./admin.ts";
 import { panelRoutes } from "./panel/index.ts";
 import { authRoutes } from "./panel/session.ts";
 import { serveStatic } from "@hono/node-server/serve-static";
@@ -35,6 +36,7 @@ export function createApp(deps: Deps) {
   }
   app.route("/api/auth", authRoutes(deps));
   app.route("/api/panel", panelRoutes(deps));
+  app.route("/api/admin", adminRoutes(deps));
   app.route("/api", onboardingRoutes(deps));
   // Bilinmeyen API yolları siteye düşmesin
   app.all("/api/*", (c) => c.json({ error: "Bulunamadı" }, 404));
