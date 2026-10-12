@@ -38,8 +38,16 @@ export function TestCallPage() {
   const ids = (voices.data?.voices ?? []).map((v) => v.id).sort();
   const hue = ids.includes(voiceId) ? HUES[ids.indexOf(voiceId) % HUES.length]! : hueFor(voiceId);
 
-  useEffect(() => () => void conv.current?.endSession(), []);
-  useEffect(() => logRef.current?.lastElementChild?.scrollIntoView({ block: "nearest" }), [lines]);
+  // Not: useEffect işlevi kasıtlı olarak süslü parantezli. Tek ifadeli ok işlevi o ifadenin değerini döndürür;
+  // scrollIntoView bazı tarayıcılarda bir değer (söz) döndürdüğü için React "temizleme işlevi değil" hatası verip sayfayı çökertiyordu.
+  useEffect(() => {
+    return () => {
+      void conv.current?.endSession();
+    };
+  }, []);
+  useEffect(() => {
+    logRef.current?.lastElementChild?.scrollIntoView({ block: "nearest" });
+  }, [lines]);
 
   // Bağlıyken ses şiddetini kürenin nefesine bağla
   useEffect(() => {
@@ -64,8 +72,31 @@ export function TestCallPage() {
     };
   }, [status]);
 
+  /**
+   * Gerçek görüşme olmadan sahneyi denemek için: adres sonuna ?demo eklenirse ses/mikrofon kullanılmadan örnek bir
+   * görüşme akışı oynatılır (durum geçişleri, mesajlar, küre). Sunucuya ve ElevenLabs'e hiçbir istek gitmez.
+   */
+  const demo = () => {
+    setStatus("connecting");
+    const timers: number[] = [];
+    const at = (ms: number, fn: () => void) => timers.push(window.setTimeout(fn, ms));
+    let speaking = false;
+    conv.current = {
+      endSession: async () => { timers.forEach(clearTimeout); conv.current = null; setStatus("idle"); },
+      getOutputVolume: () => (speaking ? 0.2 + Math.abs(Math.sin(performance.now() / 120)) * 0.4 : 0),
+      getInputVolume: () => (speaking ? 0 : 0.15 + Math.abs(Math.sin(performance.now() / 200)) * 0.3),
+    } as unknown as NonNullable<typeof conv.current>;
+    at(700, () => { setStatus("listening"); });
+    at(2200, () => { setLines((x) => [...x, { who: "user", text: "Merhaba, yarın için randevu almak istiyorum." }]); setStatus("speaking"); speaking = true; });
+    at(3200, () => setLines((x) => [...x, { who: "agent", text: "Tabii, yarın için uygun saatlere bakıyorum. Hangi saat sizin için uygun olur?" }]));
+    at(6500, () => { speaking = false; setStatus("listening"); });
+    at(8000, () => { setLines((x) => [...x, { who: "user", text: "Öğleden sonra olursa iyi olur." }]); setStatus("speaking"); speaking = true; });
+    at(9500, () => { speaking = false; setStatus("listening"); });
+  };
+
   const start = async () => {
     setLines([]);
+    if (new URLSearchParams(location.search).has("demo")) return demo();
     setStatus("connecting");
     try {
       await navigator.mediaDevices.getUserMedia({ audio: true });
