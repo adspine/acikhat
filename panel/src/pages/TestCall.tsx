@@ -29,9 +29,16 @@ export function TestCallPage() {
         dynamicVariables,
         onConnect: () => setStatus("listening"),
         onDisconnect: () => { setStatus("idle"); conv.current = null; },
-        onMessage: (m: { source: string; message: string }) => setLines((x) => [...x, { who: m.source === "user" ? "user" : "agent", text: m.message }]),
-        onModeChange: (m: { mode: string }) => setStatus(m.mode === "speaking" ? "speaking" : "listening"),
-        onError: (e: unknown) => setLines((x) => [...x, { who: "info", text: `Hata: ${String((e as Error)?.message ?? e)}` }]),
+        // Gelen veriler SDK'dan beklenmedik biçimde gelebilir (boş, nesne vb.); ekranı bozmasın diye metne çevrilir
+        onMessage: (m: unknown) => {
+          const p = (m ?? {}) as { source?: unknown; role?: unknown; message?: unknown };
+          const text = typeof p.message === "string" ? p.message.trim() : "";
+          if (!text) return;
+          const who = p.source === "user" || p.role === "user" ? "user" : "agent";
+          setLines((x) => [...x, { who, text }]);
+        },
+        onModeChange: (m: unknown) => setStatus((m as { mode?: unknown } | null)?.mode === "speaking" ? "speaking" : "listening"),
+        onError: (e: unknown) => setLines((x) => [...x, { who: "info", text: `Hata: ${typeof e === "string" ? e : String((e as Error | undefined)?.message ?? "bilinmeyen hata")}` }]),
       } as Parameters<typeof Conversation.startSession>[0]);
     } catch (e) {
       setStatus("idle");

@@ -417,3 +417,8 @@ html[data-theme="dark"] .week-row.is-closed { background: transparent; }
 html[data-theme="dark"] .pill-draft { color: #f2c14e; }
 .cal-pop { max-width: 328px; }
 .cal-day { aspect-ratio: auto; height: 40px; }
+
+/* ---------------- sayfa hatası ---------------- */
+.crash { display: grid; gap: 14px; }
+.crash-detail { margin: 0; padding: 12px 14px; border-radius: 12px; background: rgb(19 51 45 / 0.06); font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; white-space: pre-wrap; overflow-wrap: anywhere; }
+html[data-theme="dark"] .crash-detail { background: rgb(255 255 255 / 0.06); }

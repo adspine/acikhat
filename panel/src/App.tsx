@@ -4,6 +4,7 @@ import { api, ApiError, authEvents, getAdminTenant, setAdminTenant, type Me, typ
 import { Link, useRouter } from "./router.tsx";
 import { Sidebar, useSidebarCollapsed } from "./components/Sidebar.tsx";
 import { AccountSettings, type AccountUser } from "./components/AccountSettings.tsx";
+import { ErrorBoundary } from "./components/ErrorBoundary.tsx";
 import { Button, ErrorBox, Field, Icon, Input, Loading, useToast } from "./components/ui.tsx";
 import { TodayPage } from "./pages/Today.tsx";
 import { AppointmentsPage } from "./pages/Appointments.tsx";
@@ -127,7 +128,7 @@ function AdminApp({ session }: { session: Session }) {
         <span className="brand-lamp" aria-hidden="true" />
         <span className="topbar-name">Yönetim</span>
       </header>
-      <main className="main" id="icerik">{page}</main>
+      <main className="main" id="icerik"><ErrorBoundary key={loc.path}>{page}</ErrorBoundary></main>
       {accountModal}
       <nav className="tabbar" aria-label="Alt menü">
         {items.map((i) => (
@@ -355,7 +356,7 @@ function Shell() {
             Hizmetiniz şu an askıda; asistan gelen aramaları karşılamıyor. Açılması için <a href="mailto:destek@acikhat.ai">destek@acikhat.ai</a> adresine yazın.
           </p>
         )}
-        {page}
+        <ErrorBoundary key={loc.path}>{page}</ErrorBoundary>
       </main>
 
       <nav className="tabbar" aria-label="Alt menü">
