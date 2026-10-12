@@ -251,11 +251,14 @@ export function OutcomePill({ outcome, label }: { outcome: Outcome; label: strin
 export function Drawer({ open, title, onClose, children, footer, wide }: { open: boolean; title: ReactNode; onClose: () => void; children: ReactNode; footer?: ReactNode; wide?: boolean }) {
   const ref = useRef<HTMLDivElement>(null);
   const titleId = useId();
+  // onClose her çizimde yeni olabilir; etki tekrar çalışıp odağı ilk alana atmasın diye referansta tutulur
+  const closeRef = useRef(onClose);
+  closeRef.current = onClose;
   useEffect(() => {
     if (!open) return;
     const prev = document.activeElement as HTMLElement | null;
     ref.current?.querySelector<HTMLElement>("[data-autofocus], input, select, textarea, button")?.focus();
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && closeRef.current();
     window.addEventListener("keydown", onKey);
     document.body.classList.add("no-scroll");
     return () => {
@@ -263,7 +266,7 @@ export function Drawer({ open, title, onClose, children, footer, wide }: { open:
       document.body.classList.remove("no-scroll");
       prev?.focus();
     };
-  }, [open, onClose]);
+  }, [open]);
   if (!open) return null;
   return createPortal(
     <div className="drawer-wrap">
@@ -358,6 +361,9 @@ export function Modal({ open, onClose, title, children, footer, dismissible = tr
   const [shown, setShown] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   const titleId = useId();
+  // onClose her çizimde yeni bir işlev olabilir; etki yeniden çalışıp odağı sıfırlamasın diye referansta tutulur
+  const closeRef = useRef(onClose);
+  closeRef.current = onClose;
 
   useEffect(() => {
     if (open) {
@@ -376,7 +382,7 @@ export function Modal({ open, onClose, title, children, footer, dismissible = tr
     const focusables = () => Array.from(ref.current?.querySelectorAll<HTMLElement>("button:not([disabled]), a[href], input, select, textarea, [tabindex]:not([tabindex='-1'])") ?? []);
     window.setTimeout(() => (ref.current?.querySelector<HTMLElement>("[data-autofocus]") ?? focusables()[0] ?? ref.current)?.focus(), 30);
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && dismissible) return onClose();
+      if (e.key === "Escape" && dismissible) return closeRef.current();
       if (e.key !== "Tab") return;
       const f = focusables();
       if (!f.length) return;
@@ -392,7 +398,7 @@ export function Modal({ open, onClose, title, children, footer, dismissible = tr
       document.body.classList.remove("no-scroll");
       prev?.focus?.();
     };
-  }, [mounted, open, dismissible, onClose]);
+  }, [mounted, open, dismissible]);
 
   if (!mounted) return null;
   return createPortal(

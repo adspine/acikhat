@@ -30,7 +30,7 @@ export const setAdminTenant = (id: string | null) => {
 
 /** Oturum durumu (tanıtım sitesiyle ortak uç): kim, firması var mı */
 export interface Session {
-  user: { name: string; email: string; role: "owner" | "team" | "agency" };
+  user: { name: string; email: string; role: "owner" | "team" | "agency"; notifyEmail: boolean };
   hasTenant: boolean;
 }
 
@@ -56,7 +56,7 @@ export type Permission =
   | "appointments.view" | "appointments.edit" | "calls.view" | "callbacks.edit" | "reports.view" | "settings.edit" | "users.manage";
 
 export interface Me {
-  user: { id: string; name: string; email: string; role: "owner" | "team" | "agency"; mustChangePassword: boolean };
+  user: { id: string; name: string; email: string; role: "owner" | "team" | "agency"; mustChangePassword: boolean; notifyEmail: boolean };
   tenant: { id: string; name: string; vertical: string; calendar: string; suspended: boolean };
   terms: { staffTerm: string; staffLabel: string; roomLabel: string; roomLabelPlural: string; roomTypes: Record<string, string>; teamRoleLabel: string };
   permissions: Permission[];

@@ -96,8 +96,8 @@ export function SettingsPage() {
     <section className="page settings">
       <header className="page-head">
         <div>
-          <h1 className="page-title">Ayarlar</h1>
-          <p className="page-sub">Değişiklikler önce taslak olarak kaydedilir; yayınladığınızda asistan yeni bilgilerle konuşur.</p>
+          <h1 className="page-title">Kurulum</h1>
+          <p className="page-sub">Asistanınızı ve işletme bilgilerinizi buradan kurarsınız. Değişiklikler önce taslak olarak kaydedilir; yayınladığınızda asistan yeni bilgilerle konuşur.</p>
         </div>
       </header>
 

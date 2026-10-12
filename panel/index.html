@@ -6,6 +6,16 @@
     <meta name="robots" content="noindex" />
     <meta name="theme-color" content="#13332d" />
     <title>Panel — Açık Hat</title>
+    <script>
+      /* Tema: boyamadan önce uygulanır (koyu temada açık renkli bir an görünmesin). Yalnızca panelde geçerlidir. */
+      (function () {
+        try {
+          var t = localStorage.getItem("acikhat-theme") || "system";
+          var dark = t === "dark" || (t === "system" && matchMedia("(prefers-color-scheme: dark)").matches);
+          document.documentElement.dataset.theme = dark ? "dark" : "light";
+        } catch (e) {}
+      })();
+    </script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700&family=Unbounded:wght@500;600&display=swap&subset=latin-ext" rel="stylesheet" />

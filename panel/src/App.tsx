@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { api, ApiError, authEvents, getAdminTenant, setAdminTenant, type Me, type Permission, type Session, type Today, type Usage } from "./api.ts";
 import { Link, useRouter } from "./router.tsx";
 import { Sidebar, useSidebarCollapsed } from "./components/Sidebar.tsx";
+import { AccountSettings, type AccountUser } from "./components/AccountSettings.tsx";
 import { Button, ErrorBox, Field, Icon, Input, Loading, useToast } from "./components/ui.tsx";
 import { TodayPage } from "./pages/Today.tsx";
 import { AppointmentsPage } from "./pages/Appointments.tsx";
@@ -89,6 +90,7 @@ function AdminApp({ session }: { session: Session }) {
   const { loc, navigate } = useRouter();
   const [collapsed, toggleSide] = useSidebarCollapsed();
   const sendPasswordLink = usePasswordLink();
+  const { openAccount, accountModal } = useAccountSettings({ name: session.user.name, email: session.user.email, notifyEmail: session.user.notifyEmail });
   const qc = useQueryClient();
   const overview = useQuery({ queryKey: ["admin", "overview"], queryFn: () => api<{ submissions: { new: number } }>("/api/admin/overview"), refetchInterval: 60_000 });
   const pending = overview.data?.submissions.new ?? 0;
@@ -119,13 +121,14 @@ function AdminApp({ session }: { session: Session }) {
         collapsed={collapsed}
         onToggle={toggleSide}
         user={{ name: session.user.name, email: session.user.email, role: "Yönetici" }}
-        actions={[{ label: "Şifre değiştir", icon: "lock", onClick: sendPasswordLink }, { label: "Çıkış yap", icon: "logout", onClick: logout, danger: true }]}
+        actions={[{ label: "Hesap ayarları", icon: "settings", onClick: openAccount }, { label: "Şifre değiştir", icon: "lock", onClick: sendPasswordLink }, { label: "Çıkış yap", icon: "logout", onClick: logout, danger: true }]}
       />
       <header className="topbar">
         <span className="brand-lamp" aria-hidden="true" />
         <span className="topbar-name">Yönetim</span>
       </header>
       <main className="main" id="icerik">{page}</main>
+      {accountModal}
       <nav className="tabbar" aria-label="Alt menü">
         {items.map((i) => (
           <Link key={i.to} to={i.to} className="tab" {...(active(i.to) && { "aria-current": "page" as const })}>
@@ -134,6 +137,10 @@ function AdminApp({ session }: { session: Session }) {
             {!!i.badge && <span className="nav-badge">{i.badge}</span>}
           </Link>
         ))}
+        <button className="tab" onClick={openAccount}>
+          <Icon name="settings" />
+          <span>Hesap</span>
+        </button>
         <button className="tab" onClick={logout}>
           <Icon name="logout" />
           <span>Çıkış</span>
@@ -171,6 +178,12 @@ function NoTenantPage() {
       </div>
     </AuthLayout>
   );
+}
+
+/** Hesap ayarları penceresi: menüden açılır, pencere öğesi sayfaya eklenir */
+function useAccountSettings(user: AccountUser) {
+  const [open, setOpen] = useState(false);
+  return { openAccount: () => setOpen(true), accountModal: <AccountSettings open={open} onClose={() => setOpen(false)} user={user} /> };
 }
 
 /** Şifre değiştirme: Firebase şifre belirleme bağlantısı kullanıcının e-postasına gönderilir */
@@ -266,6 +279,7 @@ function Shell() {
   const me = useMe();
   const [collapsed, toggleSide] = useSidebarCollapsed();
   const sendPasswordLink = usePasswordLink();
+  const { openAccount, accountModal } = useAccountSettings({ name: me.user.name, email: me.user.email, notifyEmail: me.user.notifyEmail });
   const { loc } = useRouter();
   const qc = useQueryClient();
   const today = useToday();
@@ -279,7 +293,7 @@ function Shell() {
     { to: "/geri-aramalar", label: "Geri aramalar", icon: "callback", perm: "calls.view", mobile: true, badge: openCallbacks },
     { to: "/raporlar", label: "Raporlar", icon: "chart", perm: "reports.view" },
     { to: "/paketim", label: "Paketim", icon: "gauge", perm: "settings.edit" },
-    { to: "/ayarlar", label: "Ayarlar", icon: "settings", perm: "settings.edit" },
+    { to: "/kurulum", label: "Kurulum", icon: "settings", perm: "settings.edit" },
     { to: "/kullanicilar", label: "Kullanıcılar", icon: "users", perm: "users.manage" },
     { to: "/asistani-dene", label: "Asistanı dene", icon: "mic", perm: "settings.edit" },
   ];
@@ -299,7 +313,7 @@ function Shell() {
     if (p.startsWith("/geri-aramalar")) return <CallbacksPage />;
     if (p.startsWith("/raporlar")) return <ReportsPage />;
     if (p.startsWith("/paketim")) return <UsagePage />;
-    if (p.startsWith("/ayarlar")) return <SettingsPage />;
+    if (p.startsWith("/kurulum") || p.startsWith("/ayarlar")) return <SettingsPage />;
     if (p.startsWith("/kullanicilar")) return <UsersPage />;
     if (p.startsWith("/asistani-dene")) return <Suspense fallback={<Loading />}><TestCallPage /></Suspense>;
     return <TodayPage />;
@@ -323,7 +337,9 @@ function Shell() {
         usage={<SidebarUsage canOpen={me.permissions.includes("settings.edit")} />}
         user={{ name: me.user.name, email: me.user.email, role: roleLabel }}
         actions={[
-          ...(me.user.role === "agency" ? [{ label: "Yönetime dön", icon: "left", onClick: exitTenant }] : [{ label: "Şifre değiştir", icon: "lock", onClick: sendPasswordLink }]),
+          { label: "Hesap ayarları", icon: "settings", onClick: openAccount },
+          { label: "Şifre değiştir", icon: "lock", onClick: sendPasswordLink },
+          ...(me.user.role === "agency" ? [{ label: "Yönetime dön", icon: "left", onClick: exitTenant }] : []),
           { label: "Çıkış yap", icon: "logout", onClick: logout, danger: true },
         ]}
       />
@@ -356,6 +372,7 @@ function Shell() {
         </button>
       </nav>
 
+      {accountModal}
       {moreOpen && (
         <div className="sheet-wrap" onClick={() => setMoreOpen(false)}>
           <div className="sheet" role="dialog" aria-modal="true" aria-label="Diğer bölümler" onClick={(e) => e.stopPropagation()}>
@@ -366,6 +383,7 @@ function Shell() {
               </Link>
             ))}
             {me.user.role === "agency" && <button className="sheet-item" onClick={exitTenant}><Icon name="chart" />Yönetime dön</button>}
+            <button className="sheet-item" onClick={() => { setMoreOpen(false); openAccount(); }}><Icon name="settings" />Hesap ayarları</button>
             <button className="sheet-item" onClick={() => { setMoreOpen(false); sendPasswordLink(); }}><Icon name="lock" />Şifre değiştir</button>
             <button className="sheet-item" onClick={logout}><Icon name="logout" />Çıkış yap</button>
           </div>

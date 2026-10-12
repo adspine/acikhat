@@ -14,7 +14,7 @@ export function userRoutes(deps: Deps) {
     const user = c.get("user");
     const tenant = c.get("tenant");
     return c.json({
-      user: { id: user.id, name: user.name, email: user.email, role: user.role, mustChangePassword: user.mustChangePassword },
+      user: { id: user.id, name: user.name, email: user.email, role: user.role, mustChangePassword: user.mustChangePassword, notifyEmail: user.notifyEmail },
       tenant: { id: tenant.id, name: tenant.name, vertical: tenant.vertical, calendar: tenant.calendar.provider, suspended: tenant.suspended },
       terms: terms(tenant),
       permissions: [...c.get("permissions")],

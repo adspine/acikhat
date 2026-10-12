@@ -7,6 +7,7 @@ import { App } from "./App.tsx";
 import "../../web/tokens.css";
 import "./styles.css";
 import "./premium.css";
+import "./dark.css";
 
 const queryClient = new QueryClient({
   defaultOptions: {

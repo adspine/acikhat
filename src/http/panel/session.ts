@@ -181,7 +181,7 @@ export function authRoutes(deps: Deps) {
 
   /** Tanıtım sitesi için: giriş yapılmış mı, firması var mı, kurulum yolculuğunda hangi adımda */
   const accountOf = (user: User) => ({
-    user: { name: user.name, email: user.email, role: user.role },
+    user: { name: user.name, email: user.email, role: user.role, notifyEmail: user.notifyEmail },
     hasTenant: user.role === "agency" || !!user.tenantId,
     onboarding: deps.users.onboardingOf(user.id),
     paymentTestMode: !!deps.paymentTestMode,
@@ -215,6 +215,17 @@ export function authRoutes(deps: Deps) {
     if (!o.paidAt && deps.users.markPaid(user.id)) mailMembershipPaid(deps, user, o.plan);
     console.info(`[ödeme:test] ${user.email} → ${PLANS[o.plan].name} (test, ücret alınmadı)`);
     return c.json(accountOf(user));
+  });
+
+  /** Hesap ayarları: kullanıcının kendi adı ve e-posta bildirimi tercihi */
+  const Profile = z.object({ name: z.string().trim().min(2, "Adınızı yazın").max(80).optional(), notifyEmail: z.boolean().optional() });
+  app.patch("/profile", async (c) => {
+    const user = userFromCookie(c, deps);
+    if (!user) return c.json({ error: "Oturum açmanız gerekiyor" }, 401);
+    const parsed = Profile.safeParse(await c.req.json().catch(() => ({})));
+    if (!parsed.success) return c.json({ error: parsed.error.issues[0]?.message ?? "Geçersiz değer" }, 400);
+    deps.users.updateProfile(user.id, parsed.data);
+    return c.json(accountOf(deps.users.get(user.id) ?? user));
   });
 
   /** Şifre değiştirme: Firebase şifre belirleme e-postası gönderilir (şifre Firebase'de tutulur). Dakikada bir kez. */

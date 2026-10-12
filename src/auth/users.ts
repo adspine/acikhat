@@ -18,12 +18,15 @@ export interface User {
   mustChangePassword: boolean;
   disabled: boolean;
   lastLoginAt: number | null;
+  /** Kota ve paket gibi bilgilendirme e-postalarını alsın mı (işlem onayları her zaman gider) */
+  notifyEmail: boolean;
 }
 
 type Row = {
   id: string; tenant_id: string | null; email: string; name: string; role: Role;
   must_change_password: number; disabled: number; last_login_at: number | null; password_hash: string;
   firebase_uid?: string | null;
+  notify_email?: number;
   plan?: string | null; plan_paid_at?: number | null; onboarding_ref?: string | null;
 };
 
@@ -37,6 +40,7 @@ export interface Onboarding {
 const toUser = (r: Row): User => ({
   id: r.id, tenantId: r.tenant_id, email: r.email, name: r.name, role: r.role,
   mustChangePassword: !!r.must_change_password, disabled: !!r.disabled, lastLoginAt: r.last_login_at,
+  notifyEmail: r.notify_email !== 0,
 });
 
 /** "scrypt$N$r$p$tuz$özet" biçiminde saklanır; parametreler değişirse eski özetler çalışmaya devam eder */
@@ -164,6 +168,13 @@ export class Users {
     this.db
       .prepare("UPDATE users SET password_hash = ?, must_change_password = ? WHERE id = ?")
       .run(await hashPassword(password), opts.mustChange ? 1 : 0, userId);
+  }
+
+  /** Kullanıcının kendi profil tercihleri */
+  updateProfile(userId: string, patch: { name?: string; notifyEmail?: boolean }) {
+    const u = this.get(userId);
+    if (!u) return;
+    this.db.prepare("UPDATE users SET name = ?, notify_email = ? WHERE id = ?").run(patch.name ?? u.name, (patch.notifyEmail ?? u.notifyEmail) ? 1 : 0, userId);
   }
 
   update(userId: string, patch: { name?: string; role?: Role; disabled?: boolean }) {

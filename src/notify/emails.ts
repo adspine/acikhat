@@ -48,8 +48,9 @@ const panelUrl = (deps: Deps, path = "") => `${deps.baseUrl ?? ""}/panel/${path}
 const testTag = (deps: Deps) => (deps.paymentTestMode ? "[TEST] " : "");
 
 /** Firmanın sahip hesaplarının e-postaları */
-export function ownerEmails(deps: Deps, tenantId: string): string[] {
-  return (deps.store.db.prepare("SELECT email FROM users WHERE tenant_id = ? AND role = 'owner' AND disabled = 0").all(tenantId) as { email: string }[]).map((r) => r.email);
+export function ownerEmails(deps: Deps, tenantId: string, opts: { onlyOptedIn?: boolean } = {}): string[] {
+  const sql = `SELECT email FROM users WHERE tenant_id = ? AND role = 'owner' AND disabled = 0${opts.onlyOptedIn ? " AND notify_email = 1" : ""}`;
+  return (deps.store.db.prepare(sql).all(tenantId) as { email: string }[]).map((r) => r.email);
 }
 const admins = (deps: Deps) => deps.adminEmails ?? [];
 
@@ -109,7 +110,7 @@ export function mailPurchase(deps: Deps, tenant: Tenant, o: { label: string; amo
 }
 
 export function mailPlanScheduled(deps: Deps, tenant: Tenant, targetPlan: PlanId, effectiveText: string) {
-  send(deps, ownerEmails(deps, tenant.id), "Paket değişikliğiniz planlandı", {
+  send(deps, ownerEmails(deps, tenant.id, { onlyOptedIn: true }), "Paket değişikliğiniz planlandı", {
     title: "Paketiniz dönem sonunda değişecek",
     lines: [`${effectiveText} tarihinde paketiniz ${PLANS[targetPlan].name} olacak ve o tarihten itibaren ${usd(PLANS[targetPlan].priceUsd)} / ay (KDV dahil) faturalandırılacak. O tarihe kadar mevcut kotanızı kullanmaya devam edersiniz.`, "Fikrinizi değiştirirseniz Paketim sayfasından geçişi iptal edebilirsiniz."],
     cta: { label: "Paketim", url: panelUrl(deps, "paketim") },
@@ -117,7 +118,7 @@ export function mailPlanScheduled(deps: Deps, tenant: Tenant, targetPlan: PlanId
 }
 
 export function mailPlanApplied(deps: Deps, tenant: Tenant, plan: PlanId) {
-  send(deps, ownerEmails(deps, tenant.id), `Paketiniz ${PLANS[plan].name} oldu`, {
+  send(deps, ownerEmails(deps, tenant.id, { onlyOptedIn: true }), `Paketiniz ${PLANS[plan].name} oldu`, {
     title: "Yeni dönem, yeni paket",
     lines: [`Planladığınız geçiş yapıldı: paketiniz artık ${PLANS[plan].name}. Bu ayın kotası ${PLANS[plan].minutes} dakika.`],
     cta: { label: "Paketim", url: panelUrl(deps, "paketim") },
@@ -126,7 +127,7 @@ export function mailPlanApplied(deps: Deps, tenant: Tenant, plan: PlanId) {
 
 export function mailQuota(deps: Deps, tenant: Tenant, level: "80" | "100", used: number, quota: number) {
   const full = level === "100";
-  send(deps, ownerEmails(deps, tenant.id), full ? "Aylık kotanız doldu" : "Aylık kotanızın %80'ini kullandınız", {
+  send(deps, ownerEmails(deps, tenant.id, { onlyOptedIn: true }), full ? "Aylık kotanız doldu" : "Aylık kotanızın %80'ini kullandınız", {
     title: full ? "Kotanız doldu" : "Kotanız dolmak üzere",
     lines: [full
       ? "Bu ayki dakika kotanızı doldurdunuz. Asistanınız aramaları karşılamaya devam eder; kotadan sonraki her dakika ek ücretle hesaplanır. Ek dakika paketi alarak ya da bir üst pakete geçerek aşım ücretinden kaçınabilirsiniz."
