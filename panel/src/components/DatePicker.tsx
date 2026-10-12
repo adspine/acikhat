@@ -62,7 +62,7 @@ export function DatePicker({ value, onChange, id, className, placeholder = "Tari
   const [open, setOpen] = useState(false);
   const [cursor, setCursor] = useState<Ymd>(() => parse(value) ?? todayYmd());
   const close = useCallback(() => setOpen(false), []);
-  const { pop, mounted, shown, pos } = usePopover(open, close, btn, { minWidth: 308, maxHeight: 420 });
+  const { pop, mounted, shown, pos } = usePopover(open, close, btn, { minWidth: 300, maxWidth: 328, maxHeight: 420 });
   const gridId = useId();
 
   const today = todayYmd();

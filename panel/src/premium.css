@@ -409,3 +409,11 @@ html[data-theme="dark"] .week-row.is-closed { background: transparent; }
   .week-row .week-day { grid-column: 1 / -1; }
   .week-row.is-closed > .muted { grid-column: 1 / -1; }
 }
+
+/* ---------------- yayın durumu (Kurulum başlığı) ---------------- */
+.publish-status { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; justify-content: flex-end; }
+.pill-live { background: var(--tamam-acik); color: var(--tamam); }
+.pill-draft { background: var(--lamba-acik); color: #7a5300; }
+html[data-theme="dark"] .pill-draft { color: #f2c14e; }
+.cal-pop { max-width: 328px; }
+.cal-day { aspect-ratio: auto; height: 40px; }

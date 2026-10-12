@@ -99,6 +99,19 @@ export function SettingsPage() {
           <h1 className="page-title">Kurulum</h1>
           <p className="page-sub">Asistanınızı ve işletme bilgilerinizi buradan kurarsınız. Değişiklikler önce taslak olarak kaydedilir; yayınladığınızda asistan yeni bilgilerle konuşur.</p>
         </div>
+        <div className="publish-status" role="status" aria-live="polite">
+          <span className={`pill ${!me.testCallEnabled ? "pill-info" : state.hasDraft ? "pill-draft" : "pill-live"}`}>
+            {!me.testCallEnabled ? "Asistan hazırlanıyor" : state.hasDraft ? "Yayınlanmamış değişiklik" : "Yayında"}
+          </span>
+          {state.hasDraft ? (
+            <>
+              <Button size="sm" variant="ghost" onClick={() => discard.mutate()} busy={discard.isPending}>Taslağı at</Button>
+              <Button size="sm" onClick={() => publish.mutate()} busy={publish.isPending} disabled={state.issues.length > 0}>Yayınla</Button>
+            </>
+          ) : (
+            me.testCallEnabled && q.data?.publishedAt && <span className="muted small">Son yayın: {new Date(q.data.publishedAt).toLocaleString("tr-TR", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}</span>
+          )}
+        </div>
       </header>
 
       <div className="settings-layout">

@@ -13,24 +13,25 @@ export interface PopPos {
  * mounted/shown durumları, dışarı tıklayınca ve kaydırınca/yeniden boyutlanınca ilgilenme.
  * Yüzey sayfanın üstüne (portal) çizilir; bu yüzden fixed konum kullanılır.
  */
-export function usePopover(open: boolean, onClose: () => void, anchor: RefObject<HTMLElement | null>, opts: { minWidth?: number; maxHeight?: number } = {}) {
+export function usePopover(open: boolean, onClose: () => void, anchor: RefObject<HTMLElement | null>, opts: { minWidth?: number; maxWidth?: number; maxHeight?: number } = {}) {
   const pop = useRef<HTMLDivElement>(null);
   const [mounted, setMounted] = useState(false);
   const [shown, setShown] = useState(false);
   const [pos, setPos] = useState<PopPos>({ left: 0, width: 0, maxHeight: 360 });
   const maxH = opts.maxHeight ?? 360;
   const minW = opts.minWidth ?? 0;
+  const maxW = opts.maxWidth ?? Infinity;
 
   const place = useCallback(() => {
     const r = anchor.current?.getBoundingClientRect();
     if (!r) return;
-    const width = Math.max(r.width, minW);
+    const width = Math.min(maxW, Math.max(r.width, minW));
     const left = Math.max(8, Math.min(r.left, window.innerWidth - width - 8));
     const below = window.innerHeight - r.bottom - 12;
     const above = r.top - 12;
     const up = below < Math.min(maxH, 320) && above > below;
     setPos({ left, width, maxHeight: Math.min(maxH, up ? above : below), ...(up ? { bottom: window.innerHeight - r.top + 8 } : { top: r.bottom + 8 }) });
-  }, [anchor, minW, maxH]);
+  }, [anchor, minW, maxW, maxH]);
 
   useEffect(() => {
     if (open) {
