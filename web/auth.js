@@ -56,6 +56,29 @@ const MESSAGES = {
 const SILENT = new Set(["auth/popup-closed-by-user", "auth/cancelled-popup-request"]);
 const messageFor = (err) => MESSAGES[err?.code] ?? (err?.message && !err.code ? err.message : "Bir sorun oluştu. Lütfen tekrar deneyin.");
 
+/* ---------- eski hesaplar ---------- */
+// Eski panelden açılan hesapların şifresi yalnızca sunucuda tutulur. Doğru şifreyle girerse oturum açılır ve aynı e-posta
+// ile Firebase hesabı da açılır (şifre aynı kalır); doğrulama e-postası gönderilir. Sonraki girişler Firebase'den yapılır.
+const LEGACY_FALLBACK = new Set(["auth/invalid-credential", "auth/wrong-password", "auth/user-not-found"]);
+
+async function legacyLogin(email, password, auth, au) {
+  const { res, data } = await post("/api/auth/login", { email, password });
+  if (res.status === 429) throw new Error(data.error ?? "Çok fazla deneme yapıldı.");
+  if (!res.ok) return false;
+  // Geçici şifre ile girenlerde Firebase hesabı açılmaz: önce kendi şifrelerini belirlerler (panel ister)
+  if (!data.mustChangePassword) {
+    try {
+      const { user } = await auth.createUserWithEmailAndPassword(au, email, password);
+      await auth.sendEmailVerification(user);
+    } catch {
+      /* Firebase hesabı zaten varsa ya da açılamadıysa giriş yine de geçerlidir */
+    }
+    await auth.signOut(au).catch(() => {});
+  }
+  location.assign(data.hasTenant ? "/panel/" : "#/hesap");
+  return true;
+}
+
 /* ---------- sayfa bağlama ---------- */
 function bind(root) {
   if (root.dataset.bound) return;
@@ -140,8 +163,17 @@ function bind(root) {
     } else {
       run(async () => {
         const { auth, au } = await loadSdk();
-        const { user } = await auth.signInWithEmailAndPassword(au, email, password);
+        let user;
+        try {
+          ({ user } = await auth.signInWithEmailAndPassword(au, email, password));
+        } catch (err) {
+          // Firebase'de hesabı yoksa: eski panelden açılmış (yerel şifreli) hesap olabilir
+          if (LEGACY_FALLBACK.has(err?.code) && (await legacyLogin(email, password, auth, au))) return;
+          throw err;
+        }
         if (!user.emailVerified) {
+          // Eski panelden taşınmış hesap henüz e-postasını doğrulamadıysa, yerel şifresiyle girmesi engellenmez
+          if (await legacyLogin(email, password, auth, au)) return;
           showVerify(user);
           say(verifyError, "E-posta adresinizi doğrulamanız gerekiyor.");
           return;

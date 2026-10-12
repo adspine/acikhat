@@ -51,7 +51,7 @@ export function App() {
   }, [qc]);
 
   if (session.isLoading) return <Loading label="Panel açılıyor" />;
-  if (!session.data) return <LoginPage onDone={() => session.refetch()} />;
+  if (!session.data) return <RedirectToLogin />;
   if (isAgency && !tenantId) return <AdminApp session={session.data} />;
   // Giriş yapmış ama henüz bir firmaya bağlanmamış üye (paket ve kurulum bekliyor)
   if (!session.data.hasTenant) return <NoTenantPage />;
@@ -162,36 +162,12 @@ function NoTenantPage() {
   );
 }
 
-function LoginPage({ onDone }: { onDone: () => void }) {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState<string>();
-  const [busy, setBusy] = useState(false);
-  const submit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setBusy(true);
-    setError(undefined);
-    try {
-      await api("/api/auth/login", { method: "POST", body: { email, password } });
-      onDone();
-    } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Giriş yapılamadı");
-    } finally {
-      setBusy(false);
-    }
-  };
-  return (
-    <AuthLayout title="Panele giriş">
-      <form onSubmit={submit} className="stack">
-        <Field label="E-posta">{(id) => <Input id={id} type="email" autoComplete="username" value={email} onChange={(e) => setEmail(e.target.value)} required />}</Field>
-        <Field label="Şifre">{(id) => <Input id={id} type="password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} required />}</Field>
-        {error && <p className="form-error" role="alert">{error}</p>}
-        <Button type="submit" busy={busy}>Giriş yap</Button>
-        <p className="muted small">Şifrenizi unuttuysanız bizi arayın; yeni geçici şifre verelim.</p>
-        <p className="muted small">Google veya yeni bir hesapla mı giriyorsunuz? <a href="/#/giris">Buradan giriş yapın</a> ya da <a href="/#/uye-ol">üye olun</a>.</p>
-      </form>
-    </AuthLayout>
-  );
+/** Oturum yoksa kullanıcı sitenin giriş sayfasına yönlendirilir (tek giriş yeri) */
+function RedirectToLogin() {
+  useEffect(() => {
+    location.replace("/#/giris");
+  }, []);
+  return <Loading label="Giriş sayfasına yönlendiriliyor" />;
 }
 
 export function ChangePasswordPage({ forced, onDone }: { forced?: boolean; onDone: () => void }) {
