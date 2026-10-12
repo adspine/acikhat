@@ -328,3 +328,39 @@ body::before {
 /* kota yazısı menü açılıp kapanırken satır değiştirmesin: içerik sabit genişlikte, kutu kırpar */
 .side-usage-text { width: 208px; max-width: none; }
 .is-collapsed .side-usage-text { width: 208px; }
+
+/* ---------------- telefon: taşma ve tablo düzeni ---------------- */
+/* grid çocukları min-content genişliğine kadar uzamasın: sayfa ekran genişliğini aşmaz */
+.page { grid-template-columns: minmax(0, 1fr); }
+.page > *, .page-head > * { min-width: 0; }
+.segmented { max-width: 100%; overflow-x: auto; scrollbar-width: none; }
+.segmented::-webkit-scrollbar { display: none; }
+.segmented button { flex: none; }
+.card:has(> table), .admin-table-card { overflow-x: auto; }
+
+@media (max-width: 860px) {
+  html, body { overflow-x: hidden; }
+  .tabbar { grid-template-columns: repeat(auto-fit, minmax(0, 1fr)); }
+  .page-head { align-items: stretch; }
+  .page-head .segmented { width: 100%; }
+  .page-title { overflow-wrap: anywhere; }
+
+  /* yönetici tabloları telefonda kart olur: her satır bir kart, hücreler "etiket: değer" */
+  .admin-table, .admin-table tbody, .admin-table tr, .admin-table td { display: block; }
+  .admin-table thead { display: none; }
+  .admin-table-card { padding: 8px; overflow: visible; background: none; border: 0; box-shadow: none; backdrop-filter: none; }
+  .admin-table tr {
+    display: grid; gap: 2px; margin-bottom: 10px; padding: 14px 16px; border-radius: 20px; cursor: pointer;
+    background: var(--glass); border: 1px solid var(--glass-line); box-shadow: var(--e1);
+  }
+  .admin-table td { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; padding: 5px 0; border: 0; text-align: right; }
+  .admin-table td::before { content: attr(data-label); flex: none; font-size: 13px; color: var(--cam-soluk); text-align: left; }
+  .admin-table td.cell-main { display: block; text-align: left; padding: 0 0 8px; margin-bottom: 4px; border-bottom: 1px solid var(--ink-line); font-size: 16px; }
+  .admin-table td.cell-main::before { content: none; }
+  .admin-table td.cell-main .admin-ref { display: block; }
+
+  /* diğer tablolar (Raporlar, satın alma geçmişi) yatay kayar, sayfayı genişletmez */
+  .card:has(> .data-table) { overflow-x: auto; }
+  .stat-row-var { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+.settings-nav { scrollbar-width: none; } .settings-nav::-webkit-scrollbar { display: none; }

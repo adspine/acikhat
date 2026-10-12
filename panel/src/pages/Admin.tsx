@@ -147,12 +147,12 @@ export function AdminSubmissionsPage({ initialStatus }: { initialStatus: string 
             <tbody>
               {rows.map((s) => (
                 <tr key={s.reference} tabIndex={0} onClick={() => setOpenRef(s.reference)} onKeyDown={(e) => e.key === "Enter" && setOpenRef(s.reference)}>
-                  <td><strong>{s.businessName}</strong><span className="muted small admin-ref">{s.reference}</span></td>
-                  <td>{SECTOR_LABELS[s.sector] ?? s.sector}</td>
-                  <td>{s.member ? s.member.email : <span className="muted">Üyesiz</span>}</td>
-                  <td>{s.plan ? <>{PLAN_LABELS[s.plan]}{s.paid ? <span className="admin-paid"> ödendi</span> : <span className="muted"> bekliyor</span>}</> : <span className="muted">—</span>}</td>
-                  <td><StatusPill status={s.status} /></td>
-                  <td className="muted">{when(s.createdAt)}</td>
+                  <td className="cell-main"><strong>{s.businessName}</strong><span className="muted small admin-ref">{s.reference}</span></td>
+                  <td data-label="Sektör">{SECTOR_LABELS[s.sector] ?? s.sector}</td>
+                  <td data-label="Üye">{s.member ? s.member.email : <span className="muted">Üyesiz</span>}</td>
+                  <td data-label="Paket">{s.plan ? <>{PLAN_LABELS[s.plan]}{s.paid ? <span className="admin-paid"> ödendi</span> : <span className="muted"> bekliyor</span>}</> : <span className="muted">—</span>}</td>
+                  <td data-label="Durum"><StatusPill status={s.status} /></td>
+                  <td className="muted" data-label="Tarih">{when(s.createdAt)}</td>
                 </tr>
               ))}
             </tbody>
@@ -484,20 +484,20 @@ export function AdminCustomersPage() {
             <tbody>
               {rows.map((t) => (
                 <tr key={t.id} tabIndex={0} onClick={() => setOpenId(t.id)} onKeyDown={(e) => e.key === "Enter" && setOpenId(t.id)}>
-                  <td>
+                  <td className="cell-main">
                     <strong>{t.name}</strong>
                     <span className="muted small admin-ref">{t.owner ?? t.id}</span>
                     {t.suspended && <span className="pill admin-status admin-status-rejected">Askıda</span>}
                   </td>
-                  <td>{SECTOR_LABELS[t.vertical] ?? t.vertical}</td>
-                  <td>
+                  <td data-label="Sektör">{SECTOR_LABELS[t.vertical] ?? t.vertical}</td>
+                  <td data-label="Paket">
                     {t.plan ? PLAN_LABELS[t.plan] : <span className="muted">—</span>}
                     {t.pendingPlan && <span className="pill admin-status admin-status-reviewing">Sonra {PLAN_LABELS[t.pendingPlan]}</span>}
                   </td>
-                  <td>{t.assistantReady ? (t.hasPhone ? "Hazır" : "Hat bekliyor") : <span className="muted">Kurulacak</span>}</td>
-                  <td>{t.includedMinutes ? <span className={t.minutesUsed > t.includedMinutes ? "admin-over" : undefined}>{t.minutesUsed} / {t.includedMinutes} dk</span> : <span className="muted">{t.minutesUsed} dk</span>}</td>
-                  <td>{t.calls30}</td>
-                  <td>{t.appointments30}</td>
+                  <td data-label="Asistan">{t.assistantReady ? (t.hasPhone ? "Hazır" : "Hat bekliyor") : <span className="muted">Kurulacak</span>}</td>
+                  <td data-label="Bu ay kullanım">{t.includedMinutes ? <span className={t.minutesUsed > t.includedMinutes ? "admin-over" : undefined}>{t.minutesUsed} / {t.includedMinutes} dk</span> : <span className="muted">{t.minutesUsed} dk</span>}</td>
+                  <td data-label="Çağrı (30 gün)">{t.calls30}</td>
+                  <td data-label="Randevu">{t.appointments30}</td>
                 </tr>
               ))}
             </tbody>

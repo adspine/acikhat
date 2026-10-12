@@ -42,8 +42,9 @@ export function App() {
 
   useEffect(() => {
     const out = () => {
+      setAdminTenant(null);
+      qc.removeQueries({ predicate: (q) => q.queryKey[0] !== "session" });
       qc.setQueryData(["session"], null);
-      qc.removeQueries({ queryKey: ["me"] });
     };
     authEvents.addEventListener("logout", out);
     return () => authEvents.removeEventListener("logout", out);
@@ -88,8 +89,7 @@ function AdminApp({ session }: { session: Session }) {
   const active = (to: string) => (to === "/" ? loc.path === "/" : loc.path.startsWith(to));
   const logout = async () => {
     await api("/api/auth/logout", { method: "POST" }).catch(() => {});
-    qc.clear();
-    qc.setQueryData(["session"], null);
+    authEvents.dispatchEvent(new Event("logout"));
   };
   const page = loc.path.startsWith("/basvurular") ? (
     <AdminSubmissionsPage initialStatus={loc.query.get("durum") ?? ""} />
@@ -287,8 +287,7 @@ function Shell() {
 
   const logout = async () => {
     await api("/api/auth/logout", { method: "POST" }).catch(() => {});
-    qc.clear();
-    qc.setQueryData(["me"], null);
+    authEvents.dispatchEvent(new Event("logout"));
   };
 
   const page = (() => {
