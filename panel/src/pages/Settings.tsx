@@ -109,7 +109,10 @@ export function SettingsPage() {
               <Button size="sm" onClick={() => publish.mutate()} busy={publish.isPending} disabled={state.issues.length > 0}>Yayınla</Button>
             </>
           ) : (
-            me.testCallEnabled && q.data?.publishedAt && <span className="muted small">Son yayın: {new Date(q.data.publishedAt).toLocaleString("tr-TR", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}</span>
+            <>
+              {me.testCallEnabled && q.data?.publishedAt && <span className="muted small">Son yayın: {new Date(q.data.publishedAt).toLocaleString("tr-TR", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}</span>}
+              <Button size="sm" variant="quiet" disabled title="Yayınlanacak değişiklik yok">Yayınla</Button>
+            </>
           )}
         </div>
       </header>
