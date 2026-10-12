@@ -1,0 +1,466 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Açık Hat — telefonunuzu yapay zekâ ile cevaplayın</title>
+<meta name="description" content="İşletmenizin telefonlarını 7/24 cevaplayan, takviminizden boş saat bulup randevu yazan Türkçe sesli asistan. Kurulum formu ve numara yönlendirme rehberi.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600&family=Unbounded:wght@500;600&display=swap&subset=latin-ext" rel="stylesheet">
+<link rel="stylesheet" href="/tokens.css">
+<link rel="stylesheet" href="/site.css">
+</head>
+<body>
+<a class="skip" href="#icerik">İçeriğe geç</a>
+
+<header class="top">
+  <a class="brand" href="#/" aria-label="Ana sayfa"><span class="brand-lamp" aria-hidden="true"></span><span data-brand>Açık Hat</span></a>
+  <nav class="top-nav" aria-label="Ana menü">
+    <a href="#/rehber" data-nav="rehber">Kurulum rehberi</a>
+    <a class="btn btn-small" href="#/kurulum" data-nav="kurulum">Kuruluma başla</a>
+  </nav>
+</header>
+
+<main id="icerik">
+
+<!-- ===================== TANITIM ===================== -->
+<section class="view" data-view="home">
+  <div class="hero">
+    <div class="hero-copy">
+      <h1>Telefonunuz çaldığında, biri hep açar.</h1>
+      <p class="lead"><span data-brand>Açık Hat</span>, işletmenizin telefonunu yapay zekâ ile cevaplar. Takviminizden boş saati bulur, randevuyu yazar ve onayı müşterinize gönderir. Gece yarısı da, resepsiyon doluyken de.</p>
+      <div class="hero-actions">
+        <a class="btn" href="#/kurulum">Kuruluma başla</a>
+        <a class="btn btn-quiet" href="#/rehber">Kurulum nasıl yapılır?</a>
+      </div>
+      <p class="hero-note">Numaranız değişmez. Müşterileriniz bildikleri numarayı aramaya devam eder.</p>
+    </div>
+
+    <figure class="call" aria-label="Örnek görüşme">
+      <div class="call-head">
+        <span class="lamp" data-lamp aria-hidden="true"></span>
+        <div>
+          <p class="call-title">Örnek görüşme</p>
+          <p class="call-sub">Bir spa'nın asistanı, gerçek sesiyle</p>
+        </div>
+      </div>
+      <ol class="transcript" data-transcript aria-live="off"></ol>
+      <div class="player">
+        <button class="play" type="button" data-play aria-label="Görüşmeyi dinle">
+          <svg class="icon-play" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l11-6.5z"/></svg>
+          <svg class="icon-pause" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5h4v14H7zM13 5h4v14h-4z"/></svg>
+        </button>
+        <div class="timeline">
+          <div class="bar"><span data-progress></span></div>
+          <p class="time"><span data-time>0:00</span> / <span data-duration>0:38</span></p>
+        </div>
+      </div>
+      <audio data-audio preload="none" src="/audio/demo.m4a"></audio>
+    </figure>
+  </div>
+
+  <section class="band" aria-labelledby="adimlar-baslik">
+    <h2 id="adimlar-baslik">Kurulum dört adımda</h2>
+    <ol class="steps">
+      <li>
+        <h3>Bilgilerinizi verin</h3>
+        <p>Hizmetleriniz, fiyatlarınız, çalışma saatleriniz ve ekibiniz. Yaklaşık 15 dakika sürer.</p>
+      </li>
+      <li>
+        <h3>Asistanınızı hazırlayalım</h3>
+        <p>Bilgilerinizi kontrol eder, size özel hattı açar ve asistanı onlarca test görüşmesinden geçiririz.</p>
+      </li>
+      <li>
+        <h3>Numaranızı yönlendirin</h3>
+        <p>Telefonunuzdan tek bir kod. Cevaplayamadığınız çağrılar asistana gider.</p>
+      </li>
+      <li>
+        <h3>Deneyin, sonra yayına alın</h3>
+        <p>Kendiniz arayıp randevu alın. Memnun kaldığınızda tüm çağrılar için açarız.</p>
+      </li>
+    </ol>
+  </section>
+
+  <section class="band split" aria-labelledby="sinirlar-baslik">
+    <h2 id="sinirlar-baslik">Asistan neyi yapar, neyi yapmaz</h2>
+    <div class="columns">
+      <div>
+        <h3 class="list-title list-yes">Yapar</h3>
+        <ul class="plain">
+          <li>Randevu alır; saati yalnızca takviminizdeki boş yerlerden önerir</li>
+          <li>Fiyat, adres, çalışma saati gibi sorulara verdiğiniz bilgiyle cevap verir</li>
+          <li>Randevuyu yazmadan önce gün, saat ve ismi müşteriye tekrar okur</li>
+          <li>Onay mesajını WhatsApp veya SMS ile gönderir</li>
+          <li>Şikâyet ve özel isteklerde çağrıyı size aktarır ya da geri arama notu bırakır</li>
+          <li>Hat doluyken arayanı bekletir; kapatırsa kaçan çağrı olarak listeler</li>
+        </ul>
+      </div>
+      <div>
+        <h3 class="list-title list-no">Yapmaz</h3>
+        <ul class="plain">
+          <li>Ödeme veya kart bilgisi almaz</li>
+          <li>Sağlık konusunda tavsiye vermez</li>
+          <li>Bilmediği bir fiyatı ya da kampanyayı uydurmaz</li>
+          <li>Takviminizde olmayan bir saati önermez</li>
+          <li>Kendini insan gibi tanıtmaz; görüşmenin başında yapay zekâ olduğunu söyler</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section class="band" aria-labelledby="sss-baslik">
+    <h2 id="sss-baslik">Sık sorulanlar</h2>
+    <div class="faq">
+      <details>
+        <summary>Telefon numaram değişecek mi?</summary>
+        <p>Hayır. Size özel bir hat açarız ve mevcut numaranızı oraya yönlendirirsiniz. Müşterileriniz aynı numarayı aramaya devam eder. İstediğiniz an tek kodla eski hâline dönebilirsiniz.</p>
+      </details>
+      <details>
+        <summary>Resepsiyon açıkken de asistan mı cevap verecek?</summary>
+        <p>Siz seçersiniz. En çok tercih edilen düzen: telefonu siz açamadığınızda, meşgulken veya mesai dışında asistan devreye girer.</p>
+      </details>
+      <details>
+        <summary>Aynı anda birden fazla kişi ararsa ne olur?</summary>
+        <p>Asistan aynı anda birden fazla görüşme yapabilir. Tüm hatlar doluysa arayan kısa bir bekleme anonsu dinler. Beklemeden kapatan arayanlar size geri arama listesi olarak gelir.</p>
+      </details>
+      <details>
+        <summary>Müşteri yapay zekâ ile konuştuğunu bilecek mi?</summary>
+        <p>Evet. Görüşmenin başında asistan kendini yapay zekâ olarak tanıtır ve görüşmenin kaydedildiğini söyler. KVKK açısından da doğru olan budur.</p>
+      </details>
+      <details>
+        <summary>Fiyatlarım veya saatlerim değişirse?</summary>
+        <p>Bize bildirmeniz yeterli, aynı gün güncelleriz. Asistan her zaman verdiğiniz son bilgiyle konuşur.</p>
+      </details>
+    </div>
+  </section>
+
+  <section class="closing">
+    <h2>Başlamak için bilgilerinizi gönderin.</h2>
+    <p>Formu yarıda bırakabilirsiniz; doldurduklarınız bu cihazda saklanır.</p>
+    <a class="btn" href="#/kurulum">Kuruluma başla</a>
+  </section>
+</section>
+
+<!-- ===================== KURULUM FORMU ===================== -->
+<section class="view" data-view="kurulum" hidden>
+  <div class="form-wrap">
+    <aside class="stepper" aria-label="Form adımları">
+      <h1 class="stepper-title">Kurulum formu</h1>
+      <ol data-stepper></ol>
+      <p class="stepper-note" data-draft-note>Doldurduklarınız bu cihazda otomatik saklanır.</p>
+    </aside>
+
+    <form class="form" data-form novalidate>
+      <!-- Bot tuzağı: insanlar görmez -->
+      <div class="trap" aria-hidden="true"><label>Faks <input name="company_fax" tabindex="-1" autocomplete="off"></label></div>
+
+      <fieldset class="step" data-step="isletme" data-title="İşletme ve iletişim">
+        <legend>İşletme ve iletişim</legend>
+        <p class="step-help">Sizinle kurulum sırasında iletişime geçeceğimiz kişi.</p>
+        <div class="field">
+          <label for="f-name">İşletmenin adı</label>
+          <input id="f-name" name="business.name" required autocomplete="organization" placeholder="Örn. Lavanta Spa">
+          <p class="hint">Müşterilerin telefonda duyacağı ad.</p>
+        </div>
+        <div class="field">
+          <label for="f-operated">İşletme nasıl çalışıyor?</label>
+          <select id="f-operated" name="business.operatedBy">
+            <option value="">Seçin</option>
+            <option value="bagimsiz">Bağımsız işletme</option>
+            <option value="otel">Otelin kendi spa'sı</option>
+            <option value="diger">Diğer</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="f-address">Adres</label>
+          <textarea id="f-address" name="business.address" rows="2" autocomplete="street-address"></textarea>
+        </div>
+        <div class="field">
+          <label for="f-web">Web sitesi veya Instagram</label>
+          <input id="f-web" name="business.website" inputmode="url" placeholder="https://">
+        </div>
+        <div class="row">
+          <div class="field">
+            <label for="f-person">Yetkili kişi</label>
+            <input id="f-person" name="contact.person" required autocomplete="name">
+          </div>
+          <div class="field">
+            <label for="f-phone">Yetkilinin cep telefonu</label>
+            <input id="f-phone" name="contact.phone" required inputmode="tel" autocomplete="tel" placeholder="05xx xxx xx xx">
+          </div>
+        </div>
+        <div class="field">
+          <label for="f-email">E-posta <span class="opt">(isteğe bağlı)</span></label>
+          <input id="f-email" name="contact.email" type="email" autocomplete="email">
+        </div>
+      </fieldset>
+
+      <fieldset class="step" data-step="telefon" data-title="Telefon" hidden>
+        <legend>Telefon</legend>
+        <p class="step-help">Asistanın hangi numaraya gelen çağrıları cevaplayacağını belirleyelim.</p>
+        <div class="field">
+          <label for="f-public">Müşterilerin aradığı numara</label>
+          <input id="f-public" name="phone.publicNumber" inputmode="tel" placeholder="0532 … veya 0374 …">
+        </div>
+        <div class="field">
+          <span class="label" id="when-label">Asistan ne zaman cevap versin?</span>
+          <div class="choices" role="radiogroup" aria-labelledby="when-label">
+            <label class="choice"><input type="radio" name="phone.when" value="mesgul-cevapsiz"><span><strong>Siz açamadığınızda</strong> Meşgulken, cevapsız kaldığında ve telefon kapalıyken. Çoğu işletme bunu seçer.</span></label>
+            <label class="choice"><input type="radio" name="phone.when" value="mesai-disi"><span><strong>Yalnızca mesai dışında</strong> Çalışma saatlerinde telefonu siz açarsınız.</span></label>
+            <label class="choice"><input type="radio" name="phone.when" value="her-zaman"><span><strong>Her zaman</strong> Tüm çağrıları asistan karşılar.</span></label>
+          </div>
+        </div>
+        <div class="field">
+          <label for="f-transfer">Aktarma numarası</label>
+          <input id="f-transfer" name="phone.transferNumber" inputmode="tel" placeholder="05xx xxx xx xx">
+          <p class="hint">Müşteri bir yetkiliyle konuşmak isterse asistanın çağrıyı aktaracağı numara. <strong>Yukarıdaki numaradan farklı olmalı</strong>; aynı numara olursa çağrı tekrar asistana döner. Örneğin işletme sahibinin cep telefonu. Boş bırakırsanız asistan aktarmak yerine geri arama notu alır.</p>
+        </div>
+        <div class="field">
+          <label for="f-lang">Arayanlar hangi dilleri konuşuyor?</label>
+          <input id="f-lang" name="phone.languages" placeholder="Örn. çoğunlukla Türkçe, az sayıda İngilizce">
+        </div>
+      </fieldset>
+
+      <fieldset class="step" data-step="saatler" data-title="Çalışma saatleri" hidden>
+        <legend>Çalışma saatleri</legend>
+        <p class="step-help">Asistan yalnızca bu saatler içinde randevu önerir.</p>
+        <div class="hours" data-hours></div>
+        <button class="btn btn-quiet btn-small" type="button" data-copy-hours>Pazartesi saatlerini tüm açık günlere uygula</button>
+        <div class="row">
+          <div class="field">
+            <label for="f-lead">Aynı gün için en az kaç dakika önceden randevu alınır?</label>
+            <input id="f-lead" name="booking.minLeadMinutes" type="number" min="0" step="15" inputmode="numeric" placeholder="60">
+          </div>
+          <div class="field">
+            <label for="f-ahead">En fazla kaç gün ilerisi için randevu alınır?</label>
+            <input id="f-ahead" name="booking.maxDaysAhead" type="number" min="1" inputmode="numeric" placeholder="30">
+          </div>
+        </div>
+        <div class="field">
+          <label for="f-closed">Kapalı olduğunuz özel günler</label>
+          <textarea id="f-closed" name="closedDates" rows="2" placeholder="Örn. 29 Ekim, bayramların ilk günü"></textarea>
+        </div>
+      </fieldset>
+
+      <fieldset class="step" data-step="hizmetler" data-title="Hizmetler" hidden>
+        <legend>Hizmetler</legend>
+        <p class="step-help">Asistan süreyi ve fiyatı buradan okur. Süreye hazırlık ve temizlik dahil değildir; onu ayrıca yazın.</p>
+        <div class="rows" data-services></div>
+        <button class="btn btn-quiet btn-small" type="button" data-add-service>Hizmet ekle</button>
+      </fieldset>
+
+      <fieldset class="step" data-step="ekip" data-title="Ekip ve odalar" hidden>
+        <legend>Ekip ve odalar</legend>
+        <p class="step-help">Aynı saatte iki randevunun çakışmaması için kim, hangi hizmeti, hangi odada yapıyor bilmemiz gerekir.</p>
+        <div class="rows" data-staff></div>
+        <button class="btn btn-quiet btn-small" type="button" data-add-staff>Kişi ekle</button>
+        <div class="field">
+          <span class="label">Oda sayısı</span>
+          <div class="row row-3">
+            <label class="mini"><span>Tek kişilik</span><input name="rooms.tek" type="number" min="0" inputmode="numeric"></label>
+            <label class="mini"><span>Çift</span><input name="rooms.cift" type="number" min="0" inputmode="numeric"></label>
+            <label class="mini"><span>Hamam</span><input name="rooms.hamam" type="number" min="0" inputmode="numeric"></label>
+          </div>
+          <input name="rooms.diger" aria-label="Diğer alanlar" placeholder="Diğer alanlar (örn. 1 sauna, 1 tuz odası)">
+        </div>
+        <div class="field">
+          <label for="f-cal">Randevuları şu an nerede tutuyorsunuz?</label>
+          <select id="f-cal" name="calendar.current">
+            <option value="">Seçin</option>
+            <option value="defter">Defter</option>
+            <option value="excel">Excel</option>
+            <option value="google">Google Takvim</option>
+            <option value="yazilim">Bir randevu programı</option>
+            <option value="diger">Diğer</option>
+          </select>
+        </div>
+        <div class="field" data-show-if="calendar.current=yazilim">
+          <label for="f-soft">Programın adı</label>
+          <input id="f-soft" name="calendar.software">
+        </div>
+      </fieldset>
+
+      <fieldset class="step" data-step="kurallar" data-title="Kurallar ve sorular" hidden>
+        <legend>Kurallar ve sık sorulan sorular</legend>
+        <p class="step-help">Asistan bu bilgilerin dışına çıkmaz. Burada olmayan bir soru gelirse sizin aramanız için not alır.</p>
+        <div class="field">
+          <label for="f-cancel">İptal ve geç kalma kuralı</label>
+          <textarea id="f-cancel" name="policies.cancellation" rows="2" placeholder="Örn. 24 saat öncesine kadar ücretsiz iptal"></textarea>
+        </div>
+        <div class="field">
+          <label for="f-pay">Ödeme yöntemleri</label>
+          <input id="f-pay" name="policies.payment" placeholder="Örn. nakit ve kredi kartı, girişte ödeme">
+        </div>
+        <div class="field">
+          <label for="f-health">Sağlık, yaş veya hamilelik kuralları</label>
+          <textarea id="f-health" name="policies.health" rows="2"></textarea>
+        </div>
+        <div class="field">
+          <label for="f-faq">En çok sorulan sorular ve cevaplarınız</label>
+          <textarea id="f-faq" name="policies.faq" rows="6" placeholder="Otopark var mı? Evet, ücretsiz.&#10;Havlu ve bornoz veriliyor mu? Evet."></textarea>
+        </div>
+      </fieldset>
+
+      <fieldset class="step" data-step="asistan" data-title="Asistan ve bildirimler" hidden>
+        <legend>Asistan ve bildirimler</legend>
+        <div class="field">
+          <span class="label" id="ch-label">Randevu onayı müşteriye nasıl gitsin?</span>
+          <div class="choices" role="group" aria-labelledby="ch-label">
+            <label class="choice"><input type="checkbox" name="notifications.channels" value="whatsapp"><span><strong>WhatsApp</strong> Müşteriler daha çok okur.</span></label>
+            <label class="choice"><input type="checkbox" name="notifications.channels" value="sms"><span><strong>SMS</strong> WhatsApp'ı olmayan müşterilere de ulaşır.</span></label>
+          </div>
+          <p class="hint">İkisini birden seçerseniz önce WhatsApp denenir, ulaşmazsa SMS gider.</p>
+        </div>
+        <div class="row">
+          <div class="field">
+            <label for="f-agent">Asistanın adı <span class="opt">(isteğe bağlı)</span></label>
+            <input id="f-agent" name="agent.name" placeholder="Örn. Defne">
+          </div>
+          <div class="field">
+            <label for="f-voice">Ses tercihi</label>
+            <select id="f-voice" name="agent.voice">
+              <option value="farketmez">Fark etmez</option>
+              <option value="kadin">Kadın sesi</option>
+              <option value="erkek">Erkek sesi</option>
+            </select>
+          </div>
+        </div>
+        <div class="field">
+          <label for="f-greet">Karşılamada söylenmesini istediğiniz bir şey var mı?</label>
+          <input id="f-greet" name="agent.greetingNote" placeholder="Örn. hoş geldiniz demesi">
+        </div>
+      </fieldset>
+
+      <fieldset class="step" data-step="gonder" data-title="Gözden geçir ve gönder" hidden>
+        <legend>Gözden geçir ve gönder</legend>
+        <div class="review" data-review></div>
+        <div class="field">
+          <label class="check">
+            <input type="checkbox" name="consent.kvkk" value="true" required>
+            <span>Bu bilgilerin asistanın kurulumu için işlenmesini kabul ediyorum. Müşteri görüşmeleri, sizinle yapacağımız veri işleme sözleşmesine göre işlenir.</span>
+          </label>
+        </div>
+        <div class="field">
+          <label for="f-signer">Sözleşmeyi imzalayacak kişi <span class="opt">(isteğe bağlı)</span></label>
+          <input id="f-signer" name="consent.signer">
+        </div>
+      </fieldset>
+
+      <p class="form-error" data-form-error role="alert" hidden></p>
+
+      <div class="form-nav">
+        <button class="btn btn-quiet" type="button" data-prev>Geri</button>
+        <button class="btn" type="button" data-next>Devam</button>
+        <button class="btn" type="submit" data-submit hidden>Bilgileri gönder</button>
+      </div>
+    </form>
+  </div>
+</section>
+
+<!-- ===================== GÖNDERİLDİ ===================== -->
+<section class="view narrow" data-view="tamam" hidden>
+  <span class="lamp lamp-on lamp-big" aria-hidden="true"></span>
+  <h1>Bilgileriniz bize ulaştı.</h1>
+  <p class="lead">Başvuru kodunuz <strong class="ref" data-ref>—</strong>. Bizi ararken bu kodu söyleyebilirsiniz.</p>
+  <p>Bilgilerinizi 1 iş günü içinde kontrol edip eksik kalan yerler için sizi arayacağız. Asistanınız hazır olduğunda yönlendirme kodunuzu göndereceğiz.</p>
+  <p>Bu arada yönlendirmenin nasıl yapıldığına göz atabilirsiniz.</p>
+  <a class="btn" href="#/rehber">Kurulum rehberini aç</a>
+</section>
+
+<!-- ===================== REHBER ===================== -->
+<section class="view guide" data-view="rehber" hidden>
+  <h1>Kurulum rehberi</h1>
+  <p class="lead">Asistanınızın çağrıları cevaplaması için mevcut numaranızı size özel hatta yönlendirmeniz yeterli. Numaranız değişmez, istediğiniz an geri alabilirsiniz.</p>
+
+  <ol class="guide-steps">
+    <li>
+      <h2>Bilgilerinizi gönderin</h2>
+      <p>Kurulum formunu doldurun. Eksik kalan yerleri sizi arayıp birlikte tamamlarız.</p>
+      <a class="btn btn-quiet btn-small" href="#/kurulum">Formu aç</a>
+    </li>
+
+    <li>
+      <h2>Size özel hattı açalım</h2>
+      <p>Asistanınız için 0850 ile başlayan bir hat açarız. Bu numarayı müşterileriniz görmez; yalnızca yönlendirme hedefidir. Hat hazır olduğunda numarayı size göndeririz.</p>
+    </li>
+
+    <li>
+      <h2>Mevcut numaranızı yönlendirin</h2>
+      <p>Aşağıdaki kodları, müşterilerin aradığı telefondan tuşlayıp arama tuşuna basın. Kodlardaki <code>0850XXXXXXX</code> yerine size gönderdiğimiz numarayı yazın.</p>
+
+      <div class="tabs" data-tabs>
+        <div class="tab-list" role="tablist" aria-label="Hat türü">
+          <button role="tab" id="tab-cep" aria-controls="panel-cep" aria-selected="true">Cep hattı</button>
+          <button role="tab" id="tab-sabit" aria-controls="panel-sabit" aria-selected="false" tabindex="-1">Sabit hat veya santral</button>
+        </div>
+
+        <div class="tab-panel" role="tabpanel" id="panel-cep" aria-labelledby="tab-cep">
+          <p>Turkcell, Vodafone ve Türk Telekom hatlarında aynı kodlar kullanılır.</p>
+          <table class="codes">
+            <caption>Önerilen düzen: üç kodu da girin. Telefonu siz açamadığınızda asistan cevap verir.</caption>
+            <thead><tr><th scope="col">Ne zaman asistana gitsin</th><th scope="col">Tuşlayın</th></tr></thead>
+            <tbody>
+              <tr><td>Meşgulken</td><td><code>**67*0850XXXXXXX#</code></td></tr>
+              <tr><td>20 saniye cevap verilmezse</td><td><code>**61*0850XXXXXXX**20#</code></td></tr>
+              <tr><td>Telefon kapalı veya kapsama dışındayken</td><td><code>**62*0850XXXXXXX#</code></td></tr>
+            </tbody>
+          </table>
+          <table class="codes">
+            <thead><tr><th scope="col">Diğer</th><th scope="col">Tuşlayın</th></tr></thead>
+            <tbody>
+              <tr><td>Tüm çağrılar her zaman asistana</td><td><code>**21*0850XXXXXXX#</code></td></tr>
+              <tr><td>Tüm yönlendirmeleri iptal et</td><td><code>##002#</code></td></tr>
+            </tbody>
+          </table>
+          <p class="hint">Yönlendirilen çağrılar hattınızın dakika paketinden düşebilir; tarifenizi operatörünüzden öğrenin. Kodlar çalışmazsa operatörünüzün müşteri hizmetleri telefondan birkaç dakikada açar.</p>
+        </div>
+
+        <div class="tab-panel" role="tabpanel" id="panel-sabit" aria-labelledby="tab-sabit" hidden>
+          <p>Sabit hatlarda ve santrallerde yönlendirme cihaza göre değişir. En kolayı şudur:</p>
+          <ul class="plain">
+            <li>Bulut santral kullanıyorsanız (Netgsm, Verimor, Bulutfon vb.) yönetim panelinde "çağrı yönlendirme" bölümüne size gönderdiğimiz numarayı yazın.</li>
+            <li>Masa üstü santraliniz varsa kurulumu yapan firmadan "cevapsız ve meşgulde dış numaraya yönlendirme" isteyin.</li>
+            <li>Türk Telekom sabit hattında yönlendirme için 444 1 444'ü arayabilirsiniz.</li>
+          </ul>
+          <p>İsterseniz santral firmanızla biz konuşalım; formda santral bilgisini yazmanız yeterli.</p>
+        </div>
+      </div>
+    </li>
+
+    <li>
+      <h2>Test araması yapın</h2>
+      <p>Başka bir telefondan numaranızı arayın ve açmayın. Kontrol edin:</p>
+      <ul class="checklist">
+        <li>Asistan işletmenizin adıyla karşıladı mı?</li>
+        <li>Bir hizmet için saat önerdi ve randevuyu aldı mı?</li>
+        <li>Onay mesajı telefonunuza geldi mi?</li>
+        <li>"Yetkiliyle görüşmek istiyorum" deyince çağrı aktarma numaranıza geldi mi?</li>
+      </ul>
+      <p>Bir şey beklediğiniz gibi değilse bize yazın; aynı gün düzeltiriz.</p>
+    </li>
+
+    <li>
+      <h2>Müşterilerinizi bilgilendirin</h2>
+      <p>Asistan her görüşmenin başında yapay zekâ olduğunu ve görüşmenin kaydedildiğini söyler. Web sitenizdeki aydınlatma metnine şu paragrafı eklemenizi öneririz:</p>
+      <blockquote class="sample">Telefonla yaptığınız başvurular, randevu işlemlerinin yürütülmesi amacıyla yapay zekâ destekli bir asistan tarafından karşılanır. Görüşmeler hizmet kalitesi ve randevu kaydı amacıyla kaydedilir ve en fazla [süre] saklanır. Haklarınız ve başvuru yolları için [iletişim] adresine yazabilirsiniz.</blockquote>
+      <p class="hint">Bu metin örnektir. Yayınlamadan önce hukuk danışmanınıza onaylatın.</p>
+    </li>
+  </ol>
+
+  <aside class="undo">
+    <h2>Vazgeçerseniz</h2>
+    <p>Cep hattında <code>##002#</code> tuşlayın. Tüm yönlendirmeler kalkar ve telefonunuz eskisi gibi çalar.</p>
+  </aside>
+</section>
+
+</main>
+
+<footer class="foot">
+  <p class="foot-brand" data-brand>Açık Hat</p>
+  <p>İşletmeler için Türkçe sesli asistan</p>
+</footer>
+
+<script src="/site.js" type="module"></script>
+</body>
+</html>

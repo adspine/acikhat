@@ -1,0 +1,95 @@
+{
+  "name": "tr-resepsiyonist",
+  "rules": [
+    {
+      "type": "alias",
+      "string_to_replace": "SMS",
+      "alias": "esemes"
+    },
+    {
+      "type": "alias",
+      "string_to_replace": "TL",
+      "alias": "lira"
+    },
+    {
+      "type": "alias",
+      "string_to_replace": "KVKK",
+      "alias": "kave kaka"
+    },
+    {
+      "type": "alias",
+      "string_to_replace": "09.00",
+      "alias": "9"
+    },
+    {
+      "type": "alias",
+      "string_to_replace": "10.00",
+      "alias": "10"
+    },
+    {
+      "type": "alias",
+      "string_to_replace": "11.00",
+      "alias": "11"
+    },
+    {
+      "type": "alias",
+      "string_to_replace": "12.00",
+      "alias": "12"
+    },
+    {
+      "type": "alias",
+      "string_to_replace": "13.00",
+      "alias": "13"
+    },
+    {
+      "type": "alias",
+      "string_to_replace": "14.00",
+      "alias": "14"
+    },
+    {
+      "type": "alias",
+      "string_to_replace": "15.00",
+      "alias": "15"
+    },
+    {
+      "type": "alias",
+      "string_to_replace": "16.00",
+      "alias": "16"
+    },
+    {
+      "type": "alias",
+      "string_to_replace": "17.00",
+      "alias": "17"
+    },
+    {
+      "type": "alias",
+      "string_to_replace": "18.00",
+      "alias": "18"
+    },
+    {
+      "type": "alias",
+      "string_to_replace": "19.00",
+      "alias": "19"
+    },
+    {
+      "type": "alias",
+      "string_to_replace": "20.00",
+      "alias": "20"
+    },
+    {
+      "type": "alias",
+      "string_to_replace": "21.00",
+      "alias": "21"
+    },
+    {
+      "type": "alias",
+      "string_to_replace": "22.00",
+      "alias": "22"
+    },
+    {
+      "type": "alias",
+      "string_to_replace": "23.00",
+      "alias": "23"
+    }
+  ]
+}

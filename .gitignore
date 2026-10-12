@@ -1,0 +1,29 @@
+# Bağımlılıklar ve derleme çıktıları
+node_modules/
+panel/node_modules/
+dist/
+build/
+web/panel/
+
+# Gizli bilgiler: asla repoya girmez
+.env
+.env.*
+!.env.example
+secrets/
+
+# Yerel veri: veritabanı (müşteri randevuları, çağrı kayıtları), ses örnekleri
+data/
+samples/
+
+# Editör ve araç dosyaları
+.idea/
+.DS_Store
+
+# Claude Code: projeye kurulan skill'ler (skills-lock.json ile yeniden kurulur)
+.claude/skills/
+.claude/settings.local.json
+
+# Gerçek firma ayarları ve iş planı: müşteri bilgisi ve fiyat hesapları açık repoya girmez
+tenants/*.json
+!tenants/demo-spa.json
+sesli_ai_resepsiyonist_proje_ozeti.md

@@ -1,0 +1,19 @@
+node_modules
+data
+build
+samples
+secrets
+test
+docs
+# scripts: yalnızca create-user canlıda gerekli
+scripts/*
+!scripts/create-user.ts
+.env
+.env.*
+.idea
+.claude
+.git
+*.md
+!agent/**/*.md
+panel/node_modules
+web/panel

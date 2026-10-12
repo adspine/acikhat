@@ -1,0 +1,38 @@
+# Fly.io dağıtım ayarı. Kurulum: fly deploy
+app = "acikhat-resepsiyon"
+# Chicago: ElevenLabs'in ses sunucuları ABD'nin ortasında (Iowa); araç çağrıları buraya gelir
+primary_region = "ord"
+
+[build]
+  dockerfile = "Dockerfile"
+
+[env]
+  PORT = "8080"
+  NODE_ENV = "production"
+  DB_PATH = "/data/app.db"
+  SMS_PROVIDER = "console"
+  WHATSAPP_PROVIDER = "console"
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  # Telefon görüşmesi sırasında araç çağrısı gelir: sunucu asla uyumamalı
+  auto_stop_machines = "off"
+  auto_start_machines = true
+  min_machines_running = 1
+
+  [[http_service.checks]]
+    interval = "30s"
+    timeout = "5s"
+    grace_period = "20s"
+    method = "GET"
+    path = "/health"
+
+# SQLite veritabanı: makine yeniden başlasa da kalır, Fly günlük anlık yedek alır
+[mounts]
+  source = "data"
+  destination = "/data"
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "512mb"

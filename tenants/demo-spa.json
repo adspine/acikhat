@@ -1,0 +1,93 @@
+{
+  "id": "demo-spa",
+  "name": "Lavanta Spa",
+  "timezone": "Europe/Istanbul",
+  "phoneNumbers": ["+908500000000"],
+  "agentIds": ["agent_9701m4nct3h0fsrs7fnjhk22j6hr"],
+  "hours": {
+    "1": [["10:00", "21:00"]],
+    "2": [["10:00", "21:00"]],
+    "3": [["10:00", "21:00"]],
+    "4": [["10:00", "21:00"]],
+    "5": [["10:00", "22:00"]],
+    "6": [["10:00", "22:00"]],
+    "7": [["11:00", "19:00"]]
+  },
+  "closedDates": ["2026-10-29"],
+  "slotStepMinutes": 15,
+  "minLeadMinutes": 60,
+  "maxDaysAhead": 30,
+  "services": [
+    {
+      "id": "klasik-masaj-60",
+      "name": "Klasik masaj (60 dakika)",
+      "aliases": ["masaj", "isveç masajı", "rahatlatıcı masaj", "klasik masaj"],
+      "durationMin": 60,
+      "bufferMin": 15,
+      "priceTRY": 2500,
+      "roomType": "tek"
+    },
+    {
+      "id": "aromaterapi-90",
+      "name": "Aromaterapi masajı (90 dakika)",
+      "aliases": ["aromaterapi", "yağlı masaj"],
+      "durationMin": 90,
+      "bufferMin": 15,
+      "priceTRY": 3400,
+      "roomType": "tek"
+    },
+    {
+      "id": "cift-masaj-60",
+      "name": "Çift masajı (60 dakika)",
+      "aliases": ["çift masajı", "iki kişilik masaj", "eşimle masaj"],
+      "durationMin": 60,
+      "bufferMin": 15,
+      "priceTRY": 4800,
+      "roomType": "cift",
+      "staffCount": 2
+    },
+    {
+      "id": "hamam-kese-45",
+      "name": "Türk hamamı kese köpük (45 dakika)",
+      "aliases": ["hamam", "kese", "kese köpük"],
+      "durationMin": 45,
+      "bufferMin": 15,
+      "priceTRY": 1800,
+      "roomType": "hamam"
+    }
+  ],
+  "staff": [
+    { "id": "ayse", "name": "Ayşe", "gender": "kadin", "services": ["klasik-masaj-60", "aromaterapi-90", "cift-masaj-60"] },
+    { "id": "elif", "name": "Elif", "gender": "kadin", "services": ["klasik-masaj-60", "hamam-kese-45", "cift-masaj-60"] },
+    {
+      "id": "murat",
+      "name": "Murat",
+      "gender": "erkek",
+      "services": ["klasik-masaj-60", "aromaterapi-90", "hamam-kese-45"],
+      "hours": {
+        "1": [["14:00", "21:00"]],
+        "2": [["14:00", "21:00"]],
+        "3": [],
+        "4": [["14:00", "21:00"]],
+        "5": [["14:00", "22:00"]],
+        "6": [["10:00", "22:00"]],
+        "7": [["11:00", "19:00"]]
+      }
+    }
+  ],
+  "rooms": [
+    { "id": "oda-1", "type": "tek" },
+    { "id": "oda-2", "type": "tek" },
+    { "id": "cift-1", "type": "cift" },
+    { "id": "hamam-1", "type": "hamam" }
+  ],
+  "handoff": { "transferNumber": "+905000000000" },
+  "sms": { "sender": "LAVANTASPA" },
+  "faq": [
+    { "q": "Adres", "a": "Örnek Mahallesi, Lavanta Sokak No: 1, Kadıköy, İstanbul." },
+    { "q": "Otopark", "a": "Binanın önünde ücretsiz otopark var." },
+    { "q": "İptal politikası", "a": "Randevudan en az 24 saat önce ücretsiz iptal edilebilir." },
+    { "q": "Ödeme", "a": "Ödeme spada nakit veya kartla yapılır, telefonda ödeme alınmaz." },
+    { "q": "Hamile misafirler", "a": "Hamilelikte masaj için doktor onayı gerekir; detay için resepsiyon bilgi verir." }
+  ]
+}

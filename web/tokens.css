@@ -1,0 +1,27 @@
+/* Açık Hat ortak tasarım değişkenleri: tanıtım sitesi ve firma paneli aynı kimliği kullanır.
+   Renkler Bolu'nun çam ve göl tonlarından; amber yalnızca dikkat gerektiren şeyler için
+   ("hat açık" lambası, bekleyen geri arama, kaçan çağrı). */
+:root {
+  --sis: #edf1ef;        /* sayfa zemini */
+  --kagit: #fbfcfb;      /* form ve kart yüzeyi */
+  --cam: #13332d;        /* metin, koyu yüzey */
+  --cam-soluk: #4a645e;  /* ikincil metin */
+  --gol: #1b5e73;        /* eylem */
+  --gol-koyu: #134656;
+  --gol-acik: #e3eef1;   /* seçili satır, eylem zemini */
+  --cizgi: #ccd7d3;
+  --cizgi-acik: #e1e8e5;
+  --lamba: #e4a11b;      /* dikkat: canlı, bekleyen, kaçan */
+  --lamba-acik: #fbf0d6;
+  --hata: #a4271f;
+  --hata-acik: #f6e3e1;
+  --tamam: #2e6b4f;
+  --tamam-acik: #e1efe7;
+
+  --display: "Unbounded", "Arial Black", sans-serif;
+  --text: "Onest", system-ui, sans-serif;
+
+  --gutter: clamp(16px, 4vw, 40px);
+  --max: 1160px;
+  color-scheme: light;
+}
