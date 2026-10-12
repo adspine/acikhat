@@ -42,7 +42,8 @@ export function createVoiceCatalog(apiKey: string, fetchFn: typeof fetch = fetch
           const g = v.labels?.gender;
           return {
             id: v.voice_id,
-            name: title(v.name.split(/\s+-\s+/)[0] ?? v.name),
+            // Panelde yalnızca ilk ad gösterilir ("Duygu Eris" → "Duygu"); açıklama eki (" - Genç, samimi") ve soyad atılır
+            name: title((v.name.split(/\s+-\s+/)[0] ?? v.name).trim().split(/\s+/)[0] ?? v.name),
             gender: g === "male" ? "male" : g === "female" ? "female" : "neutral",
             tags: [AGE[v.labels?.age ?? ""], STYLE[v.labels?.descriptive ?? ""]].filter((x): x is string => !!x),
             previewUrl: v.preview_url ?? null,
