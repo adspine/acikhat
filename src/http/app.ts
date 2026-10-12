@@ -45,6 +45,12 @@ export function createApp(deps: Deps) {
     await next();
     if (c.req.path.endsWith(".m4a")) c.header("content-type", "audio/mp4");
   });
+  // Tanıtım sitesi dosyaları adlarında sürüm taşımaz; tarayıcı her seferinde değişip değişmediğini sormalı
+  app.use("/*", async (c, next) => {
+    await next();
+    const p = c.req.path;
+    if (!p.startsWith("/panel/assets/") && (p === "/" || /.(css|js|html|json)$/.test(p))) c.header("cache-control", "no-cache");
+  });
   app.use("/*", serveStatic({ root: "./web" }));
   // Firma paneli (panel/ derlemesi web/panel/ altında): kendi yönlendiricisi olduğu için bilinmeyen alt yollar panele düşer
   app.get("/panel", (c) => c.redirect("/panel/"));

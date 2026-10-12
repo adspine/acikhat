@@ -7,138 +7,352 @@
 <meta name="description" content="İşletmenizin telefonlarını 7/24 cevaplayan, takviminizden boş saat bulup randevu yazan Türkçe sesli asistan. Kurulum formu ve numara yönlendirme rehberi.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600&family=Unbounded:wght@500;600&display=swap&subset=latin-ext" rel="stylesheet">
-<link rel="stylesheet" href="/tokens.css">
-<link rel="stylesheet" href="/site.css">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/tokens.css?v=12">
+<link rel="stylesheet" href="/site.css?v=12">
 </head>
 <body>
 <a class="skip" href="#icerik">İçeriğe geç</a>
 
-<header class="top">
-  <a class="brand" href="#/" aria-label="Ana sayfa"><span class="brand-lamp" aria-hidden="true"></span><span data-brand>Açık Hat</span></a>
-  <nav class="top-nav" aria-label="Ana menü">
-    <a href="#/rehber" data-nav="rehber">Kurulum rehberi</a>
-    <a class="btn btn-small" href="#/kurulum" data-nav="kurulum">Kuruluma başla</a>
-  </nav>
+<header class="top" data-top>
+  <div class="top-bar">
+    <a class="brand" href="#/" aria-label="Ana sayfa"><span class="brand-lamp" aria-hidden="true"></span><span data-brand>Açık Hat</span></a>
+    <nav class="top-nav" id="ana-menu" aria-label="Ana menü">
+      <a href="#/" data-nav="home" data-spy="top">Ana sayfa</a>
+      <a href="#/nasil" data-spy="nasil">Nasıl çalışır</a>
+      <a href="#/ozellikler" data-spy="ozellikler">Özellikler</a>
+      <a href="#/fiyatlandirma" data-spy="fiyatlandirma">Fiyatlandırma</a>
+      <a href="#/sss" data-spy="sss">SSS</a>
+      <a href="#/rehber" data-nav="rehber">Kurulum rehberi</a>
+      <a href="#/iletisim" data-spy="iletisim">İletişim</a>
+      <div class="top-auth">
+        <a class="btn btn-glass btn-small" href="/panel/">Giriş yap</a>
+        <a class="btn btn-small" href="#/kurulum" data-nav="kurulum">Üye ol</a>
+      </div>
+    </nav>
+    <button class="menu-toggle" type="button" data-menu aria-expanded="false" aria-controls="ana-menu" aria-label="Menüyü aç">
+      <span></span><span></span>
+    </button>
+  </div>
 </header>
 
 <main id="icerik">
 
 <!-- ===================== TANITIM ===================== -->
 <section class="view" data-view="home">
-  <div class="hero">
-    <div class="hero-copy">
-      <h1>Telefonunuz çaldığında, biri hep açar.</h1>
-      <p class="lead"><span data-brand>Açık Hat</span>, işletmenizin telefonunu yapay zekâ ile cevaplar. Takviminizden boş saati bulur, randevuyu yazar ve onayı müşterinize gönderir. Gece yarısı da, resepsiyon doluyken de.</p>
-      <div class="hero-actions">
-        <a class="btn" href="#/kurulum">Kuruluma başla</a>
-        <a class="btn btn-quiet" href="#/rehber">Kurulum nasıl yapılır?</a>
-      </div>
-      <p class="hero-note">Numaranız değişmez. Müşterileriniz bildikleri numarayı aramaya devam eder.</p>
+
+  <!-- ===== Açılış ===== -->
+  <div class="hero" id="top" data-section="top">
+    <div class="hero-sky" aria-hidden="true">
+      <span class="orb orb-lake" data-parallax="0.18"></span>
+      <span class="orb orb-lamp" data-parallax="-0.1"></span>
+      <span class="orb orb-pine" data-parallax="0.28"></span>
+      <svg class="hero-rings" data-parallax="0.06" viewBox="0 0 800 800" fill="none">
+        <circle cx="400" cy="400" r="130"/><circle cx="400" cy="400" r="230"/><circle cx="400" cy="400" r="330"/><circle cx="400" cy="400" r="395"/>
+      </svg>
     </div>
 
-    <figure class="call" aria-label="Örnek görüşme">
-      <div class="call-head">
-        <span class="lamp" data-lamp aria-hidden="true"></span>
-        <div>
-          <p class="call-title">Örnek görüşme</p>
-          <p class="call-sub">Bir spa'nın asistanı, gerçek sesiyle</p>
+    <div class="wrap hero-grid">
+      <div class="hero-copy">
+        <p class="pill"><span class="lamp lamp-on" aria-hidden="true"></span>Hat şu an açık, 7/24</p>
+        <h1>Telefonunuz çaldığında, biri hep açar.</h1>
+        <p class="lead"><span data-brand>Açık Hat</span>, işletmenizin telefonunu yapay zekâ ile cevaplar. Takviminizden boş saati bulur, randevuyu yazar ve onayı müşterinize gönderir. Gece yarısı da, resepsiyon doluyken de.</p>
+        <div class="hero-actions">
+          <a class="btn btn-lg" href="#/kurulum">Kuruluma başla</a>
+          <a class="btn btn-glass btn-lg" href="#/nasil">Nasıl çalışır?</a>
+        </div>
+        <p class="hero-note">Numaranız değişmez. Müşterileriniz bildikleri numarayı aramaya devam eder.</p>
+      </div>
+
+      <div class="hero-stage">
+        <figure class="call" aria-label="Örnek görüşme">
+          <div class="call-head">
+            <span class="lamp" data-lamp aria-hidden="true"></span>
+            <div>
+              <p class="call-title">Örnek görüşme</p>
+              <p class="call-sub">Bir spa'nın asistanı, gerçek sesiyle</p>
+            </div>
+            <span class="wave" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></span>
+          </div>
+          <ol class="transcript" data-transcript aria-live="off"></ol>
+          <div class="player">
+            <button class="play" type="button" data-play aria-label="Görüşmeyi dinle">
+              <svg class="icon-play" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l11-6.5z"/></svg>
+              <svg class="icon-pause" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5h4v14H7zM13 5h4v14h-4z"/></svg>
+            </button>
+            <div class="timeline">
+              <div class="bar"><span data-progress></span></div>
+              <p class="time"><span data-time>0:00</span> / <span data-duration>0:38</span></p>
+            </div>
+          </div>
+          <audio data-audio preload="none" src="/audio/demo.m4a"></audio>
+        </figure>
+
+        <div class="float float-a glass" data-lag="0.12" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15" rx="3"/><path d="M8 3v4M16 3v4M3.5 10h17M9 15l2 2 4-4"/></svg>
+          <div><strong>Randevu onaylandı</strong><span>Yarın 14:30, aromaterapi masajı</span></div>
+        </div>
+        <div class="float float-b glass" data-lag="0.2" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><path d="M4 5.5C4 4.7 4.7 4 5.5 4h2.2c.5 0 .9.3 1 .8l.7 2.6c.1.4 0 .8-.3 1.1L7.9 9.9a12 12 0 0 0 6.2 6.2l1.4-1.2c.3-.3.7-.4 1.1-.3l2.6.7c.5.1.8.5.8 1v2.2c0 .8-.7 1.5-1.5 1.5C10.5 20 4 13.5 4 5.5z"/></svg>
+          <div><strong>Gece 02:14</strong><span>Çağrı karşılandı</span></div>
+        </div>
+        <div class="float float-c glass" data-lag="0.07" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>
+          <div><strong>WhatsApp</strong><span>Onay mesajı gönderildi</span></div>
         </div>
       </div>
-      <ol class="transcript" data-transcript aria-live="off"></ol>
-      <div class="player">
-        <button class="play" type="button" data-play aria-label="Görüşmeyi dinle">
-          <svg class="icon-play" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l11-6.5z"/></svg>
-          <svg class="icon-pause" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5h4v14H7zM13 5h4v14h-4z"/></svg>
-        </button>
-        <div class="timeline">
-          <div class="bar"><span data-progress></span></div>
-          <p class="time"><span data-time>0:00</span> / <span data-duration>0:38</span></p>
-        </div>
-      </div>
-      <audio data-audio preload="none" src="/audio/demo.m4a"></audio>
-    </figure>
+    </div>
+
+    <a class="scroll-cue" href="#/nasil" aria-label="Aşağı kaydır"><span></span></a>
   </div>
 
-  <section class="band" aria-labelledby="adimlar-baslik">
-    <h2 id="adimlar-baslik">Kurulum dört adımda</h2>
-    <ol class="steps">
-      <li>
-        <h3>Bilgilerinizi verin</h3>
-        <p>Hizmetleriniz, fiyatlarınız, çalışma saatleriniz ve ekibiniz. Yaklaşık 15 dakika sürer.</p>
-      </li>
-      <li>
-        <h3>Asistanınızı hazırlayalım</h3>
-        <p>Bilgilerinizi kontrol eder, size özel hattı açar ve asistanı onlarca test görüşmesinden geçiririz.</p>
-      </li>
-      <li>
-        <h3>Numaranızı yönlendirin</h3>
-        <p>Telefonunuzdan tek bir kod. Cevaplayamadığınız çağrılar asistana gider.</p>
-      </li>
-      <li>
-        <h3>Deneyin, sonra yayına alın</h3>
-        <p>Kendiniz arayıp randevu alın. Memnun kaldığınızda tüm çağrılar için açarız.</p>
-      </li>
-    </ol>
+  <!-- ===== Rakamlar ===== -->
+  <section class="facts" aria-label="Kısaca">
+    <div class="wrap facts-grid">
+      <div class="fact"><strong>7/24</strong><span>Gece, hafta sonu, bayram. Hat hep açık.</span></div>
+      <div class="fact"><strong>Aynı anda</strong><span>Birden fazla görüşmeyi birlikte yürütür.</span></div>
+      <div class="fact"><strong>15 dk</strong><span>Bilgi formunu doldurmak bu kadar sürer.</span></div>
+      <div class="fact"><strong>Aynı numara</strong><span>Müşterileriniz bildikleri numarayı arar.</span></div>
+    </div>
   </section>
 
-  <section class="band split" aria-labelledby="sinirlar-baslik">
-    <h2 id="sinirlar-baslik">Asistan neyi yapar, neyi yapmaz</h2>
-    <div class="columns">
-      <div>
-        <h3 class="list-title list-yes">Yapar</h3>
-        <ul class="plain">
-          <li>Randevu alır; saati yalnızca takviminizdeki boş yerlerden önerir</li>
-          <li>Fiyat, adres, çalışma saati gibi sorulara verdiğiniz bilgiyle cevap verir</li>
-          <li>Randevuyu yazmadan önce gün, saat ve ismi müşteriye tekrar okur</li>
-          <li>Onay mesajını WhatsApp veya SMS ile gönderir</li>
-          <li>Şikâyet ve özel isteklerde çağrıyı size aktarır ya da geri arama notu bırakır</li>
-          <li>Hat doluyken arayanı bekletir; kapatırsa kaçan çağrı olarak listeler</li>
-        </ul>
+  <!-- ===== Nasıl çalışır ===== -->
+  <section class="how" id="nasil" data-section="nasil" aria-labelledby="nasil-baslik">
+    <div class="wrap how-grid">
+      <div class="how-side">
+        <h2 id="nasil-baslik">Kurulum dört adımda</h2>
+        <p class="lead">Teknik bilgiye gerek yok. Siz işletmenizi anlatırsınız, gerisini biz hazırlarız.</p>
+        <ol class="how-dots" aria-hidden="true"><li class="is-on"></li><li></li><li></li><li></li></ol>
+        <a class="btn" href="#/kurulum">Kuruluma başla</a>
       </div>
-      <div>
-        <h3 class="list-title list-no">Yapmaz</h3>
-        <ul class="plain">
-          <li>Ödeme veya kart bilgisi almaz</li>
-          <li>Sağlık konusunda tavsiye vermez</li>
-          <li>Bilmediği bir fiyatı ya da kampanyayı uydurmaz</li>
-          <li>Takviminizde olmayan bir saati önermez</li>
-          <li>Kendini insan gibi tanıtmaz; görüşmenin başında yapay zekâ olduğunu söyler</li>
+      <ol class="how-list">
+        <li class="how-card glass is-active">
+          <span class="how-no" aria-hidden="true">1</span>
+          <h3>Bilgilerinizi verin</h3>
+          <p>Hizmetleriniz, fiyatlarınız, çalışma saatleriniz ve ekibiniz. Yaklaşık 15 dakika sürer; yarıda bırakabilir, sonra devam edebilirsiniz.</p>
+        </li>
+        <li class="how-card glass">
+          <span class="how-no" aria-hidden="true">2</span>
+          <h3>Asistanınızı hazırlayalım</h3>
+          <p>Bilgilerinizi kontrol eder, size özel hattı açar ve asistanı onlarca test görüşmesinden geçiririz.</p>
+        </li>
+        <li class="how-card glass">
+          <span class="how-no" aria-hidden="true">3</span>
+          <h3>Numaranızı yönlendirin</h3>
+          <p>Telefonunuzdan tek bir kod. Cevaplayamadığınız çağrılar asistana gider. İstediğiniz an tek kodla geri alırsınız.</p>
+        </li>
+        <li class="how-card glass">
+          <span class="how-no" aria-hidden="true">4</span>
+          <h3>Deneyin, sonra yayına alın</h3>
+          <p>Kendiniz arayıp randevu alın. Memnun kaldığınızda tüm çağrılar için açarız.</p>
+        </li>
+      </ol>
+    </div>
+  </section>
+
+  <!-- ===== Kayan büyük yazı ===== -->
+  <section class="marquee" aria-label="Açık Hat ne yapar" data-marquee>
+    <p class="marquee-row" data-slide="-1"><span>Cevaplar</span><span>Dinler</span><span>Randevu yazar</span><span>Cevaplar</span><span>Dinler</span></p>
+    <p class="marquee-row marquee-row-2" data-slide="1"><span>Onay gönderir</span><span>Not bırakır</span><span>Aktarır</span><span>Onay gönderir</span><span>Not bırakır</span></p>
+  </section>
+
+  <!-- ===== Özellikler ===== -->
+  <section class="features" id="ozellikler" data-section="ozellikler" aria-labelledby="oz-baslik">
+    <div class="wrap">
+      <div class="section-head">
+        <h2 id="oz-baslik">Asistan neyi yapar, neyi yapmaz</h2>
+        <p class="lead">Yapacağı işi iyi yapar, bilmediği yerde uydurmaz.</p>
+      </div>
+
+      <div class="bento">
+        <article class="tile tile-wide tile-dark" data-reveal>
+          <div class="tile-copy">
+            <h3>Saati yalnızca boş yerlerden önerir</h3>
+            <p>Asistan takviminize bakar; çalışma saatini, terapisti, odayı ve hazırlık süresini hesaba katar. Saati kendisi uyduramaz, çifte randevu yazılmaz.</p>
+          </div>
+          <div class="slots" aria-hidden="true" data-parallax="0.05">
+            <span class="slot">10:00</span><span class="slot is-taken">11:30</span><span class="slot">13:00</span>
+            <span class="slot is-pick">14:30</span><span class="slot is-taken">16:00</span><span class="slot">17:30</span>
+          </div>
+        </article>
+
+        <article class="tile" data-reveal>
+          <svg class="tile-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>
+          <h3>Önce teyit, sonra kayıt</h3>
+          <p>Randevuyu yazmadan önce gün, saat ve ismi müşteriye tekrar okur.</p>
+        </article>
+
+        <article class="tile" data-reveal>
+          <svg class="tile-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6.5h16v10H9l-4 3.5v-3.5H4z"/></svg>
+          <h3>Onay mesajı <span class="soon">Yakında</span></h3>
+          <p>Randevu onayı WhatsApp veya SMS ile gidecek. İkisini seçerseniz önce WhatsApp denenecek.</p>
+        </article>
+
+        <article class="tile" data-reveal>
+          <svg class="tile-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4h10v3.5a5 5 0 0 1-10 0zM7 20h10M12 12.5V20"/></svg>
+          <h3>İşinizi bilir</h3>
+          <p>Fiyat, adres, çalışma saati gibi sorulara verdiğiniz bilgiyle cevap verir.</p>
+        </article>
+
+        <article class="tile tile-lamp" data-reveal>
+          <svg class="tile-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5h14v14H5zM9 9h6M9 13h4"/></svg>
+          <h3>Kaçan çağrı kalmaz</h3>
+          <p>Hat doluyken arayan bekleme anonsu dinler. Beklemeden kapatanlar size geri arama listesi olarak gelir.</p>
+        </article>
+
+        <article class="tile tile-wide" data-reveal>
+          <div class="tile-copy">
+            <h3>Şikâyet ve özel isteklerde insana aktarır</h3>
+            <p>Çağrıyı belirlediğiniz numaraya aktarır ya da geri arama notu bırakır. Siz yokken bile müşteri yanıtsız kalmaz.</p>
+          </div>
+          <div class="handoff" aria-hidden="true">
+            <span class="handoff-dot"></span><span class="handoff-line"></span><span class="handoff-dot handoff-dot-end"></span>
+          </div>
+        </article>
+      </div>
+
+      <div class="limits" data-reveal>
+        <div class="limits-head">
+          <h3>Sınırlarını bilir</h3>
+          <p>Güvenmeniz için neleri yapmadığını da açıkça yazıyoruz.</p>
+        </div>
+        <ul class="limits-list">
+          <li><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>Ödeme veya kart bilgisi almaz</li>
+          <li><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>Sağlık konusunda tavsiye vermez</li>
+          <li><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>Bilmediği bir fiyatı ya da kampanyayı uydurmaz</li>
+          <li><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>Takviminizde olmayan bir saati önermez</li>
+          <li><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>Kendini insan gibi tanıtmaz; başta yapay zekâ olduğunu söyler</li>
         </ul>
       </div>
     </div>
   </section>
 
-  <section class="band" aria-labelledby="sss-baslik">
-    <h2 id="sss-baslik">Sık sorulanlar</h2>
-    <div class="faq">
-      <details>
-        <summary>Telefon numaram değişecek mi?</summary>
-        <p>Hayır. Size özel bir hat açarız ve mevcut numaranızı oraya yönlendirirsiniz. Müşterileriniz aynı numarayı aramaya devam eder. İstediğiniz an tek kodla eski hâline dönebilirsiniz.</p>
-      </details>
-      <details>
-        <summary>Resepsiyon açıkken de asistan mı cevap verecek?</summary>
-        <p>Siz seçersiniz. En çok tercih edilen düzen: telefonu siz açamadığınızda, meşgulken veya mesai dışında asistan devreye girer.</p>
-      </details>
-      <details>
-        <summary>Aynı anda birden fazla kişi ararsa ne olur?</summary>
-        <p>Asistan aynı anda birden fazla görüşme yapabilir. Tüm hatlar doluysa arayan kısa bir bekleme anonsu dinler. Beklemeden kapatan arayanlar size geri arama listesi olarak gelir.</p>
-      </details>
-      <details>
-        <summary>Müşteri yapay zekâ ile konuştuğunu bilecek mi?</summary>
-        <p>Evet. Görüşmenin başında asistan kendini yapay zekâ olarak tanıtır ve görüşmenin kaydedildiğini söyler. KVKK açısından da doğru olan budur.</p>
-      </details>
-      <details>
-        <summary>Fiyatlarım veya saatlerim değişirse?</summary>
-        <p>Bize bildirmeniz yeterli, aynı gün güncelleriz. Asistan her zaman verdiğiniz son bilgiyle konuşur.</p>
-      </details>
+  <!-- ===== Fiyatlandırma ===== -->
+  <section class="pricing" id="fiyatlandirma" data-section="fiyatlandirma" aria-labelledby="fiyat-baslik">
+    <div class="wrap">
+      <div class="section-head">
+        <h2 id="fiyat-baslik">İşletmenize uygun planı seçin</h2>
+        <p class="lead">Aylık sabit ücret, paket içinde belirli dakika. İhtiyacınız değişirse planınızı birlikte güncelleriz.</p>
+        <p class="launch"><span class="lamp lamp-on" aria-hidden="true"></span>Lansmana özel %25 indirim</p>
+      </div>
+
+      <div class="plans">
+        <article class="plan glass" data-reveal>
+          <h3>Başlangıç</h3>
+          <p class="plan-for">Tek şubeli, çağrı sayısı sınırlı işletmeler</p>
+          <p class="plan-price"><s>$199</s><strong>$149</strong><span>/ ay</span></p>
+          <p class="plan-min"><strong>400</strong> dakika dahil</p>
+          <ul class="ticks ticks-sm">
+            <li>7/24 Türkçe sesli karşılama</li>
+            <li>Takvimden boş saate randevu</li>
+            <li>Fiyat, adres, saat gibi sorulara cevap</li>
+            <li>Çağrı özeti ve geri arama listesi</li>
+            <li>Firma paneli ve raporlar</li>
+          </ul>
+          <a class="btn btn-glass" href="#/kurulum">Başlangıç ile başla</a>
+        </article>
+
+        <article class="plan plan-main" data-reveal>
+          <p class="plan-badge">En çok tercih edilen</p>
+          <h3>Standart</h3>
+          <p class="plan-for">Düzenli randevu trafiği olan spa ve kliniklerin çoğu</p>
+          <p class="plan-price"><s>$399</s><strong>$299</strong><span>/ ay</span></p>
+          <p class="plan-min"><strong>1.000</strong> dakika dahil</p>
+          <ul class="ticks ticks-sm">
+            <li>7/24 Türkçe sesli karşılama</li>
+            <li>Takvimden boş saate randevu</li>
+            <li>Fiyat, adres, saat gibi sorulara cevap</li>
+            <li>Çağrı özeti ve geri arama listesi</li>
+            <li>Firma paneli ve raporlar</li>
+          </ul>
+          <a class="btn btn-lamp" href="#/kurulum">Standart ile başla</a>
+        </article>
+
+        <article class="plan glass" data-reveal>
+          <h3>Pro</h3>
+          <p class="plan-for">Oteller, klinikler ve yoğun çağrı alan işletmeler</p>
+          <p class="plan-price"><s>$799</s><strong>$599</strong><span>/ ay</span></p>
+          <p class="plan-min"><strong>2.500</strong> dakika dahil</p>
+          <ul class="ticks ticks-sm">
+            <li>7/24 Türkçe sesli karşılama</li>
+            <li>Takvimden boş saate randevu</li>
+            <li>Fiyat, adres, saat gibi sorulara cevap</li>
+            <li>Çağrı özeti ve geri arama listesi</li>
+            <li>Firma paneli ve raporlar</li>
+          </ul>
+          <a class="btn btn-glass" href="#/kurulum">Pro ile başla</a>
+        </article>
+      </div>
+
+      <div class="plan-more glass" data-reveal>
+        <div class="plan-incl">
+          <h3>Her pakette ayrıca</h3>
+          <ul class="ticks">
+            <li>Size özel 0850 hattı; numaranız değişmez</li>
+            <li>Takvim bağlantısı: kendi takvimimiz veya Google Takvim</li>
+            <li>Gerektiğinde çağrıyı yetkiliye aktarma, meşgulken bekleme anonsu</li>
+            <li>Fiyat ve saat değişikliklerini panelden kendiniz yayınlama</li>
+            <li>Yayına almadan önce onlarca test görüşmesi</li>
+            <li>WhatsApp ve SMS ile randevu onayı <span class="soon">Yakında</span></li>
+          </ul>
+        </div>
+        <div class="plan-notes">
+          <p><strong>Paket dakikası bitince</strong> her ek dakika $0,30. Kullanımı panelden izlersiniz.</p>
+          <p><strong>Kurulum bedeli yok.</strong> Bilgi formunu doldurun, kurulumu biz yapalım.</p>
+          <p class="plan-fine">Fiyatlar USD cinsindendir ve KDV hariçtir. Üstü çizili tutarlar lansman öncesi liste fiyatlarıdır.</p>
+        </div>
+      </div>
+
+      <p class="plan-case" data-reveal>Dakikaya değil, kaçan randevuya bakın: randevusu 60 $ olan bir spa, ayda yalnızca 20 çağrıyı kurtarsa 1.200 $ ek ciro eder. Panelin Raporlar sayfası asistanın aldığı ve mesai dışında yakaladığı randevuları gösterir. <em>(Örnek hesaptır.)</em></p>
     </div>
   </section>
 
-  <section class="closing">
-    <h2>Başlamak için bilgilerinizi gönderin.</h2>
-    <p>Formu yarıda bırakabilirsiniz; doldurduklarınız bu cihazda saklanır.</p>
-    <a class="btn" href="#/kurulum">Kuruluma başla</a>
+  <!-- ===== SSS ===== -->
+  <section class="faq-section" id="sss" data-section="sss" aria-labelledby="sss-baslik">
+    <div class="wrap faq-grid">
+      <div class="section-head">
+        <h2 id="sss-baslik">Sık sorulanlar</h2>
+        <p class="lead">Aklınıza takılan başka bir şey varsa bize yazın.</p>
+      </div>
+      <div class="faq">
+        <details>
+          <summary>Telefon numaram değişecek mi?</summary>
+          <p>Hayır. Size özel bir hat açarız ve mevcut numaranızı oraya yönlendirirsiniz. Müşterileriniz aynı numarayı aramaya devam eder. İstediğiniz an tek kodla eski hâline dönebilirsiniz.</p>
+        </details>
+        <details>
+          <summary>Resepsiyon açıkken de asistan mı cevap verecek?</summary>
+          <p>Siz seçersiniz. En çok tercih edilen düzen: telefonu siz açamadığınızda, meşgulken veya mesai dışında asistan devreye girer.</p>
+        </details>
+        <details>
+          <summary>Aynı anda birden fazla kişi ararsa ne olur?</summary>
+          <p>Asistan aynı anda birden fazla görüşme yapabilir. Tüm hatlar doluysa arayan kısa bir bekleme anonsu dinler. Beklemeden kapatan arayanlar size geri arama listesi olarak gelir.</p>
+        </details>
+        <details>
+          <summary>Müşteri yapay zekâ ile konuştuğunu bilecek mi?</summary>
+          <p>Evet. Görüşmenin başında asistan kendini yapay zekâ olarak tanıtır ve görüşmenin kaydedildiğini söyler. KVKK açısından da doğru olan budur.</p>
+        </details>
+        <details>
+          <summary>Fiyatlarım veya saatlerim değişirse?</summary>
+          <p>Firma panelinden değiştirip Yayınla'ya basmanız yeterli; kod ya da kurulum gerekmez. Asistan her zaman yayınladığınız son bilgiyle konuşur.</p>
+        </details>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== İletişim ===== -->
+  <section class="closing" id="iletisim" data-section="iletisim" aria-labelledby="iletisim-baslik">
+    <div class="closing-sky" aria-hidden="true">
+      <span class="orb orb-lamp" data-parallax="0.2"></span>
+      <span class="orb orb-lake" data-parallax="-0.15"></span>
+    </div>
+    <div class="wrap closing-inner">
+      <h2 id="iletisim-baslik">Başlamak için bilgilerinizi gönderin.</h2>
+      <p class="lead">Formu yarıda bırakabilirsiniz; doldurduklarınız bu cihazda saklanır. Gönderdikten sonra 1 iş günü içinde sizi arayıp eksikleri birlikte tamamlarız.</p>
+      <div class="hero-actions">
+        <a class="btn btn-lg btn-lamp" href="#/kurulum">Kuruluma başla</a>
+        <a class="btn btn-ghost btn-lg" href="/panel/">Zaten üyeyim, giriş yap</a>
+      </div>
+    </div>
   </section>
 </section>
 
@@ -457,10 +671,23 @@
 </main>
 
 <footer class="foot">
-  <p class="foot-brand" data-brand>Açık Hat</p>
-  <p>İşletmeler için Türkçe sesli asistan</p>
+  <div class="foot-inner">
+    <div>
+      <p class="foot-brand"><span class="brand-lamp" aria-hidden="true"></span><span data-brand>Açık Hat</span></p>
+      <p>İşletmeler için Türkçe sesli asistan</p>
+    </div>
+    <nav class="foot-links" aria-label="Alt menü">
+      <a href="#/nasil">Nasıl çalışır</a>
+      <a href="#/ozellikler">Özellikler</a>
+      <a href="#/fiyatlandirma">Fiyatlandırma</a>
+      <a href="#/sss">SSS</a>
+      <a href="#/rehber">Kurulum rehberi</a>
+      <a href="/panel/">Giriş yap</a>
+      <a href="#/kurulum">Üye ol</a>
+    </nav>
+  </div>
 </footer>
 
-<script src="/site.js" type="module"></script>
+<script src="/site.js?v=12" type="module"></script>
 </body>
 </html>

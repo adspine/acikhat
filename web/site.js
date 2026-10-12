@@ -9,17 +9,23 @@ const $$ = (sel, root = document) => [...root.querySelectorAll(sel)];
 for (const el of $$("[data-brand]")) el.textContent = BRAND;
 
 /* ======================= Yönlendirme ======================= */
-const routes = { "": "home", kurulum: "kurulum", rehber: "rehber", tamam: "tamam" };
+// Ana sayfadaki bölümler de kendi adresiyle açılır (#/fiyatlandirma gibi) ve o bölüme kayar.
+const sections = ["nasil", "ozellikler", "fiyatlandirma", "sss", "iletisim"];
+const routes = { "": "home", kurulum: "kurulum", rehber: "rehber", tamam: "tamam", ...Object.fromEntries(sections.map((k) => [k, "home"])) };
 const titles = {
   home: `${BRAND} — telefonunuzu yapay zekâ ile cevaplayın`,
   kurulum: `Kurulum formu — ${BRAND}`,
   rehber: `Kurulum rehberi — ${BRAND}`,
   tamam: `Bilgileriniz alındı — ${BRAND}`,
 };
+const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)");
+let currentView = null;
 
 function route() {
   const key = location.hash.replace(/^#\/?/, "").split("/")[0];
   const view = routes[key] ?? "home";
+  const changed = view !== currentView;
+  currentView = view;
   for (const v of $$("[data-view]")) v.hidden = v.dataset.view !== view;
   for (const a of $$("[data-nav]")) {
     if (a.dataset.nav === view) a.setAttribute("aria-current", "page");
@@ -27,8 +33,13 @@ function route() {
   }
   document.title = titles[view];
   if (view !== "home") demo.pause();
-  window.scrollTo({ top: 0 });
+  setMenu(false);
+  const target = view === "home" && sections.includes(key) ? document.getElementById(key) : null;
+  if (target) target.scrollIntoView({ behavior: changed || reduceMotion.matches ? "instant" : "smooth", block: "start" });
+  else window.scrollTo({ top: 0, behavior: changed || reduceMotion.matches ? "instant" : "smooth" });
   if (view === "kurulum") wizard.show(wizard.current);
+  spy();
+  effects.refresh();
 }
 
 /* ======================= Örnek görüşme ======================= */
@@ -120,6 +131,138 @@ const demo = (() => {
 
   return { pause: () => audio.pause() };
 })();
+
+
+/* ======================= Üst çubuk, menü ve kaydırma efektleri ======================= */
+const top = $("[data-top]");
+const menuBtn = $("[data-menu]");
+function setMenu(open) {
+  top.classList.toggle("is-open", open);
+  menuBtn.setAttribute("aria-expanded", String(open));
+  menuBtn.setAttribute("aria-label", open ? "Menüyü kapat" : "Menüyü aç");
+}
+menuBtn.addEventListener("click", () => setMenu(menuBtn.getAttribute("aria-expanded") !== "true"));
+document.addEventListener("keydown", (e) => { if (e.key === "Escape") setMenu(false); });
+document.addEventListener("click", (e) => { if (!top.contains(e.target)) setMenu(false); });
+
+// Hangi bölümdeysek menüde o bağlantı vurgulanır
+function spy() {
+  let active = null;
+  if (currentView === "home") {
+    active = "top";
+    const line = innerHeight * 0.4;
+    for (const sec of $$("[data-section]")) if (sec.getBoundingClientRect().top <= line) active = sec.dataset.section;
+  }
+  for (const a of $$("[data-spy]")) a.classList.toggle("is-current", a.dataset.spy === active);
+  for (const a of $$("[data-nav]")) a.classList.toggle("is-current", a.dataset.nav === currentView && currentView !== "home");
+}
+
+const effects = (() => {
+  document.documentElement.classList.add("js");
+  const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
+  let parallax = [];
+  let slides = [];
+  let lagging = [];
+  let ticking = false;
+
+  const reveal = new IntersectionObserver((entries) => {
+    for (const e of entries) if (e.isIntersecting) { e.target.classList.add("is-in"); reveal.unobserve(e.target); }
+  }, { threshold: 0.15, rootMargin: "0px 0px -6% 0px" });
+
+  // Kurulum adımları: ekranın ortasına gelen kart yanar
+  const cards = $$(".how-card");
+  const dots = $$(".how-dots li");
+  const stepIO = new IntersectionObserver((entries) => {
+    for (const e of entries) {
+      if (!e.isIntersecting) continue;
+      const i = cards.indexOf(e.target);
+      cards.forEach((c, n) => c.classList.toggle("is-active", n === i));
+      dots.forEach((d, n) => d.classList.toggle("is-on", n === i));
+    }
+  }, { rootMargin: "-45% 0px -45% 0px" });
+  cards.forEach((c) => stepIO.observe(c));
+
+  function frame() {
+    ticking = false;
+    const vh = innerHeight;
+    top.classList.toggle("is-scrolled", scrollY > 24);
+    spy();
+    if (reduceMotion.matches || currentView !== "home") return;
+    for (const el of parallax) {
+      const r = el.getBoundingClientRect();
+      if (r.bottom < -200 || r.top > vh + 200) continue;
+      const d = r.top + r.height / 2 - vh / 2;
+      el.style.translate = `0 ${(-d * el.__speed).toFixed(1)}px`;
+    }
+    // yüzen kartlar: sayfanın en üstünde yerinde, kaydırdıkça biraz geriden gelir
+    for (const el of lagging) el.style.translate = `0 ${(Math.min(scrollY, vh) * el.__lag).toFixed(1)}px`;
+    for (const el of slides) {
+      const r = el.parentElement.getBoundingClientRect();
+      if (r.bottom < 0 || r.top > vh) continue;
+      const p = clamp((vh - r.top) / (vh + r.height), 0, 1) - 0.5;
+      const w = el.scrollWidth - innerWidth;
+      el.style.translate = `${(p * -el.__dir * Math.max(w, innerWidth * 0.6)).toFixed(1)}px 0`;
+    }
+  }
+  const request = () => { if (!ticking) { ticking = true; requestAnimationFrame(frame); } };
+  addEventListener("scroll", request, { passive: true });
+  addEventListener("resize", request);
+
+  return {
+    refresh() {
+      parallax = $$("[data-parallax]").map((el) => ((el.__speed = parseFloat(el.dataset.parallax)), el));
+      lagging = $$("[data-lag]").map((el) => ((el.__lag = parseFloat(el.dataset.lag)), el));
+      slides = $$("[data-slide]").map((el) => ((el.__dir = parseFloat(el.dataset.slide)), el));
+      $$("[data-reveal]:not(.is-in)").forEach((el, i) => {
+        el.style.setProperty("--d", `${(i % 3) * 0.08}s`);
+        reveal.observe(el);
+      });
+      request();
+    },
+  };
+})();
+
+/* ======================= SSS akordiyonu ======================= */
+// <details> varsayılan olarak anında açılır; yüksekliği kendimiz akıtırız.
+// Niyet (wantOpen) ayrı tutulur: animasyon sürerken tekrar tıklanırsa kutu bulunduğu yükseklikten tersine döner.
+for (const d of $$(".faq details")) {
+  const sum = d.querySelector("summary");
+  let anim = null;
+  let wantOpen = d.open;
+
+  sum.addEventListener("click", (e) => {
+    e.preventDefault();
+    wantOpen = !wantOpen;
+    if (reduceMotion.matches) { d.open = wantOpen; return; }
+
+    const from = d.getBoundingClientRect().height;
+    if (anim) {
+      // eski animasyonun bitiş kodu yeni durumu bozmasın
+      anim.onfinish = anim.oncancel = null;
+      anim.cancel();
+      anim = null;
+    }
+    d.style.height = "";
+    d.classList.toggle("is-closing", !wantOpen);
+    if (wantOpen) d.open = true;
+    const to = wantOpen ? d.getBoundingClientRect().height : sum.getBoundingClientRect().height + 1;
+
+    const mine = d.animate(
+      { height: [from + "px", to + "px"] },
+      { duration: wantOpen ? 560 : 520, easing: wantOpen ? "cubic-bezier(.25,.8,.25,1)" : "cubic-bezier(.45,.05,.2,1)" },
+    );
+    anim = mine;
+    mine.onfinish = () => {
+      if (anim !== mine) return;
+      anim = null;
+      d.style.height = "";
+      if (!wantOpen) {
+        d.open = false;
+        d.classList.remove("is-closing");
+      }
+    };
+  });
+}
 
 /* ======================= Taslak saklama ======================= */
 // Taslak yalnızca bu cihazda tutulur; erişilemezse form yine çalışır.
