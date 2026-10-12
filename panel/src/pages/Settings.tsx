@@ -254,9 +254,8 @@ export function SettingsPage() {
 
           {section === "asistan" && (
             <Group title="Asistan">
-              <Field label="Asistanın sesi" hint="Dinleyip seçin. Asistan görüşmelerde bu sesle konuşur.">
-                {() => <VoicePicker value={config.agent.voiceId} onChange={(id) => set("agent", { ...config.agent, voiceId: id })} />}
-              </Field>
+              <VoicePicker value={config.agent.voiceId} assistantName={config.agent.name} onChange={(id) => set("agent", { ...config.agent, voiceId: id })} />
+              <h3 className="group-sub">Kendini tanıtışı</h3>
               <Field label="Asistanın adı" error={issue("agent.name")}>{(id) => <Input id={id} value={config.agent.name} onChange={(e) => set("agent", { ...config.agent, name: e.target.value })} />}</Field>
               <Field label="Karşılama cümlesi" hint="Boş bırakırsanız varsayılan kullanılır. {firma} ve {ajan} yerine işletme ve asistan adı yazılır. Yapay zekâ ve kayıt bilgilendirmesi KVKK gereği kalmalıdır." optional>
                 {(id, d) => <Textarea id={id} aria-describedby={d} rows={3} value={config.agent.greeting ?? ""} placeholder={meta.defaultGreeting} onChange={(e) => set("agent", { ...config.agent, greeting: e.target.value || undefined } as TenantConfig["agent"])} />}

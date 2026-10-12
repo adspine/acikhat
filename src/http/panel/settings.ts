@@ -1,3 +1,4 @@
+import { existsSync } from "node:fs";
 import { Hono } from "hono";
 import { z } from "zod";
 import type { Deps } from "../deps.ts";
@@ -96,18 +97,25 @@ function changedSections(live: unknown, draft: unknown): string[] {
   return SECTIONS.filter((s) => s.fields.some((f) => JSON.stringify(l[f] ?? null) !== JSON.stringify(d[f] ?? null))).map((s) => s.label);
 }
 
+const SAMPLE_DIR = new URL("../../../web/audio/voices/", import.meta.url);
+const sampleUrl = (id: string) => (/^[A-Za-z0-9]{10,40}$/.test(id) && existsSync(new URL(`${id}.mp3`, SAMPLE_DIR)) ? `/audio/voices/${id}.mp3` : null);
+
 export function settingsRoutes(deps: Deps) {
   const app = new Hono<PanelEnv>();
   app.use("/settings", requirePermission("settings.edit"));
   app.use("/voices", requirePermission("settings.edit"));
   app.use("/settings/*", requirePermission("settings.edit"));
 
-  /** Türkçe asistan sesleri (önizleme bağlantısıyla) */
+  /**
+   * Türkçe asistan sesleri. Önizleme, tüm seslerin aynı metni söylediği, bir kere üretilip depoda tutulan örnektir
+   * (scripts/make-voice-samples.ts); örneği olmayan sesin önizlemesi yoktur.
+   */
   app.get("/voices", async (c) => {
     const defaultId = process.env.ELEVENLABS_VOICE_ID || "MzfWWOj9g3sIKex1YFMV";
     if (!deps.voices) return c.json({ voices: [], enabled: false, defaultId });
     try {
-      return c.json({ voices: await deps.voices(), enabled: true, defaultId });
+      const voices = (await deps.voices()).map((v) => ({ ...v, previewUrl: sampleUrl(v.id) }));
+      return c.json({ voices, enabled: true, defaultId });
     } catch {
       return c.json({ error: "Ses listesi şu an alınamıyor. Biraz sonra tekrar deneyin." }, 502);
     }

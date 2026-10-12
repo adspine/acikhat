@@ -87,6 +87,16 @@ describe("asistan sesleri", () => {
     expect(r.body.voices.map((v: Voice) => v.id)).toEqual(["v1", "v2"]);
   });
 
+  it("önizleme, tüm seslerde aynı hazır örnektir: dosyası olan sese bağlantı verilir, olmayana verilmez", async () => {
+    const withSample: Voice = { id: "MzfWWOj9g3sIKex1YFMV", name: "Duygu Eris", gender: "female", tags: [], previewUrl: "https://elevenlabs.io/rastgele-metin.mp3" };
+    const { owner } = await setup({ voices: async () => [withSample, ...voices] });
+    const list = (await owner("GET", "/voices")).body.voices as Voice[];
+    expect(list.find((v) => v.id === withSample.id)?.previewUrl).toBe("/audio/voices/MzfWWOj9g3sIKex1YFMV.mp3");
+    // ElevenLabs'in kendi (her sesin farklı metin söylediği) önizlemesi asla iletilmez
+    expect(list.every((v) => !v.previewUrl || v.previewUrl.startsWith("/audio/voices/"))).toBe(true);
+    expect(list.find((v) => v.id === "v1")?.previewUrl).toBeNull();
+  });
+
   it("ses servisi kapalıysa boş liste, hata verirse 502", async () => {
     const off = await setup();
     expect((await off.owner("GET", "/voices")).body).toMatchObject({ voices: [], enabled: false });
