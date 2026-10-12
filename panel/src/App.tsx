@@ -99,6 +99,7 @@ function AdminApp({ session }: { session: Session }) {
     { to: "/", label: "Genel bakış", icon: "chart" },
     { to: "/basvurular", label: "Başvurular", icon: "callback", badge: pending },
     { to: "/musteriler", label: "Müşteriler", icon: "users" },
+    { to: "/asistani-dene", label: "Asistanı dene", icon: "mic" },
   ];
   const active = (to: string) => (to === "/" ? loc.path === "/" : loc.path.startsWith(to));
   const logout = async () => {
@@ -109,6 +110,8 @@ function AdminApp({ session }: { session: Session }) {
     <AdminSubmissionsPage initialStatus={loc.query.get("durum") ?? ""} />
   ) : loc.path.startsWith("/musteriler") ? (
     <AdminCustomersPage />
+  ) : loc.path.startsWith("/asistani-dene") ? (
+    <Suspense fallback={<Loading />}><TestCallPage /></Suspense>
   ) : (
     <AdminOverviewPage go={navigate} />
   );
@@ -242,7 +245,7 @@ export function ChangePasswordPage({ forced, onDone }: { forced?: boolean; onDon
 }
 
 /* ---------------- kabuk ---------------- */
-interface NavItem { to: string; label: string; icon: string; perm?: Permission; mobile?: boolean; badge?: number; agencyOnly?: boolean }
+interface NavItem { to: string; label: string; icon: string; perm?: Permission; mobile?: boolean; badge?: number }
 
 /** Sol alt köşede, profilin hemen üstünde: bu ayın kota kullanımı */
 function SidebarUsage({ canOpen }: { canOpen: boolean }) {
@@ -296,9 +299,8 @@ function Shell() {
     { to: "/paketim", label: "Paketim", icon: "gauge", perm: "settings.edit" },
     { to: "/kurulum", label: "Kurulum", icon: "settings", perm: "settings.edit" },
     { to: "/kullanicilar", label: "Kullanıcılar", icon: "users", perm: "users.manage" },
-    { to: "/asistani-dene", label: "Asistanı dene", icon: "mic", perm: "settings.edit", agencyOnly: true },
   ];
-  const items = all.filter((i) => (!i.perm || can(me, i.perm)) && (!i.agencyOnly || me.user.role === "agency"));
+  const items = all.filter((i) => !i.perm || can(me, i.perm));
   const active = (to: string) => (to === "/" ? loc.path === "/" : loc.path.startsWith(to));
 
   const logout = async () => {
@@ -316,8 +318,6 @@ function Shell() {
     if (p.startsWith("/paketim")) return <UsagePage />;
     if (p.startsWith("/kurulum") || p.startsWith("/ayarlar")) return <SettingsPage />;
     if (p.startsWith("/kullanicilar")) return <UsersPage />;
-    // Deneme görüşmesi gerçek takvime yazar ve dakika harcar: yalnızca yönetici (müşteri panelini açarak) kullanır
-    if (p.startsWith("/asistani-dene") && me.user.role === "agency") return <Suspense fallback={<Loading />}><TestCallPage /></Suspense>;
     return <TodayPage />;
   })();
 

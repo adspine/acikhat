@@ -37,11 +37,11 @@ export interface Session {
 /** Oturum düşerse uygulama girişe döner (App bunu dinler) */
 export const authEvents = new EventTarget();
 
-export async function api<T>(path: string, init: { method?: string; body?: unknown } = {}): Promise<T> {
+export async function api<T>(path: string, init: { method?: string; body?: unknown; /** Yönetici bu istek için firmayı kendi seçer (oturumdaki seçimi ezer) */ tenant?: string } = {}): Promise<T> {
   const res = await fetch(path.startsWith("/api") ? path : `/api/panel${path}`, {
     method: init.method ?? "GET",
     // x-panel: başka sitelerden gelen form gönderimlerine karşı (sunucu değişiklik isteklerinde arar)
-    headers: { "x-panel": "1", ...(getAdminTenant() && { "x-tenant": getAdminTenant()! }), ...(init.body !== undefined && { "content-type": "application/json" }) },
+    headers: { "x-panel": "1", ...((init.tenant ?? getAdminTenant()) && { "x-tenant": (init.tenant ?? getAdminTenant())! }), ...(init.body !== undefined && { "content-type": "application/json" }) },
     body: init.body === undefined ? undefined : JSON.stringify(init.body),
     credentials: "same-origin",
   });

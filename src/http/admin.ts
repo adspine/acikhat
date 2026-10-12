@@ -192,6 +192,7 @@ export function adminRoutes(deps: Deps) {
           owner: owner?.email ?? null,
           plan: t.plan.id ?? (owner && isPlanId(owner.plan) && owner.plan_paid_at ? owner.plan : null),
           phoneNumbers: t.phoneNumbers,
+          voiceId: t.agent.voiceId ?? null,
           suspended: t.suspended,
           pendingPlan: t.plan.pending?.id ?? null,
           calls30: calls.get(t.id) ?? 0,

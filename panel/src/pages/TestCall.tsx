@@ -2,8 +2,8 @@ import { useEffect, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Conversation } from "@elevenlabs/client";
 import { api, type VoiceOption } from "../api.ts";
-import { useMe } from "../App.tsx";
-import { Button, Empty, Icon } from "../components/ui.tsx";
+import { Button, Empty, Icon, Loading, Select } from "../components/ui.tsx";
+import { useRouter } from "../router.tsx";
 import { HUES, VoiceOrb, hueFor } from "../components/VoiceOrb.tsx";
 
 type Line = { who: "agent" | "user" | "info"; text: string };
@@ -20,12 +20,48 @@ const STATUS_TEXT: Record<Status, string> = {
 const IDEAS = ["Yarın için randevu almak istiyorum", "Çalışma saatleriniz nedir?", "Fiyatlarınızı öğrenebilir miyim?", "Adresiniz nerede?", "Randevumu iptal etmek istiyorum"];
 
 /**
- * Asistanla tarayıcıdan sesli test görüşmesi: yapılan randevular gerçek takvime yazılır.
+ * Yönetici: bir firmanın asistanıyla tarayıcıdan sesli test görüşmesi. Yapılan randevular firmanın gerçek takvimine yazılır.
  * Sahnenin ortasında asistanın sesinin küresi durur; bağlıyken küre canlanır ve konuşan tarafın ses şiddetiyle nefes alır
  * (asistan konuşurken çıkış, siz konuşurken giriş sesi).
  */
+export interface TestTenant {
+  id: string;
+  name: string;
+  voiceId: string | null;
+  assistantReady: boolean;
+}
+
+/** Yönetici sayfası: firma seçilir, seçilen firmanın asistanı denenir */
 export function TestCallPage() {
-  const me = useMe();
+  const { loc, navigate } = useRouter();
+  const q = useQuery({ queryKey: ["admin", "tenants"], queryFn: () => api<{ tenants: TestTenant[] }>("/api/admin/tenants") });
+  const ready = (q.data?.tenants ?? []).filter((t) => t.assistantReady);
+  const wanted = loc.query.get("firma");
+  const tenant = ready.find((t) => t.id === wanted) ?? ready[0];
+
+  return (
+    <section className="page narrow">
+      <header className="page-head">
+        <div>
+          <h1 className="page-title">Asistanı dene</h1>
+          <p className="page-sub">Bir firmanın asistanıyla müşteri gibi konuşun. Bu görüşmede alınan randevular firmanın gerçek takvimine yazılır; denemeden sonra iptal etmeyi unutmayın.</p>
+        </div>
+        {ready.length > 1 && tenant && (
+          <div className="test-picker">
+            <Select aria-label="Denenecek firma" value={tenant.id} onChange={(e) => navigate(`/asistani-dene?firma=${e.target.value}`)}>
+              {ready.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
+            </Select>
+          </div>
+        )}
+      </header>
+      {q.isLoading && <Loading />}
+      {q.data && !tenant && <Empty title="Asistanı kurulmuş firma yok">Bir firmanın asistanı kurulunca buradan denenebilir.</Empty>}
+      {tenant && <TestCallStage key={tenant.id} tenant={tenant} />}
+    </section>
+  );
+}
+
+function TestCallStage({ tenant }: { tenant: TestTenant }) {
   const [status, setStatus] = useState<Status>("idle");
   const [lines, setLines] = useState<Line[]>([]);
   const conv = useRef<Awaited<ReturnType<typeof Conversation.startSession>> | null>(null);
@@ -33,8 +69,8 @@ export function TestCallPage() {
   const stage = useRef<HTMLElement>(null);
 
   // Küre rengi, ses galerisindekiyle aynı: ses listesindeki sıraya göre
-  const voices = useQuery({ queryKey: ["voices"], queryFn: () => api<{ voices: VoiceOption[]; enabled: boolean; defaultId: string }>("/voices"), staleTime: 3_600_000, retry: false });
-  const voiceId = me.tenant.voiceId ?? voices.data?.defaultId ?? "asistan";
+  const voices = useQuery({ queryKey: ["voices", "/api/admin/voices"], queryFn: () => api<{ voices: VoiceOption[]; enabled: boolean; defaultId: string }>("/api/admin/voices"), staleTime: 3_600_000, retry: false });
+  const voiceId = tenant.voiceId ?? voices.data?.defaultId ?? "asistan";
   const ids = (voices.data?.voices ?? []).map((v) => v.id).sort();
   const hue = ids.includes(voiceId) ? HUES[ids.indexOf(voiceId) % HUES.length]! : hueFor(voiceId);
 
@@ -100,7 +136,7 @@ export function TestCallPage() {
     setStatus("connecting");
     try {
       await navigator.mediaDevices.getUserMedia({ audio: true });
-      const { conversationToken, dynamicVariables } = await api<{ conversationToken: string; dynamicVariables: Record<string, string> }>("/test-call");
+      const { conversationToken, dynamicVariables } = await api<{ conversationToken: string; dynamicVariables: Record<string, string> }>("/test-call", { tenant: tenant.id });
       conv.current = await Conversation.startSession({
         conversationToken,
         connectionType: "webrtc",
@@ -125,21 +161,11 @@ export function TestCallPage() {
     }
   };
 
-  if (!me.testCallEnabled) {
-    return <section className="page narrow"><Empty title="Asistan henüz kurulmadı">Kurulum tamamlandığında buradan sesli deneyebilirsiniz.</Empty></section>;
-  }
   const live = status !== "idle";
   const connected = status === "listening" || status === "speaking";
 
   return (
-    <section className="page narrow">
-      <header className="page-head">
-        <div>
-          <h1 className="page-title">Asistanı dene</h1>
-          <p className="page-sub"><strong>{me.tenant.name}</strong> asistanını deniyorsunuz. Müşteri gibi konuşun. Bu görüşmede alınan randevular firmanın gerçek takvimine yazılır; denemeden sonra iptal etmeyi unutmayın.</p>
-        </div>
-      </header>
-
+    <>
       <section ref={stage} className={`card test-stage${live ? " is-live" : ""}`} aria-label="Deneme görüşmesi">
         <div className="test-stage-orb">
           <VoiceOrb id={voiceId} hue={hue} size={156} active={connected} />
@@ -181,6 +207,6 @@ export function TestCallPage() {
           </div>
         )}
       </section>
-    </section>
+    </>
   );
 }

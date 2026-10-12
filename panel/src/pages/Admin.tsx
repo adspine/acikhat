@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { api, ApiError, setAdminTenant } from "../api.ts";
+import { useRouter } from "../router.tsx";
 import { Button, Drawer, Empty, ErrorBox, Field, Input, Loading, Segmented, Select, Textarea, useToast } from "../components/ui.tsx";
 import { RankBars } from "../components/Charts.tsx";
 import { SubmissionEditor } from "./SubmissionEditor.tsx";
@@ -27,7 +28,7 @@ interface SubmissionDetail extends SubmissionItem {
 interface TenantItem {
   id: string; name: string; vertical: string; assistantReady: boolean; hasPhone: boolean; owner: string | null;
   plan: PlanId | null; calls30: number; appointments30: number; includedMinutes: number | null; minutesUsed: number;
-  phoneNumbers: string[]; suspended: boolean; pendingPlan: PlanId | null; addonMinutes: number; planMinutes: number | null;
+  phoneNumbers: string[]; voiceId: string | null; suspended: boolean; pendingPlan: PlanId | null; addonMinutes: number; planMinutes: number | null;
 }
 
 export const SECTOR_LABELS: Record<string, string> = {
@@ -507,6 +508,7 @@ function AssistantDrawer({ tenant, onClose }: { tenant: TenantItem | null; onClo
 }
 
 export function AdminCustomersPage() {
+  const { navigate } = useRouter();
   const q = useQuery({ queryKey: ["admin", "tenants"], queryFn: () => api<{ tenants: TenantItem[] }>("/api/admin/tenants"), refetchInterval: 60_000 });
   const rows = q.data?.tenants ?? [];
   const [openId, setOpenId] = useState("");
@@ -553,7 +555,7 @@ export function AdminCustomersPage() {
                       actions={[
                         { label: "Yönet", icon: "settings", onClick: () => setOpenId(t.id) },
                         { label: "Asistanı düzenle", icon: "users", onClick: () => setAssistantId(t.id) },
-                        ...(t.assistantReady ? [{ label: "Asistanı dene", icon: "mic", onClick: () => { setAdminTenant(t.id); location.assign("/panel/asistani-dene"); } }] : []),
+                        ...(t.assistantReady ? [{ label: "Asistanı dene", icon: "mic", onClick: () => navigate(`/asistani-dene?firma=${t.id}`) }] : []),
                         { label: "Müşteri panelini aç", icon: "chart", onClick: () => { setAdminTenant(t.id); location.assign("/panel/"); } },
                       ]}
                     />
