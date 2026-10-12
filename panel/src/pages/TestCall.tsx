@@ -136,7 +136,7 @@ export function TestCallPage() {
       <header className="page-head">
         <div>
           <h1 className="page-title">Asistanı dene</h1>
-          <p className="page-sub">Müşteriniz gibi konuşun. Bu görüşmede alınan randevular gerçek takviminize yazılır; denemeden sonra iptal etmeyi unutmayın.</p>
+          <p className="page-sub"><strong>{me.tenant.name}</strong> asistanını deniyorsunuz. Müşteri gibi konuşun. Bu görüşmede alınan randevular firmanın gerçek takvimine yazılır; denemeden sonra iptal etmeyi unutmayın.</p>
         </div>
       </header>
 

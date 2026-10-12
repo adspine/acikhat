@@ -242,7 +242,7 @@ export function ChangePasswordPage({ forced, onDone }: { forced?: boolean; onDon
 }
 
 /* ---------------- kabuk ---------------- */
-interface NavItem { to: string; label: string; icon: string; perm?: Permission; mobile?: boolean; badge?: number }
+interface NavItem { to: string; label: string; icon: string; perm?: Permission; mobile?: boolean; badge?: number; agencyOnly?: boolean }
 
 /** Sol alt köşede, profilin hemen üstünde: bu ayın kota kullanımı */
 function SidebarUsage({ canOpen }: { canOpen: boolean }) {
@@ -296,9 +296,9 @@ function Shell() {
     { to: "/paketim", label: "Paketim", icon: "gauge", perm: "settings.edit" },
     { to: "/kurulum", label: "Kurulum", icon: "settings", perm: "settings.edit" },
     { to: "/kullanicilar", label: "Kullanıcılar", icon: "users", perm: "users.manage" },
-    { to: "/asistani-dene", label: "Asistanı dene", icon: "mic", perm: "settings.edit" },
+    { to: "/asistani-dene", label: "Asistanı dene", icon: "mic", perm: "settings.edit", agencyOnly: true },
   ];
-  const items = all.filter((i) => !i.perm || can(me, i.perm));
+  const items = all.filter((i) => (!i.perm || can(me, i.perm)) && (!i.agencyOnly || me.user.role === "agency"));
   const active = (to: string) => (to === "/" ? loc.path === "/" : loc.path.startsWith(to));
 
   const logout = async () => {
@@ -316,7 +316,8 @@ function Shell() {
     if (p.startsWith("/paketim")) return <UsagePage />;
     if (p.startsWith("/kurulum") || p.startsWith("/ayarlar")) return <SettingsPage />;
     if (p.startsWith("/kullanicilar")) return <UsersPage />;
-    if (p.startsWith("/asistani-dene")) return <Suspense fallback={<Loading />}><TestCallPage /></Suspense>;
+    // Deneme görüşmesi gerçek takvime yazar ve dakika harcar: yalnızca yönetici (müşteri panelini açarak) kullanır
+    if (p.startsWith("/asistani-dene") && me.user.role === "agency") return <Suspense fallback={<Loading />}><TestCallPage /></Suspense>;
     return <TodayPage />;
   })();
 

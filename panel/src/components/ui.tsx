@@ -259,7 +259,11 @@ export function Drawer({ open, title, onClose, children, footer, wide }: { open:
     if (!open) return;
     const prev = document.activeElement as HTMLElement | null;
     ref.current?.querySelector<HTMLElement>("[data-autofocus], input, select, textarea, button")?.focus();
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && closeRef.current();
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== "Escape") return;
+      if (document.querySelector(".modal-root.is-open, .select-pop.is-open")) return; // üstteki pencere kendi Esc'ini işler
+      closeRef.current();
+    };
     window.addEventListener("keydown", onKey);
     document.body.classList.add("no-scroll");
     return () => {

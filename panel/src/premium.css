@@ -422,3 +422,17 @@ html[data-theme="dark"] .pill-draft { color: #f2c14e; }
 .crash { display: grid; gap: 14px; }
 .crash-detail { margin: 0; padding: 12px 14px; border-radius: 12px; background: rgb(19 51 45 / 0.06); font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; white-space: pre-wrap; overflow-wrap: anywhere; }
 html[data-theme="dark"] .crash-detail { background: rgb(255 255 255 / 0.06); }
+
+/* ---------------- işlem menüsü (⋮) ---------------- */
+.action-btn { width: 36px; height: 36px; display: grid; place-items: center; border: 0; border-radius: 12px; background: transparent; color: var(--cam-soluk); cursor: pointer; transition: background var(--t-fast), color var(--t-fast); }
+.action-btn:hover, .action-btn[aria-expanded="true"] { background: rgb(19 51 45 / 0.08); color: var(--cam); }
+html[data-theme="dark"] .action-btn:hover, html[data-theme="dark"] .action-btn[aria-expanded="true"] { background: rgb(255 255 255 / 0.1); }
+.action-item { width: 100%; justify-content: flex-start; border: 0; background: none; color: var(--cam); font: inherit; text-align: left; cursor: pointer; }
+.action-item:focus-visible { outline: none; background: var(--gol-acik); }
+.action-item.is-danger { color: var(--hata); }
+.admin-table td.cell-actions { width: 52px; text-align: right; }
+@media (max-width: 860px) {
+  .admin-table tr { position: relative; }
+  .admin-table td.cell-actions { display: block; position: absolute; top: 8px; right: 8px; width: auto; padding: 0; }
+  .admin-table td.cell-actions::before { content: none; }
+}

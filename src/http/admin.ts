@@ -9,6 +9,8 @@ import { PLANS, isPlanId } from "../domain/plans.ts";
 import { normalizeTrPhone } from "../domain/phone.ts";
 import { TenantSchema } from "../domain/tenant.ts";
 import { mailSuspension, mailTenantReady } from "../notify/emails.ts";
+import { sampleUrl } from "./panel/settings.ts";
+import { loadVertical } from "../domain/vertical.ts";
 
 /**
  * Yönetici (agency) paneli API'si: başvurular, müşteriler ve satış/kullanım özeti.
@@ -212,7 +214,28 @@ export function adminRoutes(deps: Deps) {
     includedMinutes: z.number().int().min(0).max(100_000).optional(),
     phoneNumbers: z.array(z.string()).max(10).optional(),
     suspended: z.boolean().optional(),
+    /** Asistan: ses, ad ve karşılama. Canlıya hemen uygulanır (asistan ElevenLabs'te de güncellenir). greeting boş ya da null ise varsayılana döner. */
+    agent: z.object({ voiceId: z.string().min(10).max(40).optional(), name: z.string().trim().min(1).max(40).optional(), greeting: z.string().max(500).nullable().optional() }).optional(),
   });
+
+  /** Asistan sesleri (yönetici için, firma seçmeden): panelle aynı Türkçe liste ve hazır örnek sesler */
+  app.get("/voices", async (c) => {
+    const defaultId = process.env.ELEVENLABS_VOICE_ID || "MzfWWOj9g3sIKex1YFMV";
+    if (!deps.voices) return c.json({ voices: [], enabled: false, defaultId });
+    try {
+      return c.json({ voices: (await deps.voices()).map((v) => ({ ...v, previewUrl: sampleUrl(v.id) })), enabled: true, defaultId });
+    } catch {
+      return c.json({ error: "Ses listesi şu an alınamıyor. Biraz sonra tekrar deneyin." }, 502);
+    }
+  });
+
+  /** Firmanın asistan kimliği: düzenleme penceresi bununla açılır */
+  app.get("/tenants/:id/agent", (c) => {
+    const t = deps.tenants.get(c.req.param("id"));
+    if (!t) return c.json({ error: "Firma bulunamadı" }, 404);
+    return c.json({ voiceId: t.agent.voiceId ?? null, name: t.agent.name, greeting: t.agent.greeting ?? "", defaultGreeting: loadVertical(t.vertical).greeting, firma: t.name, ready: t.agentIds.length > 0 });
+  });
+
   app.patch("/tenants/:id", async (c) => {
     const id = c.req.param("id");
     const tenant = deps.tenants.get(id);
@@ -234,7 +257,28 @@ export function adminRoutes(deps: Deps) {
       }
     }
 
+    // Ses yalnızca ElevenLabs'teki Türkçe listeden seçilebilir
+    if (p.agent?.voiceId) {
+      let allowed: Set<string> | null = null;
+      try {
+        allowed = deps.voices ? new Set((await deps.voices()).map((v) => v.id)) : null;
+      } catch {
+        allowed = null;
+      }
+      if (!allowed?.has(p.agent.voiceId)) return c.json({ error: "Bu ses seçilemez (Türkçe ses listesinde yok ya da liste alınamadı)" }, 422);
+    }
+
     const apply = (raw: Record<string, unknown>) => {
+      if (p.agent) {
+        const agent = { ...((raw.agent as Record<string, unknown>) ?? {}) };
+        if (p.agent.voiceId) agent.voiceId = p.agent.voiceId;
+        if (p.agent.name) agent.name = p.agent.name;
+        if (p.agent.greeting !== undefined) {
+          if (p.agent.greeting?.trim()) agent.greeting = p.agent.greeting.trim();
+          else delete agent.greeting;
+        }
+        raw.agent = agent;
+      }
       if (p.plan) raw.plan = { ...((raw.plan as object) ?? {}), id: p.plan, includedMinutes: p.includedMinutes ?? PLANS[p.plan].minutes };
       else if (p.includedMinutes !== undefined) raw.plan = { ...((raw.plan as object) ?? {}), includedMinutes: p.includedMinutes };
       if (phones) raw.phoneNumbers = phones;
@@ -244,6 +288,11 @@ export function adminRoutes(deps: Deps) {
     const editable = deps.tenantStore.getEditable(id);
     const next = TenantSchema.safeParse(apply(structuredClone(deps.tenantStore.getLiveRaw(id) as Record<string, unknown>)));
     if (!next.success) return c.json({ error: "Ayar geçerli değil" }, 422);
+    // Asistan kuruluysa ElevenLabs'te de güncellenir; başarısızsa canlı ayar değişmez
+    if (p.agent && next.data.agentIds.length) {
+      const pushed = await deps.publishAgent(next.data);
+      if (!pushed.ok) return c.json({ error: pushed.error }, 502);
+    }
     deps.tenantStore.publish(next.data);
     deps.tenants.set(next.data);
     if (p.suspended !== undefined && p.suspended !== tenant.suspended) mailSuspension(deps, next.data, p.suspended);

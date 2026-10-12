@@ -4,6 +4,8 @@ import { api, ApiError, setAdminTenant } from "../api.ts";
 import { Button, Drawer, Empty, ErrorBox, Field, Input, Loading, Segmented, Select, Textarea, useToast } from "../components/ui.tsx";
 import { RankBars } from "../components/Charts.tsx";
 import { SubmissionEditor } from "./SubmissionEditor.tsx";
+import { ActionMenu } from "../components/ActionMenu.tsx";
+import { VoicePicker, type AgentIdentity } from "../components/VoicePicker.tsx";
 
 /* ---------------- tipler ve etiketler ---------------- */
 type Status = "new" | "reviewing" | "approved" | "live" | "rejected";
@@ -459,11 +461,58 @@ function TenantDrawer({ tenant, onClose }: { tenant: TenantItem | null; onClose:
   );
 }
 
+/** Firmanın asistanı: ses, ad ve karşılama. Burada yapılan değişiklik taslak beklemeden canlıya uygulanır. */
+function AssistantDrawer({ tenant, onClose }: { tenant: TenantItem | null; onClose: () => void }) {
+  const qc = useQueryClient();
+  const toast = useToast();
+  const [busy, setBusy] = useState(false);
+  const q = useQuery({
+    queryKey: ["admin", "agent", tenant?.id],
+    queryFn: () => api<{ voiceId: string | null; name: string; greeting: string; defaultGreeting: string; firma: string; ready: boolean }>(`/api/admin/tenants/${tenant!.id}/agent`),
+    enabled: !!tenant,
+  });
+  const apply = async (a: AgentIdentity) => {
+    if (!tenant) return;
+    setBusy(true);
+    try {
+      await api(`/api/admin/tenants/${tenant.id}`, { method: "PATCH", body: { agent: { voiceId: a.voiceId, name: a.name, greeting: a.greeting || null } } });
+      toast(q.data?.ready ? "Asistan güncellendi ve canlıya alındı" : "Asistan ayarı kaydedildi (asistan kurulunca geçerli olur)");
+      await qc.invalidateQueries({ queryKey: ["admin", "agent"] });
+    } catch (e) {
+      toast(e instanceof ApiError ? e.message : "Güncellenemedi", "error");
+    } finally {
+      setBusy(false);
+    }
+  };
+  const d = q.data;
+  return (
+    <Drawer open={!!tenant} onClose={onClose} wide title={tenant ? `${tenant.name} · Asistan` : "Asistan"}>
+      {q.isLoading && <Loading />}
+      {q.error && <ErrorBox error={q.error} />}
+      {d && (
+        <div className="admin-drawer" aria-busy={busy}>
+          <p className="muted small">Burada yaptığınız değişiklik, müşterinin taslağını beklemeden canlıya uygulanır{d.ready ? " ve ElevenLabs'teki asistan güncellenir" : ""}. Seçtiğiniz sesi dinleyip kartın ⋮ düğmesinden adı ve karşılamayı da değiştirebilirsiniz.</p>
+          <VoicePicker
+            endpoint="/api/admin/voices"
+            value={d.voiceId ?? undefined}
+            agent={{ name: d.name, greeting: d.greeting }}
+            defaultGreeting={d.defaultGreeting}
+            firma={d.firma}
+            onApply={apply}
+          />
+        </div>
+      )}
+    </Drawer>
+  );
+}
+
 export function AdminCustomersPage() {
   const q = useQuery({ queryKey: ["admin", "tenants"], queryFn: () => api<{ tenants: TenantItem[] }>("/api/admin/tenants"), refetchInterval: 60_000 });
   const rows = q.data?.tenants ?? [];
   const [openId, setOpenId] = useState("");
+  const [assistantId, setAssistantId] = useState("");
   const open = rows.find((t) => t.id === openId) ?? null;
+  const assistantTenant = rows.find((t) => t.id === assistantId) ?? null;
   return (
     <section className="page">
       <header className="page-head">
@@ -479,7 +528,7 @@ export function AdminCustomersPage() {
         <div className="card admin-table-card">
           <table className="data-table admin-table">
             <thead>
-              <tr><th>Firma</th><th>Sektör</th><th>Paket</th><th>Asistan</th><th>Bu ay kullanım</th><th>Çağrı (30 gün)</th><th>Randevu</th></tr>
+              <tr><th>Firma</th><th>Sektör</th><th>Paket</th><th>Asistan</th><th>Bu ay kullanım</th><th>Çağrı (30 gün)</th><th>Randevu</th><th className="sr-only">İşlemler</th></tr>
             </thead>
             <tbody>
               {rows.map((t) => (
@@ -498,6 +547,17 @@ export function AdminCustomersPage() {
                   <td data-label="Bu ay kullanım">{t.includedMinutes ? <span className={t.minutesUsed > t.includedMinutes ? "admin-over" : undefined}>{t.minutesUsed} / {t.includedMinutes} dk</span> : <span className="muted">{t.minutesUsed} dk</span>}</td>
                   <td data-label="Çağrı (30 gün)">{t.calls30}</td>
                   <td data-label="Randevu">{t.appointments30}</td>
+                  <td className="cell-actions" onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}>
+                    <ActionMenu
+                      label={`${t.name} için işlemler`}
+                      actions={[
+                        { label: "Yönet", icon: "settings", onClick: () => setOpenId(t.id) },
+                        { label: "Asistanı düzenle", icon: "users", onClick: () => setAssistantId(t.id) },
+                        ...(t.assistantReady ? [{ label: "Asistanı dene", icon: "mic", onClick: () => { setAdminTenant(t.id); location.assign("/panel/asistani-dene"); } }] : []),
+                        { label: "Müşteri panelini aç", icon: "chart", onClick: () => { setAdminTenant(t.id); location.assign("/panel/"); } },
+                      ]}
+                    />
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -505,6 +565,7 @@ export function AdminCustomersPage() {
         </div>
       )}
       <TenantDrawer tenant={open} onClose={() => setOpenId("")} />
+      <AssistantDrawer tenant={assistantTenant} onClose={() => setAssistantId("")} />
     </section>
   );
 }

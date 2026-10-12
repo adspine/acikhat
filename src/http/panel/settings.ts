@@ -100,7 +100,7 @@ function changedSections(live: unknown, draft: unknown): string[] {
 }
 
 const SAMPLE_DIR = new URL("../../../web/audio/voices/", import.meta.url);
-const sampleUrl = (id: string) => (/^[A-Za-z0-9]{10,40}$/.test(id) && existsSync(new URL(`${id}.mp3`, SAMPLE_DIR)) ? `/audio/voices/${id}.mp3` : null);
+export const sampleUrl = (id: string) => (/^[A-Za-z0-9]{10,40}$/.test(id) && existsSync(new URL(`${id}.mp3`, SAMPLE_DIR)) ? `/audio/voices/${id}.mp3` : null);
 
 export function settingsRoutes(deps: Deps) {
   const app = new Hono<PanelEnv>();

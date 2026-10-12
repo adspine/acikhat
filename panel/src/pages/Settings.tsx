@@ -278,7 +278,6 @@ export function SettingsPage() {
                 nameError={issue("agent.name")}
                 onApply={(a) => set("agent", { ...config.agent, voiceId: a.voiceId, name: a.name, greeting: a.greeting || undefined } as TenantConfig["agent"])}
               />
-              {me.testCallEnabled && <p className="muted small">Yayınladıktan sonra "Asistanı dene" bölümünden sesli deneyebilirsiniz.</p>}
             </Group>
           )}
 

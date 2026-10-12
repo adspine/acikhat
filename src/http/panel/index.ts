@@ -35,6 +35,8 @@ export function panelRoutes(deps: Deps) {
    * API anahtarı tarayıcıya gitmez; tarih tablosu gibi değişkenler de buradan verilir.
    */
   app.get("/test-call", requirePermission("settings.edit"), async (c) => {
+    // Deneme görüşmesi gerçek takvime randevu yazar ve ElevenLabs dakikası harcar: yalnızca yönetici kullanır
+    if (c.get("user").role !== "agency") return c.json({ error: "Bu özellik yalnızca yöneticilere açık" }, 403);
     const tenant = c.get("tenant");
     const agentId = tenant.agentIds[0];
     const apiKey = process.env.ELEVENLABS_API_KEY;

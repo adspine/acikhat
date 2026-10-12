@@ -21,7 +21,9 @@ export interface AgentIdentity {
  * asistanın adı ve karşılama cümlesi orada girilir, "Onayla" ses, ad ve karşılamayı birlikte taslağa yazar
  * (asistana "Yayınla" ile uygulanır).
  */
-export function VoicePicker({ value, agent, defaultGreeting, firma, nameError, onApply }: {
+export function VoicePicker({ value, agent, defaultGreeting, firma, nameError, onApply, endpoint = "/voices" }: {
+  /** Ses listesi ucu: müşteri panelinde "/voices", yönetici panelinde "/api/admin/voices" */
+  endpoint?: string;
   value: string | undefined;
   agent: { name: string; greeting: string };
   defaultGreeting: string;
@@ -29,7 +31,7 @@ export function VoicePicker({ value, agent, defaultGreeting, firma, nameError, o
   nameError?: string | undefined;
   onApply: (a: AgentIdentity) => void;
 }) {
-  const q = useQuery({ queryKey: ["voices"], queryFn: () => api<{ voices: VoiceOption[]; enabled: boolean; defaultId: string }>("/voices"), staleTime: 3_600_000, retry: false });
+  const q = useQuery({ queryKey: ["voices", endpoint], queryFn: () => api<{ voices: VoiceOption[]; enabled: boolean; defaultId: string }>(endpoint), staleTime: 3_600_000, retry: false });
   const [gender, setGender] = useState<"all" | "female" | "male">("all");
   const [editing, setEditing] = useState<string | null>(null);
   const root = useRef<HTMLDivElement>(null);
