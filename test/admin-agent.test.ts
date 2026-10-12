@@ -83,3 +83,20 @@ describe("Asistanı dene yalnızca yöneticiye açık", () => {
     expect((await adminForTenant("GET", "/api/panel/test-call")).status).toBe(409);
   });
 });
+
+describe("yönetici: asistanı kur", () => {
+  it("asistanı olmayan firmada oluşturur ve kimliği firmaya yazar", async () => {
+    const { admin, deps, tenant } = await setup({ agentIds: [], publish: async () => ({ ok: true, agentId: "agent_yeni", created: true }) });
+    const r = await admin("POST", `/api/admin/tenants/${tenant.id}/assistant`);
+    expect(r).toMatchObject({ status: 200, body: { ok: true, created: true } });
+    expect(deps.tenants.get(tenant.id)?.agentIds).toEqual(["agent_yeni"]);
+    expect((await admin("GET", `/api/admin/tenants/${tenant.id}/agent`)).body.ready).toBe(true);
+  });
+
+  it("ElevenLabs hata verirse firma değişmez; müşteri kuramaz", async () => {
+    const { admin, owner, deps, tenant } = await setup({ agentIds: [], publish: async () => ({ ok: false, error: "ElevenLabs yanıt vermedi" }) });
+    expect((await admin("POST", `/api/admin/tenants/${tenant.id}/assistant`)).status).toBe(502);
+    expect(deps.tenants.get(tenant.id)?.agentIds).toEqual([]);
+    expect((await owner("POST", `/api/admin/tenants/${tenant.id}/assistant`)).status).toBe(403);
+  });
+});

@@ -513,6 +513,17 @@ export function AdminCustomersPage() {
   const rows = q.data?.tenants ?? [];
   const [openId, setOpenId] = useState("");
   const [assistantId, setAssistantId] = useState("");
+  const qc = useQueryClient();
+  const toast = useToast();
+  const setup = async (t: TenantItem) => {
+    try {
+      const r = await api<{ created: boolean }>(`/api/admin/tenants/${t.id}/assistant`, { method: "POST" });
+      toast(r.created ? `${t.name} için asistan kuruldu` : `${t.name} asistanı güncellendi`);
+      await qc.invalidateQueries({ queryKey: ["admin"] });
+    } catch (e) {
+      toast(e instanceof ApiError ? e.message : "Asistan kurulamadı", "error");
+    }
+  };
   const open = rows.find((t) => t.id === openId) ?? null;
   const assistantTenant = rows.find((t) => t.id === assistantId) ?? null;
   return (
@@ -554,7 +565,7 @@ export function AdminCustomersPage() {
                       label={`${t.name} için işlemler`}
                       actions={[
                         { label: "Yönet", icon: "settings", onClick: () => setOpenId(t.id) },
-                        { label: "Asistanı düzenle", icon: "users", onClick: () => setAssistantId(t.id) },
+                        ...(t.assistantReady ? [{ label: "Asistanı düzenle", icon: "users", onClick: () => setAssistantId(t.id) }] : [{ label: "Asistanı kur", icon: "mic", onClick: () => void setup(t) }]),
                         { label: "Müşteri panelini aç", icon: "chart", onClick: () => { setAdminTenant(t.id); location.assign("/panel/"); } },
                       ]}
                     />

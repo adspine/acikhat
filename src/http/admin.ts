@@ -237,6 +237,30 @@ export function adminRoutes(deps: Deps) {
     return c.json({ voiceId: t.agent.voiceId ?? null, name: t.agent.name, greeting: t.agent.greeting ?? "", defaultGreeting: loadVertical(t.vertical).greeting, firma: t.name, ready: t.agentIds.length > 0 });
   });
 
+  /**
+   * Asistanı kur: firmanın ElevenLabs asistanını oluşturur ve kimliğini firmaya yazar (komut satırı betiğinin panel karşılığı).
+   * Asistan zaten varsa aynı çağrı onu güncel ayarla günceller.
+   */
+  app.post("/tenants/:id/assistant", async (c) => {
+    const id = c.req.param("id");
+    const tenant = deps.tenants.get(id);
+    if (!tenant) return c.json({ error: "Firma bulunamadı" }, 404);
+    const pushed = await deps.publishAgent(tenant);
+    if (!pushed.ok) return c.json({ error: pushed.error }, 502);
+    if (pushed.created) {
+      const raw = structuredClone(deps.tenantStore.getLiveRaw(id) as Record<string, unknown>);
+      raw.agentIds = [pushed.agentId];
+      const next = TenantSchema.safeParse(raw);
+      if (!next.success) return c.json({ error: "Ayar geçerli değil" }, 422);
+      deps.tenantStore.publish(next.data);
+      deps.tenants.set(next.data);
+      const editable = deps.tenantStore.getEditable(id);
+      if (editable?.hasDraft) deps.tenantStore.saveDraft(id, { ...(editable.config as Record<string, unknown>), agentIds: [pushed.agentId] });
+    }
+    deps.store.audit({ tenantId: id, userId: c.get("admin").id, action: "admin.assistant", target: id, detail: { created: pushed.created } });
+    return c.json({ ok: true, created: pushed.created });
+  });
+
   app.patch("/tenants/:id", async (c) => {
     const id = c.req.param("id");
     const tenant = deps.tenants.get(id);
