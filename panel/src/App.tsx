@@ -50,8 +50,18 @@ export function App() {
     return () => authEvents.removeEventListener("logout", out);
   }, [qc]);
 
+  // Yönetici bir firma seçmişken o firma bulunamazsa eski seçim silinip yönetim ekranına dönülür
+  const staleTenant = isAgency && !!tenantId && me.error instanceof ApiError && [403, 404, 409].includes(me.error.status);
+  useEffect(() => {
+    if (staleTenant) {
+      setAdminTenant(null);
+      location.assign("/panel/");
+    }
+  }, [staleTenant]);
+
   if (session.isLoading) return <Loading label="Panel açılıyor" />;
   if (!session.data) return <RedirectToLogin />;
+  if (staleTenant) return <Loading label="Yönetim ekranına dönülüyor" />;
   if (isAgency && !tenantId) return <AdminApp session={session.data} />;
   // Giriş yapmış ama henüz bir firmaya bağlanmamış üye (paket ve kurulum bekliyor)
   if (!session.data.hasTenant) return <NoTenantPage />;

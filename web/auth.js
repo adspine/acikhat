@@ -56,6 +56,15 @@ const MESSAGES = {
 const SILENT = new Set(["auth/popup-closed-by-user", "auth/cancelled-popup-request"]);
 const messageFor = (err) => MESSAGES[err?.code] ?? (err?.message && !err.code ? err.message : "Bir sorun oluştu. Lütfen tekrar deneyin.");
 
+// Yönetici bir müşterinin panelini açmışken seçilen firma bu sekmede saklanır; yeni girişte temizlenir
+function forgetTenantChoice() {
+  try {
+    sessionStorage.removeItem("acikhat-admin-tenant");
+  } catch {
+    /* tarayıcı depolamaya izin vermiyorsa yapacak bir şey yok */
+  }
+}
+
 /* ---------- eski hesaplar ---------- */
 // Eski panelden açılan hesapların şifresi yalnızca sunucuda tutulur. Doğru şifreyle girerse oturum açılır ve aynı e-posta
 // ile Firebase hesabı da açılır (şifre aynı kalır); doğrulama e-postası gönderilir. Sonraki girişler Firebase'den yapılır.
@@ -75,6 +84,7 @@ async function legacyLogin(email, password, auth, au) {
     }
     await auth.signOut(au).catch(() => {});
   }
+  forgetTenantChoice();
   location.assign(data.hasTenant ? "/panel/" : "#/hesap");
   return true;
 }
@@ -118,6 +128,7 @@ function bind(root) {
       return;
     }
     if (!res.ok) throw new Error(data.error ?? "Giriş yapılamadı.");
+    forgetTenantChoice();
     location.assign(data.hasTenant ? "/panel/" : "#/hesap");
   }
 
