@@ -6,12 +6,13 @@
   --size: 96px;
   --h: 190;
   position: relative; display: inline-grid; place-items: center; width: var(--size); height: var(--size);
-  border-radius: 50%; isolation: isolate; transform: scale(calc(1 + var(--amp, 0) * 0.16)); transition: transform 90ms linear;
+  border-radius: 50%; isolation: isolate; transform: scale(calc(1 + var(--amp, 0) * 0.16)); transition: transform 0.8s cubic-bezier(0.22, 0.8, 0.24, 1);
 }
 .orb:not(.is-active) { --amp: 0; }
+.orb.is-active { transition: transform 90ms linear; }
 
 .orb-halo {
-  position: absolute; inset: -24%; z-index: -1; border-radius: 50%; filter: blur(12px); opacity: 0.4; transition: opacity 0.45s var(--ease, ease);
+  position: absolute; inset: -24%; z-index: -1; border-radius: 50%; filter: blur(12px); opacity: 0.4; transition: opacity 1s var(--ease, ease);
   background: radial-gradient(closest-side, hsl(var(--h) 95% 62% / 0.55), transparent 72%);
 }
 .orb.is-active .orb-halo { opacity: calc(0.6 + var(--amp, 0) * 0.4); }
@@ -38,13 +39,15 @@
   opacity: 0.75; animation-direction: reverse; animation-duration: 15s;
   background: conic-gradient(from 90deg, hsl(calc(var(--h) - 60) 100% 70% / 0), hsl(calc(var(--h) - 20) 100% 74% / 0.85), hsl(calc(var(--h) + 100) 100% 72% / 0), hsl(calc(var(--h) + 190) 100% 74% / 0.75), hsl(calc(var(--h) - 60) 100% 70% / 0));
 }
-.orb.is-active .orb-sweep { animation-duration: 3.2s; }
-.orb.is-active .orb-sweep-2 { animation-duration: 4.8s; }
+/* ses çalarken beliren hızlı süpürmeler: dönüş süresi sabit, yalnızca opaklık yumuşakça değişir */
+.orb-sweep-fast { opacity: 0; animation: orb-spin 3.2s linear infinite, orb-fade-in 0.7s var(--ease, ease) backwards; transition: opacity 1s var(--ease, ease); }
+.orb-sweep-fast-2 { animation: orb-spin 4.8s linear infinite reverse, orb-fade-in 0.7s var(--ease, ease) backwards; }
+.orb.is-active .orb-sweep-fast { opacity: 0.85; }
+@keyframes orb-fade-in { from { opacity: 0; } }
 .orb-prism {
   position: absolute; inset: 0; border-radius: 50%; mix-blend-mode: overlay; animation: orb-prism 7s ease-in-out infinite alternate;
   background: linear-gradient(115deg, transparent 30%, hsl(calc(var(--h) + 120) 100% 80% / 0.5) 45%, hsl(calc(var(--h) + 200) 100% 80% / 0.42) 52%, transparent 68%);
 }
-.orb.is-active .orb-prism { animation-duration: 2.4s; }
 .orb-shine { position: absolute; inset: 0; border-radius: 50%; background: radial-gradient(ellipse 46% 34% at 30% 22%, rgb(255 255 255 / 0.85), transparent 70%); }
 @keyframes orb-spin { to { transform: rotate(360deg); } }
 @keyframes orb-prism { from { transform: translateX(-26%) rotate(0deg); } to { transform: translateX(26%) rotate(18deg); } }
@@ -105,3 +108,14 @@
 }
 @media (max-width: 420px) { .voice-grid { grid-template-columns: 1fr; } }
 .group-sub { margin-top: 10px; font-size: 16px; font-weight: 600; }
+
+/* kartın sağ üstündeki ⋮ düğmesi */
+.voice-hero, .voice-card { position: relative; }
+.voice-kebab {
+  position: absolute; top: 10px; right: 10px; z-index: 2; width: 36px; height: 36px; display: grid; place-items: center; border: 0; border-radius: 12px;
+  background: transparent; color: var(--cam-soluk); cursor: pointer; transition: background var(--t-fast), color var(--t-fast);
+}
+.voice-kebab:hover, .voice-kebab:focus-visible { background: rgb(19 51 45 / 0.08); color: var(--cam); }
+html[data-theme="dark"] .voice-kebab:hover, html[data-theme="dark"] .voice-kebab:focus-visible { background: rgb(255 255 255 / 0.1); }
+.voice-hero .voice-kebab { top: 16px; right: 16px; }
+div.voice-choose.is-on, span.voice-choose.is-on { cursor: default; }

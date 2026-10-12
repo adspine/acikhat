@@ -20,6 +20,7 @@ const paths: Record<string, string> = {
   left: "M12 4.5 6.5 10l5.5 5.5",
   right: "M8 4.5l5.5 5.5L8 15.5",
   more: "M5 10h.01M10 10h.01M15 10h.01",
+  moreV: "M10 4.5h.01M10 10h.01M10 15.5h.01",
   logout: "M8 4H4.5v12H8M11.5 6.5 15 10l-3.5 3.5M15 10H7.5",
   check: "M4.5 10.5 8 14l7.5-8",
   gauge: "M3.5 14.5a6.5 6.5 0 1 1 13 0M10 14.5l3-4.2",

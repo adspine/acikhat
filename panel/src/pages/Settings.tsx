@@ -254,13 +254,14 @@ export function SettingsPage() {
 
           {section === "asistan" && (
             <Group title="Asistan">
-              <VoicePicker value={config.agent.voiceId} assistantName={config.agent.name} onChange={(id) => set("agent", { ...config.agent, voiceId: id })} />
-              <h3 className="group-sub">Kendini tanıtışı</h3>
-              <Field label="Asistanın adı" error={issue("agent.name")}>{(id) => <Input id={id} value={config.agent.name} onChange={(e) => set("agent", { ...config.agent, name: e.target.value })} />}</Field>
-              <Field label="Karşılama cümlesi" hint="Boş bırakırsanız varsayılan kullanılır. {firma} ve {ajan} yerine işletme ve asistan adı yazılır. Yapay zekâ ve kayıt bilgilendirmesi KVKK gereği kalmalıdır." optional>
-                {(id, d) => <Textarea id={id} aria-describedby={d} rows={3} value={config.agent.greeting ?? ""} placeholder={meta.defaultGreeting} onChange={(e) => set("agent", { ...config.agent, greeting: e.target.value || undefined } as TenantConfig["agent"])} />}
-              </Field>
-              <p className="preview"><span>Önizleme</span>{fillTpl(config.agent.greeting || meta.defaultGreeting, { firma: config.name, ajan: config.agent.name })}</p>
+              <VoicePicker
+                value={config.agent.voiceId}
+                agent={{ name: config.agent.name, greeting: config.agent.greeting ?? "" }}
+                defaultGreeting={meta.defaultGreeting}
+                firma={config.name}
+                nameError={issue("agent.name")}
+                onApply={(a) => set("agent", { ...config.agent, voiceId: a.voiceId, name: a.name, greeting: a.greeting || undefined } as TenantConfig["agent"])}
+              />
               {me.testCallEnabled && <p className="muted small">Yayınladıktan sonra "Asistanı dene" bölümünden sesli deneyebilirsiniz.</p>}
             </Group>
           )}

@@ -49,11 +49,13 @@ type Draft = Record<string, unknown> & {
 };
 
 /** Korunan alanları canlıdan al, yeni satırlara kimlik ver */
-function normalizeDraft(input: Draft, live: Tenant): Draft {
+function normalizeDraft(input: Draft, live: Tenant, allowedVoices: Set<string> | null): Draft {
   const d: Draft = structuredClone(input);
   for (const k of PROTECTED) (d as Record<string, unknown>)[k] = structuredClone((live as Record<string, unknown>)[k]);
-  // Ses kimliği kurulumda seçilir; panelden yalnızca ad ve karşılama değişir
-  d.agent = { ...((d.agent as object) ?? {}), voiceId: live.agent.voiceId };
+  // Ses: yalnızca ElevenLabs'teki Türkçe ses listesinden seçilebilir; liste alınamıyorsa canlıdaki ses korunur
+  const requested = (d.agent as { voiceId?: unknown } | undefined)?.voiceId;
+  const voiceId = typeof requested === "string" && allowedVoices?.has(requested) ? requested : live.agent.voiceId;
+  d.agent = { ...((d.agent as object) ?? {}), voiceId };
   const ids = new Set<string>();
   for (const s of d.services ?? []) s.id = s.id && !ids.has(s.id) ? (ids.add(s.id), s.id) : unique(slug(`${s.name ?? "hizmet"}-${s.durationMin ?? ""}`), ids);
   const staffIds = new Set<string>();
@@ -106,6 +108,15 @@ export function settingsRoutes(deps: Deps) {
   app.use("/voices", requirePermission("settings.edit"));
   app.use("/settings/*", requirePermission("settings.edit"));
 
+  /** Seçilebilir ses kimlikleri (yoksa null: ses değişikliği kabul edilmez) */
+  const allowedVoices = async (): Promise<Set<string> | null> => {
+    try {
+      return deps.voices ? new Set((await deps.voices()).map((v) => v.id)) : null;
+    } catch {
+      return null;
+    }
+  };
+
   /**
    * Türkçe asistan sesleri. Önizleme, tüm seslerin aynı metni söylediği, bir kere üretilip depoda tutulan örnektir
    * (scripts/make-voice-samples.ts); örneği olmayan sesin önizlemesi yoktur.
@@ -152,7 +163,7 @@ export function settingsRoutes(deps: Deps) {
     const tenant = c.get("tenant");
     const body = (await c.req.json().catch(() => null)) as { config?: Draft } | null;
     if (!body?.config || typeof body.config !== "object") return c.json({ error: "Ayar okunamadı" }, 400);
-    const draft = normalizeDraft(body.config, tenant);
+    const draft = normalizeDraft(body.config, tenant, await allowedVoices());
     deps.tenantStore.saveDraft(tenant.id, draft);
     const { issues } = validate(draft);
     return c.json({ ok: true, config: draft, hasDraft: true, changes: changedSections(deps.tenantStore.getLiveRaw(tenant.id), draft), issues });
@@ -170,7 +181,7 @@ export function settingsRoutes(deps: Deps) {
     const user = c.get("user");
     const editable = deps.tenantStore.getEditable(tenant.id)!;
     if (!editable.hasDraft) return c.json({ error: "Yayınlanacak değişiklik yok" }, 400);
-    const draft = normalizeDraft(editable.config as Draft, tenant);
+    const draft = normalizeDraft(editable.config as Draft, tenant, await allowedVoices());
     const { tenant: next, issues } = validate(draft);
     if (!next) return c.json({ error: "Bazı alanlar hatalı", issues }, 422);
 
