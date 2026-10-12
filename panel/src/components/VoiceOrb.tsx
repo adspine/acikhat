@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type CSSProperties } from "react";
+import { useEffect, useState, type CSSProperties } from "react";
 
 /** Her ses kendi renk ailesini taşır: kimliğinden hesaplanır, her seferinde aynıdır. */
 export const HUES = [188, 268, 330, 22, 152, 214, 44, 292, 168];
@@ -17,27 +17,26 @@ export function hueFor(id: string): number {
 export function VoiceOrb({ id, size = 96, active = false, hue }: { id: string; size?: number; active?: boolean; hue?: number }) {
   const style = { "--size": `${size}px`, "--h": hue ?? hueFor(id) } as CSSProperties;
 
-  // Aktiflik bitince hızlı katmanlar sönme süresi boyunca ekranda kalır
-  const [settling, setSettling] = useState(false);
-  const was = useRef(active);
+  // Hızlı katmanlar ve halkalar, aktiflik bittikten sonra sönme süresi boyunca ekranda kalır.
+  // "fast" bir durum olarak tutulur: türetilmiş (active || settling) olsaydı, aktiflik biter bitmez ilk çizimde
+  // katmanlar kaldırılır ve sönmeden kaybolurdu.
+  const [fast, setFast] = useState(active);
   useEffect(() => {
     if (active) {
-      setSettling(false);
-    } else if (was.current) {
-      setSettling(true);
-      const t = setTimeout(() => setSettling(false), 1200);
-      was.current = active;
-      return () => clearTimeout(t);
+      setFast(true);
+      return;
     }
-    was.current = active;
+    const t = setTimeout(() => setFast(false), 1400);
+    return () => clearTimeout(t);
   }, [active]);
-  const fast = active || settling;
 
   return (
-    <span className={`orb${active ? " is-active" : ""}`} style={style} aria-hidden="true">
+    <span className={`orb${active ? " is-active" : ""}${fast ? " is-fast" : ""}`} style={style} aria-hidden="true">
       <span className="orb-halo" />
-      <span className="orb-ring" />
-      <span className="orb-ring orb-ring-2" />
+      <span className="orb-rings">
+        <span className="orb-ring" />
+        <span className="orb-ring orb-ring-2" />
+      </span>
       <span className="orb-body">
         <span className="orb-sweep" />
         <span className="orb-sweep orb-sweep-2" />
