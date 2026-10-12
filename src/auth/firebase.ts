@@ -1,4 +1,5 @@
 import { createPublicKey, verify, type JsonWebKeyInput, type KeyObject } from "node:crypto";
+import { randomBytes } from "node:crypto";
 
 /**
  * Firebase Authentication kimlik belgesi (ID token) doğrulaması.
@@ -98,5 +99,34 @@ export function createFirebaseVerifier(opts: {
         name: typeof c.name === "string" && c.name.trim() ? c.name.trim() : undefined,
       };
     },
+  };
+}
+
+/**
+ * Şifre belirleme e-postası: Firebase'in kendi e-postası gönderilir, bağlantıdaki sayfada kullanıcı yeni şifresini yazar.
+ * Hesap Firebase'de yoksa (eski panelden gelen kullanıcı) önce rastgele şifreyle açılır, sonra e-posta gönderilir.
+ * Yalnızca herkese açık web anahtarı kullanılır; yönetici yetkisi gerekmez.
+ */
+export function createPasswordResetSender(opts: { apiKey: string; fetchFn?: typeof fetch }): (email: string) => Promise<void> {
+  const doFetch = opts.fetchFn ?? fetch;
+  const call = async (path: string, body: unknown): Promise<string | null> => {
+    const res = await doFetch(`https://identitytoolkit.googleapis.com/v1/accounts:${path}?key=${opts.apiKey}`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(body),
+      signal: AbortSignal.timeout(10_000),
+    });
+    if (res.ok) return null;
+    const json = (await res.json().catch(() => ({}))) as { error?: { message?: string } };
+    return json.error?.message ?? `HTTP ${res.status}`;
+  };
+  return async (email) => {
+    let err = await call("sendOobCode", { requestType: "PASSWORD_RESET", email });
+    if (err === "EMAIL_NOT_FOUND") {
+      const made = await call("signUp", { email, password: randomBytes(24).toString("base64url"), returnSecureToken: false });
+      if (made && made !== "EMAIL_EXISTS") throw new Error(`Firebase hesabı açılamadı: ${made}`);
+      err = await call("sendOobCode", { requestType: "PASSWORD_RESET", email });
+    }
+    if (err) throw new Error(`Şifre e-postası gönderilemedi: ${err}`);
   };
 }

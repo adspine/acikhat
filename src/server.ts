@@ -6,7 +6,7 @@ import { Store } from "./store/db.ts";
 import { TenantRegistry } from "./store/tenants.ts";
 import { TenantStore } from "./store/tenant-store.ts";
 import { Users } from "./auth/users.ts";
-import { createFirebaseVerifier } from "./auth/firebase.ts";
+import { createFirebaseVerifier, createPasswordResetSender } from "./auth/firebase.ts";
 import { createVoiceCatalog } from "./integrations/voices.ts";
 import { createMailer } from "./integrations/mail.ts";
 import { createNotifier } from "./integrations/notify.ts";
@@ -62,6 +62,7 @@ const deps: Deps = {
   slotKey: required("SLOT_SIGNING_KEY"),
   webhookSecret: process.env.ELEVENLABS_WEBHOOK_SECRET ?? "",
   firebase: createFirebaseVerifier({ projectId: process.env.FIREBASE_PROJECT_ID ?? "acikhat-ai" }),
+  passwordReset: createPasswordResetSender({ apiKey: process.env.FIREBASE_API_KEY ?? "AIzaSyBAW7N5g4Ihfl6-jULFjybon7AH3skBXNY" }),
   voices: process.env.ELEVENLABS_API_KEY ? createVoiceCatalog(process.env.ELEVENLABS_API_KEY) : null,
   adminEmails: (process.env.ADMIN_EMAILS ?? "").split(",").map((e) => e.trim().toLowerCase()).filter(Boolean),
   paymentTestMode: (process.env.PAYMENT_TEST_MODE ?? (process.env.NODE_ENV === "production" ? "0" : "1")) === "1",

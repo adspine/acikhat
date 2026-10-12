@@ -32,6 +32,8 @@ export interface Deps {
   webhookSecret: string;
   /** Firebase giriş belgesi doğrulayıcı; yoksa Firebase ile giriş kapalıdır */
   firebase?: FirebaseVerifier | null;
+  /** Giriş yapmış kullanıcıya şifre belirleme e-postası gönderir (Firebase); yoksa özellik kapalıdır */
+  passwordReset?: ((email: string) => Promise<void>) | null;
   /** Asistan sesi seçimi için Türkçe ses listesi; yoksa panelde ses seçimi kapalıdır */
   voices?: VoiceCatalog | null;
   /** Bu e-postalarla (Firebase'de doğrulanmış) giren hesap yönetici (agency) olur. Küçük harfle. */

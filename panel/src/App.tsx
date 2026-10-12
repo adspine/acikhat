@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { api, ApiError, authEvents, getAdminTenant, setAdminTenant, type Me, type Permission, type Session, type Today, type Usage } from "./api.ts";
 import { Link, useRouter } from "./router.tsx";
 import { Sidebar, useSidebarCollapsed } from "./components/Sidebar.tsx";
-import { Button, ErrorBox, Field, Icon, Input, Loading } from "./components/ui.tsx";
+import { Button, ErrorBox, Field, Icon, Input, Loading, useToast } from "./components/ui.tsx";
 import { TodayPage } from "./pages/Today.tsx";
 import { AppointmentsPage } from "./pages/Appointments.tsx";
 import { CallsPage } from "./pages/Calls.tsx";
@@ -78,6 +78,7 @@ export function App() {
 function AdminApp({ session }: { session: Session }) {
   const { loc, navigate } = useRouter();
   const [collapsed, toggleSide] = useSidebarCollapsed();
+  const sendPasswordLink = usePasswordLink();
   const qc = useQueryClient();
   const overview = useQuery({ queryKey: ["admin", "overview"], queryFn: () => api<{ submissions: { new: number } }>("/api/admin/overview"), refetchInterval: 60_000 });
   const pending = overview.data?.submissions.new ?? 0;
@@ -108,7 +109,7 @@ function AdminApp({ session }: { session: Session }) {
         collapsed={collapsed}
         onToggle={toggleSide}
         user={{ name: session.user.name, email: session.user.email, role: "Yönetici" }}
-        actions={[{ label: "Çıkış yap", icon: "logout", onClick: logout, danger: true }]}
+        actions={[{ label: "Şifre değiştir", icon: "lock", onClick: sendPasswordLink }, { label: "Çıkış yap", icon: "logout", onClick: logout, danger: true }]}
       />
       <header className="topbar">
         <span className="brand-lamp" aria-hidden="true" />
@@ -160,6 +161,19 @@ function NoTenantPage() {
       </div>
     </AuthLayout>
   );
+}
+
+/** Şifre değiştirme: Firebase şifre belirleme bağlantısı kullanıcının e-postasına gönderilir */
+function usePasswordLink() {
+  const toast = useToast();
+  return async () => {
+    try {
+      const r = await api<{ email: string }>("/api/auth/password-reset", { method: "POST" });
+      toast(`Şifre belirleme bağlantısını ${r.email} adresine gönderdik`);
+    } catch (e) {
+      toast(e instanceof ApiError ? e.message : "Bağlantı gönderilemedi", "error");
+    }
+  };
 }
 
 /** Oturum yoksa kullanıcı sitenin giriş sayfasına yönlendirilir (tek giriş yeri) */
@@ -241,6 +255,7 @@ function SidebarUsage({ canOpen }: { canOpen: boolean }) {
 function Shell() {
   const me = useMe();
   const [collapsed, toggleSide] = useSidebarCollapsed();
+  const sendPasswordLink = usePasswordLink();
   const { loc } = useRouter();
   const qc = useQueryClient();
   const today = useToday();
@@ -277,7 +292,6 @@ function Shell() {
     if (p.startsWith("/ayarlar")) return <SettingsPage />;
     if (p.startsWith("/kullanicilar")) return <UsersPage />;
     if (p.startsWith("/asistani-dene")) return <Suspense fallback={<Loading />}><TestCallPage /></Suspense>;
-    if (p.startsWith("/sifre")) return <section className="page narrow"><h1 className="page-title">Şifre değiştir</h1><ChangePasswordPage onDone={() => history.back()} /></section>;
     return <TodayPage />;
   })();
 
@@ -299,7 +313,7 @@ function Shell() {
         usage={<SidebarUsage canOpen={me.permissions.includes("settings.edit")} />}
         user={{ name: me.user.name, email: me.user.email, role: roleLabel }}
         actions={[
-          ...(me.user.role === "agency" ? [{ label: "Yönetime dön", icon: "left", onClick: exitTenant }] : [{ label: "Şifre değiştir", icon: "lock", to: "/sifre" }]),
+          ...(me.user.role === "agency" ? [{ label: "Yönetime dön", icon: "left", onClick: exitTenant }] : [{ label: "Şifre değiştir", icon: "lock", onClick: sendPasswordLink }]),
           { label: "Çıkış yap", icon: "logout", onClick: logout, danger: true },
         ]}
       />
@@ -342,7 +356,7 @@ function Shell() {
               </Link>
             ))}
             {me.user.role === "agency" && <button className="sheet-item" onClick={exitTenant}><Icon name="chart" />Yönetime dön</button>}
-            <Link to="/sifre" className="sheet-item" onClick={() => setMoreOpen(false)}><Icon name="settings" />Şifre değiştir</Link>
+            <button className="sheet-item" onClick={() => { setMoreOpen(false); sendPasswordLink(); }}><Icon name="lock" />Şifre değiştir</button>
             <button className="sheet-item" onClick={logout}><Icon name="logout" />Çıkış yap</button>
           </div>
         </div>

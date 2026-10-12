@@ -33,6 +33,7 @@ export function makeApp(
   for (const t of tenantList) tenantStore.create(t);
   const published: Tenant[] = [];
   const mailbox: Mail[] = [];
+  const resets: string[] = [];
   const deps = {
     store,
     notifier,
@@ -48,6 +49,7 @@ export function makeApp(
     adminEmails: opts.adminEmails ?? [],
     voices: opts.voices ?? null,
     mailer: { send: async (m: Mail) => void mailbox.push(m) },
+    passwordReset: async (email: string) => void resets.push(email),
     baseUrl: "https://panel.test",
     toolSecret: "tool-secret",
     slotKey: "slot-key",
@@ -66,5 +68,5 @@ export function makeApp(
     const json = res.headers.get("content-type")?.includes("json") ? JSON.parse(text) : text;
     return { status: res.status, body: json as any };
   };
-  return { app, store, sms, call, deps, published, mailbox };
+  return { app, store, sms, call, deps, published, mailbox, resets };
 }

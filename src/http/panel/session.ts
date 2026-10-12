@@ -217,6 +217,24 @@ export function authRoutes(deps: Deps) {
     return c.json(accountOf(user));
   });
 
+  /** Şifre değiştirme: Firebase şifre belirleme e-postası gönderilir (şifre Firebase'de tutulur). Dakikada bir kez. */
+  const lastReset = new Map<string, number>();
+  app.post("/password-reset", async (c) => {
+    const user = userFromCookie(c, deps);
+    if (!user) return c.json({ error: "Oturum açmanız gerekiyor" }, 401);
+    if (!deps.passwordReset) return c.json({ error: "Şifre e-postası şu an gönderilemiyor" }, 503);
+    const last = lastReset.get(user.id);
+    if (last && Date.now() - last < 60_000) return c.json({ error: "Bağlantıyı az önce gönderdik. Bir dakika sonra tekrar deneyin." }, 429);
+    try {
+      await deps.passwordReset(user.email);
+    } catch (err) {
+      console.error(`[şifre] e-posta gönderilemedi (${user.email}): ${(err as Error).message}`);
+      return c.json({ error: "Şifre e-postası gönderilemedi. Biraz sonra tekrar deneyin." }, 502);
+    }
+    lastReset.set(user.id, Date.now());
+    return c.json({ ok: true, email: user.email });
+  });
+
   app.post("/logout", (c) => {
     const token = getCookie(c, cookieName(deps.secureCookies));
     if (token) deps.users.revoke(token);
