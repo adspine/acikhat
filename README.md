@@ -88,3 +88,15 @@ Randevu motoru (süreli hizmet + personel + oda/alan) sektörden bağımsızdır
 | Panel geliştirme (yerel sunucu 8787'de açıkken) | `cd panel && npm run dev` |
 | Panel derleme (Docker zaten yapar) | `cd panel && npm run build` |
 | Canlıda kullanıcı açma | `fly ssh console -C 'node scripts/create-user.ts <firma-id> <e-posta> "<Ad Soyad>" owner'` |
+
+## Dağıtım (otomatik)
+`main` dalına her `git push` işleminde GitHub Actions önce testleri ve panel derlemesini çalıştırır, geçerse Fly.io'ya dağıtır (`.github/workflows/deploy.yml`). Elle `fly deploy` gerekmez. Durum: GitHub → Actions sekmesi.
+
+- Fly erişimi GitHub'daki `FLY_API_TOKEN` gizli değeriyle yapılır (yalnızca bu uygulamaya dağıtım yetkili, 1 yıl geçerli). Süresi dolunca: `fly tokens create deploy -a acikhat-resepsiyon --expiry 8760h | gh secret set FLY_API_TOKEN -R adspine/acikhat`
+- Sunucunun gizli değerleri (API anahtarları) Fly'da durur (`fly secrets`), repoya girmez.
+
+### Yeni bir bilgisayarda kurulum
+1. `git clone https://github.com/adspine/acikhat.git && cd acikhat && npm ci && (cd panel && npm ci)`
+2. `.env` dosyası repoda yoktur: diğer bilgisayardan güvenli bir yolla (parola yöneticisi vb.) kopyalanır. E-posta veya mesajla gönderilmez.
+3. Commit kimliği (yalnızca bu klasör için): `git config user.name adspine && git config user.email 341140214+adspine@users.noreply.github.com`
+4. `npm test` ile kontrol, `npm run dev` ile yerel sunucu.
