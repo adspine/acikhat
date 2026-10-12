@@ -555,7 +555,6 @@ export function AdminCustomersPage() {
                       actions={[
                         { label: "Yönet", icon: "settings", onClick: () => setOpenId(t.id) },
                         { label: "Asistanı düzenle", icon: "users", onClick: () => setAssistantId(t.id) },
-                        ...(t.assistantReady ? [{ label: "Asistanı dene", icon: "mic", onClick: () => navigate(`/asistani-dene?firma=${t.id}`) }] : []),
                         { label: "Müşteri panelini aç", icon: "chart", onClick: () => { setAdminTenant(t.id); location.assign("/panel/"); } },
                       ]}
                     />

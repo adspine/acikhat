@@ -2,7 +2,8 @@ import { useEffect, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Conversation } from "@elevenlabs/client";
 import { api, type VoiceOption } from "../api.ts";
-import { Button, Empty, Icon, Loading, Select } from "../components/ui.tsx";
+import { Button, Empty, Icon, Loading, Modal, Select } from "../components/ui.tsx";
+import { useVoicePlayer } from "../components/voice-player.ts";
 import { useRouter } from "../router.tsx";
 import { HUES, VoiceOrb, hueFor } from "../components/VoiceOrb.tsx";
 
@@ -67,10 +68,13 @@ function TestCallStage({ tenant }: { tenant: TestTenant }) {
   const conv = useRef<Awaited<ReturnType<typeof Conversation.startSession>> | null>(null);
   const logRef = useRef<HTMLOListElement>(null);
   const stage = useRef<HTMLElement>(null);
+  const [pickVoice, setPickVoice] = useState(false);
+  const [chosen, setChosen] = useState<string | null>(null);
 
   // Küre rengi, ses galerisindekiyle aynı: ses listesindeki sıraya göre
   const voices = useQuery({ queryKey: ["voices", "/api/admin/voices"], queryFn: () => api<{ voices: VoiceOption[]; enabled: boolean; defaultId: string }>("/api/admin/voices"), staleTime: 3_600_000, retry: false });
-  const voiceId = tenant.voiceId ?? voices.data?.defaultId ?? "asistan";
+  const ownVoice = tenant.voiceId ?? voices.data?.defaultId ?? "asistan";
+  const voiceId = chosen ?? ownVoice;
   const ids = (voices.data?.voices ?? []).map((v) => v.id).sort();
   const hue = ids.includes(voiceId) ? HUES[ids.indexOf(voiceId) % HUES.length]! : hueFor(voiceId);
 
@@ -141,6 +145,8 @@ function TestCallStage({ tenant }: { tenant: TestTenant }) {
         conversationToken,
         connectionType: "webrtc",
         dynamicVariables,
+        // Başka bir ses seçildiyse yalnızca bu görüşme için geçerli olur; firmanın asistanı değişmez
+        ...(chosen && chosen !== ownVoice && { overrides: { tts: { voiceId: chosen } } }),
         onConnect: () => setStatus("listening"),
         onDisconnect: () => { setStatus("idle"); conv.current = null; },
         // Gelen veriler SDK'dan beklenmedik biçimde gelebilir (boş, nesne vb.); ekranı bozmasın diye metne çevrilir
@@ -162,15 +168,20 @@ function TestCallStage({ tenant }: { tenant: TestTenant }) {
   };
 
   const live = status !== "idle";
+  const voiceName = voices.data?.voices.find((v) => v.id === voiceId)?.name;
   const connected = status === "listening" || status === "speaking";
 
   return (
     <>
       <section ref={stage} className={`card test-stage${live ? " is-live" : ""}`} aria-label="Deneme görüşmesi">
+        <button type="button" className="voice-kebab test-stage-kebab" onClick={() => setPickVoice(true)} disabled={live} aria-label="Denenecek sesi değiştir" title="Başka bir sesle dene">
+          <Icon name="moreV" size={18} />
+        </button>
         <div className="test-stage-orb">
           <VoiceOrb id={voiceId} hue={hue} size={156} active={connected} />
         </div>
         <p className="test-stage-status" role="status">{STATUS_TEXT[status]}</p>
+        {voiceName && <p className="test-stage-voice">Ses: <strong>{voiceName}</strong>{chosen && chosen !== ownVoice ? " (deneme)" : ""}</p>}
         <p className="muted small test-stage-hint">
           {live ? "Cümlenizi bitirince asistan cevap verir. Bitirmek için aşağıdaki düğmeyi kullanın." : "Başlattığınızda tarayıcı mikrofon izni isteyebilir."}
         </p>
@@ -207,6 +218,46 @@ function TestCallStage({ tenant }: { tenant: TestTenant }) {
           </div>
         )}
       </section>
+      <VoiceTryModal
+        open={pickVoice}
+        onClose={() => setPickVoice(false)}
+        voices={voices.data?.voices ?? []}
+        selected={voiceId}
+        own={ownVoice}
+        onChoose={(id) => { setChosen(id === ownVoice ? null : id); setPickVoice(false); }}
+      />
     </>
+  );
+}
+
+/** Denenecek ses listesi: dinle, seç. Seçim yalnızca deneme görüşmesi içindir; firmanın asistanı değişmez. */
+function VoiceTryModal({ open, onClose, voices, selected, own, onChoose }: { open: boolean; onClose: () => void; voices: VoiceOption[]; selected: string; own: string; onChoose: (id: string) => void }) {
+  const root = useRef<HTMLDivElement>(null);
+  const { playingId, play, stop } = useVoicePlayer(root);
+  useEffect(() => {
+    if (!open) stop();
+  }, [open, stop]);
+  const ids = voices.map((v) => v.id).sort();
+  return (
+    <Modal open={open} onClose={onClose} title="Başka bir sesle dene" size="md">
+      <div ref={root} className="voice-try">
+        <p className="muted small">Seçtiğiniz ses yalnızca bu deneme görüşmesinde kullanılır, firmanın asistanını değiştirmez. Kalıcı değiştirmek için Müşteriler listesinde ⋮ &gt; Asistanı düzenle.</p>
+        <ul className="voice-try-list">
+          {voices.map((v) => (
+            <li key={v.id} className={`voice-try-row${v.id === selected ? " is-selected" : ""}`}>
+              <VoiceOrb id={v.id} hue={HUES[ids.indexOf(v.id) % HUES.length]!} size={44} active={playingId === v.id} />
+              <div className="voice-try-name">
+                <strong>{v.name}</strong>
+                <span className="muted small">{v.gender === "female" ? "Kadın" : v.gender === "male" ? "Erkek" : "Nötr"}{v.id === own ? " · Firmanın sesi" : ""}</span>
+              </div>
+              <Button variant="ghost" onClick={() => v.previewUrl && void play(v.id, v.previewUrl)} disabled={!v.previewUrl}>
+                <Icon name={playingId === v.id ? "stop" : "play"} size={16} />{playingId === v.id ? "Durdur" : "Dinle"}
+              </Button>
+              <Button variant={v.id === selected ? "primary" : "quiet"} onClick={() => onChoose(v.id)}>{v.id === selected ? "Seçili" : "Bununla dene"}</Button>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </Modal>
   );
 }

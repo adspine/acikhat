@@ -176,7 +176,8 @@ export function buildAgent(t: Tenant, env: AgentEnv) {
     platform_settings: {
       // Telefon (SIP) aramalarında arama başında bizim init webhook'umuz çağrılır:
       // tarih tablosu ve arayan numarası buradan gelir. Tarayıcı testinde sayfa bunu kendisi verir.
-      overrides: { enable_conversation_initiation_client_data_from_webhook: true },
+      // Yönetici "Asistanı dene" sayfası başka sesleri asistanı değiştirmeden denemek için ses geçersiz kılar
+      overrides: { enable_conversation_initiation_client_data_from_webhook: true, conversation_config_override: { tts: { voice_id: true } } },
       workspace_overrides: {
         conversation_initiation_client_data_webhook: {
           url: `${env.baseUrl}/webhooks/elevenlabs/init`,
