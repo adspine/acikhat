@@ -57,7 +57,7 @@ export type Permission =
 
 export interface Me {
   user: { id: string; name: string; email: string; role: "owner" | "team" | "agency"; mustChangePassword: boolean; notifyEmail: boolean };
-  tenant: { id: string; name: string; vertical: string; calendar: string; suspended: boolean };
+  tenant: { id: string; name: string; vertical: string; calendar: string; suspended: boolean; voiceId: string | null };
   terms: { staffTerm: string; staffLabel: string; roomLabel: string; roomLabelPlural: string; roomTypes: Record<string, string>; teamRoleLabel: string };
   permissions: Permission[];
   services: { id: string; name: string; durationMin: number; price: number; staffCount: number }[];
