@@ -33,7 +33,7 @@ Sesli AI ürünleri, ürün olgunlaştıkça şu beş katmanı ayırıyor. Hepsi
 
 **Uyanlar**
 - **Taslak → yayınla → geri dön** (Goodcall): bizde taslak ve yayınlama var, geri alma yok. Küçük bir eklemeyle (önceki sürüme dön) tamamlanır.
-- **Çağrı kaydı + transkript + özet** (Smith.ai, Rosie): müşterilerin en çok değer verdiği ekran. Bizde yalnızca özet var; en büyük boşluk.
+- **Çağrı kaydı + transkript + özet** (Smith.ai, Rosie): müşterilerin en çok değer verdiği ekran. Bizde özet ve zaman damgalı döküm var; konuşma içinde arama ve kopyalama eklendi. Eksik olan: ses kaydı dinleme ve kart/kimlik bilgisi gibi alanların dökümde otomatik gizlenmesi.
 - **Çağrıyı "yanlış" diye işaretle** (Goodcall): asistan kalitesini iyileştirmenin en ucuz yolu. Bizde yok.
 - **Anlık bildirim** (Rosie): yeni müşteri adayı, kaçan çağrı. Bizde e-posta altyapısı var, kural bazlı bildirim ekranı yok.
 - **Açık / kapalı saat için ayrı yönlendirme** (Dialpad): bizde "asistan ne zaman devrede" tek seçim; mesai içi ve dışı için ayrı davranış (aktarma, mesaj al) eklenebilir.
@@ -66,4 +66,4 @@ Profil:    Hesap ayarları · Şifre değiştir · Çıkış
 ## 5. Bu turda yapılanlar ve sonraki öneriler
 
 - Yapıldı: "Ayarlar" → "Kurulum", profil menüsünde "Hesap ayarları" (ad, dil, görünüm, e-posta bildirimleri), panel için açık/koyu/sistem teması. Tanıtım sitesi her zaman açık temada kalır.
-- Sonraki: çağrı transkripti ve "yanlış çağrıyı işaretle", ayarlar için "önceki sürüme dön", mesai içi/dışı ayrı yönlendirme, kural bazlı anlık bildirimler, menüyü Çalışma / Analiz / Hesap / Kurulum gruplarına bölmek.
+- Sonraki: "yanlış çağrıyı işaretle" (döküm ve arama hazır), ayarlar için "önceki sürüme dön", mesai içi/dışı ayrı yönlendirme, kural bazlı anlık bildirimler, menüyü Çalışma / Analiz / Hesap / Kurulum gruplarına bölmek.

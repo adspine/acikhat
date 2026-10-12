@@ -109,6 +109,8 @@ export interface CallItem {
   summary: string | null;
   afterHours: boolean;
   appointmentId: string | null;
+  /** Konuşma içinde arama yapıldıysa eşleşen yerin çevresi */
+  snippet?: string;
 }
 
 export interface CallDetail extends CallItem {

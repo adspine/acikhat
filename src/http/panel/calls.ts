@@ -28,6 +28,39 @@ const MISSED_REASONS: Record<string, string> = {
   failed: "Bağlantı kurulamadı",
 };
 
+export interface TranscriptTurn { role: "agent" | "user" | "event"; text: string; second: number }
+
+/** Görüşme olayındaki ham dökümü panelde gösterilecek sıraya çevirir (araç çağrıları "olay" satırı olur) */
+export function transcriptOf(payloadJson: string): TranscriptTurn[] {
+  let data: { transcript?: unknown[] } = {};
+  try {
+    data = (JSON.parse(payloadJson) as { data?: { transcript?: unknown[] } }).data ?? {};
+  } catch {
+    return [];
+  }
+  const out: TranscriptTurn[] = [];
+  for (const t of (data.transcript ?? []) as {
+    role?: string; message?: string | null; time_in_call_secs?: number; tool_calls?: { tool_name?: string }[];
+  }[]) {
+    for (const call of t.tool_calls ?? []) {
+      const text = TOOL_EVENTS[call.tool_name ?? ""];
+      if (text) out.push({ role: "event", text, second: t.time_in_call_secs ?? 0 });
+    }
+    const msg = t.message?.trim();
+    if (msg && msg !== "...") out.push({ role: t.role === "user" ? "user" : "agent", text: msg, second: t.time_in_call_secs ?? 0 });
+  }
+  return out;
+}
+
+/** Aranan metnin geçtiği yerin çevresi: "...ön sözcükler **metin** son sözcükler..." için parçalar */
+function snippetAround(text: string, needle: string): string {
+  const i = text.toLocaleLowerCase("tr").indexOf(needle);
+  if (i < 0) return text.slice(0, 120);
+  const from = Math.max(0, i - 45);
+  const to = Math.min(text.length, i + needle.length + 70);
+  return `${from > 0 ? "…" : ""}${text.slice(from, to)}${to < text.length ? "…" : ""}`;
+}
+
 export function callView(tenant: Tenant, r: CallRow, nowMs: number) {
   const at = r.started_at ?? 0;
   const outcome = (r.outcome ?? "info") as keyof typeof OUTCOME_LABELS;
@@ -81,6 +114,25 @@ export function callRoutes(deps: Deps) {
     const outcome = c.req.query("outcome");
     const digits = (c.req.query("q") ?? "").replace(/\D/g, "").replace(/^0/, "");
 
+    // Konuşma içinde arama: özet ve döküm metninde geçen kelimeler (Türkçe büyük/küçük harf duyarsız)
+    const ara = (c.req.query("ara") ?? "").trim().toLocaleLowerCase("tr");
+    if (ara.length >= 2) {
+      const rows = db
+        .prepare(
+          `SELECT conversation_id, started_at, duration_secs, outcome, summary, caller_phone, after_hours, appointment_id, payload_json
+           FROM calls WHERE tenant_id = ? AND started_at >= ? AND started_at < ? ORDER BY started_at DESC LIMIT 500`,
+        )
+        .all(tenant.id, fromMs, toMs) as unknown as (CallRow & { payload_json: string })[];
+      const found = rows.flatMap((r) => {
+        const turn = transcriptOf(r.payload_json).find((t) => t.role !== "event" && t.text.toLocaleLowerCase("tr").includes(ara));
+        const inSummary = (r.summary ?? "").toLocaleLowerCase("tr").includes(ara);
+        if (!turn && !inSummary) return [];
+        const snippet = turn ? `${turn.role === "user" ? "Arayan" : "Asistan"}: ${snippetAround(turn.text, ara)}` : snippetAround(r.summary ?? "", ara);
+        return [{ ...callView(tenant, r, nowMs), snippet }];
+      }).filter((x) => !outcome || x.outcome === outcome);
+      return c.json({ from: from.toString(), to: to.toString(), items: found, searched: true });
+    }
+
     const calls = (db
       .prepare(
         `SELECT conversation_id, started_at, duration_secs, outcome, summary, caller_phone, after_hours, appointment_id
@@ -110,19 +162,7 @@ export function callRoutes(deps: Deps) {
       )
       .get(tenant.id, c.req.param("id")) as (CallRow & { payload_json: string }) | undefined;
     if (!row) return c.json({ error: "Görüşme bulunamadı" }, 404);
-    const data = (JSON.parse(row.payload_json) as { data?: { transcript?: unknown[] } }).data ?? {};
-    const transcript: { role: "agent" | "user" | "event"; text: string; second: number }[] = [];
-    for (const t of (data.transcript ?? []) as {
-      role?: string; message?: string | null; time_in_call_secs?: number; tool_calls?: { tool_name?: string }[];
-    }[]) {
-      for (const call of t.tool_calls ?? []) {
-        const text = TOOL_EVENTS[call.tool_name ?? ""];
-        if (text) transcript.push({ role: "event", text, second: t.time_in_call_secs ?? 0 });
-      }
-      const msg = t.message?.trim();
-      if (msg && msg !== "...") transcript.push({ role: t.role === "user" ? "user" : "agent", text: msg, second: t.time_in_call_secs ?? 0 });
-    }
-    return c.json({ ...callView(tenant, row, deps.now().epochMilliseconds), transcript });
+    return c.json({ ...callView(tenant, row, deps.now().epochMilliseconds), transcript: transcriptOf(row.payload_json) });
   });
 
   // ---- geri aramalar ----

@@ -54,7 +54,7 @@ Son commit: `43fe4b8`. GitHub Actions bu commit ile canlıya dağıtım yapar.
 
 Eksik ve iyileştirilebilir:
 - **Kota aşımı tahsil edilmiyor:** kota bitince asistan çalışmaya devam ediyor, aşım ücreti yalnızca gösteriliyor. Aşım dönem sonunda faturalandırılmalı ya da kota dolunca davranış (durdur / devam) seçtirilmeli.
-- **Çağrı detayında ses kaydı/transkript dinleme ve metin arama yok** (özet var). Müşterinin en çok isteyeceği özelliklerden biri.
+- **Çağrı dökümü var** (konuşma metni, zaman damgalı, özet, randevuya bağlantı) ve artık konuşma içinde arama ile kopyalama da var. **Ses kaydı dinleme yok** (ElevenLabs'ten kayıt çekilmiyor). Müşteriler için değerli ama ayrı bir saklama ve KVKK konusu.
 - **Bildirim tercihleri yok:** kota ve satın alma e-postaları kapatılamıyor; haftalık özet e-postası yok.
 - **Rapor dışa aktarma yok** (CSV/PDF). Randevu listesi de dışa aktarılamıyor.
 - Randevu hatırlatma (SMS/WhatsApp), iptal sonrası otomatik geri arama, toplu mesaj gibi gelir getiren işler yok; çoğu Netgsm'e bağlı.
@@ -96,7 +96,7 @@ Eksik ve iyileştirilebilir:
 **Sonraki 2-4 hafta**
 7. PayTR entegrasyonu + fatura süreci + kota aşımı tahsilatı.
 8. Hash yönlendirmeden gerçek sayfalara geçiş; sektör iniş sayfaları; canlı ses demosu.
-9. Çağrı kaydı dinleme ve transkript arama; KVKK silme/dışa aktarma aracı; saklama süresi işi.
+9. Ses kaydı dinleme (isteğe bağlı); KVKK silme/dışa aktarma aracı; döküm saklama süresi işi.
 10. Ön yüz duman testleri (Playwright) ve hata izleme.
 11. Diğer sektörler için ElevenLabs ajanlarının kurulup gerçek aramalarla doğrulanması ve eval senaryoları.
 
