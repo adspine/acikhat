@@ -1,0 +1,89 @@
+<!--
+  CANLI DENEME KARTI (şimdilik kapalı)
+
+  Ziyaretçi numarasını yazar, demo firmanın 0850 hattı onu arar (en fazla 2 dk, numara başına 2 deneme).
+  CSS (.try, .listen) ve JS (site.js içinde "Hero: canlı test görüşmesi") dosyalarda duruyor; kart HTML'i olmadığı için etkisizdir.
+
+  Yeniden açmak için:
+    1) Netgsm'de giden arama için bakiye yükleyin (bakiye 0 iken Netgsm giden aramayı 486 ile reddediyor).
+    2) Sunucuda arka ucu açın:   fly secrets set DEMO_CALLS=on -a acikhat-resepsiyon
+    3) web/index.html'de hero-stage içindeki <figure class="call" aria-label="Örnek görüşme"> yerine "KART" bloğunu koyun,
+       <figure>'ü "ÖRNEK GÖRÜŞME BÖLÜMÜ" içine taşıyıp bu bölümü "Nasıl çalışır" bölümünün önüne ekleyin,
+       .hero-note satırını kaldırın ve site.css/site.js sürüm numarasını artırın.
+  Yönetici panelindeki "Test aramaları" sayfası kayıtları gösterir.
+-->
+
+<!-- ===== KART (hero-stage içine) ===== -->
+        <!-- Canlı deneme: numarayı demo firmanın 0850 hattı arar (en fazla 2 dk, numara başına 2 deneme) -->
+        <div class="call try" data-try>
+          <div class="call-head">
+            <span class="lamp" aria-hidden="true"></span>
+            <div>
+              <p class="call-title" id="try-title">Canlı deneme</p>
+              <p class="call-sub"><span data-try-name>Demo işletme</span> asistanı sizi arar</p>
+            </div>
+            <span class="wave" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></span>
+          </div>
+
+          <form class="try-form" data-try-form novalidate aria-labelledby="try-title">
+            <div class="field">
+              <label for="try-phone">Cep numaranız</label>
+              <input id="try-phone" name="phone" type="tel" inputmode="tel" autocomplete="tel-national" placeholder="05xx xxx xx xx" maxlength="16" required aria-describedby="try-error">
+            </div>
+            <label class="check try-consent">
+              <input type="checkbox" name="consent" required>
+              <span>Aranmayı ve görüşmenin kaydedilmesini kabul ediyorum. <a href="#/yasal/kvkk-aydinlatma-metni">KVKK aydınlatma metni</a></span>
+            </label>
+            <input class="try-hp" type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true">
+            <p class="field-error" id="try-error" role="alert" data-try-error hidden></p>
+            <button class="btn btn-lamp btn-lg" type="submit" data-try-submit>Beni arayın</button>
+            <p class="try-fine">En fazla 2 dakika sürer. Bir numara 2 kez deneyebilir.</p>
+          </form>
+
+          <div class="try-live" data-try-live hidden aria-live="polite">
+            <h2 class="try-title" data-try-title tabindex="-1">Telefonunuz çalıyor</h2>
+            <p class="try-lead" data-try-text></p>
+            <div class="try-meter" aria-hidden="true"><span data-try-bar></span></div>
+            <p class="try-time" data-try-time></p>
+            <div class="try-after" data-try-after hidden>
+              <a class="btn" href="#/uye-ol">Hemen başla</a>
+              <button class="btn btn-quiet" type="button" data-try-again hidden>Tekrar dene</button>
+            </div>
+          </div>
+
+          <p class="try-off" data-try-off hidden>Canlı deneme şu an kapalı. Örnek görüşmeyi aşağıdan dinleyebilirsiniz.</p>
+        </div>
+
+<!-- ===== ÖRNEK GÖRÜŞME BÖLÜMÜ (facts bölümünden sonra, Nasıl çalışır'dan önce) ===== -->
+  <!-- ===== Örnek görüşme ===== -->
+  <section class="listen" id="dinle" data-section="dinle" aria-labelledby="dinle-baslik">
+    <div class="wrap listen-grid">
+      <div class="listen-copy">
+        <h2 id="dinle-baslik">Bir randevu telefonda böyle alınır</h2>
+        <p>Asistan boş saati bulur, adı ve numarayı teyit eder, randevuyu yazar. Kaydı dinleyin, yazıya da dökülüyor.</p>
+      </div>
+      <figure class="call" aria-label="Örnek görüşme">
+        <div class="call-head">
+          <span class="lamp" data-lamp aria-hidden="true"></span>
+          <div>
+            <p class="call-title">Örnek görüşme</p>
+            <p class="call-sub">Bir spa'nın asistanı, gerçek sesiyle</p>
+          </div>
+          <span class="wave" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></span>
+        </div>
+        <ol class="transcript" data-transcript aria-live="off"></ol>
+        <div class="player">
+          <button class="play" type="button" data-play aria-label="Görüşmeyi dinle">
+            <svg class="icon-play" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l11-6.5z"/></svg>
+            <svg class="icon-pause" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5h4v14H7zM13 5h4v14h-4z"/></svg>
+          </button>
+          <div class="timeline">
+            <div class="bar"><span data-progress></span></div>
+            <p class="time"><span data-time>0:00</span> / <span data-duration>0:38</span></p>
+          </div>
+        </div>
+        <audio data-audio preload="none" src="/audio/demo.m4a"></audio>
+      </figure>
+    </div>
+  </section>
+

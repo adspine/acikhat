@@ -9,7 +9,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/tokens.css?v=35">
-<link rel="stylesheet" href="/site.css?v=38">
+<link rel="stylesheet" href="/site.css?v=40">
 </head>
 <body>
 <a class="skip" href="#icerik">İçeriğe geç</a>
@@ -70,49 +70,32 @@
           <a class="btn btn-lg" href="#/uye-ol">Hemen başla</a>
           <a class="btn btn-glass btn-lg" href="#/nasil">Nasıl çalışır?</a>
         </div>
-
+        <p class="hero-note">Numaranız değişmez. Müşterileriniz bildikleri numarayı aramaya devam eder.</p>
       </div>
 
       <div class="hero-stage">
-        <!-- Canlı deneme: numarayı demo firmanın 0850 hattı arar (en fazla 2 dk, numara başına 2 deneme) -->
-        <div class="call try" data-try>
+        <figure class="call" aria-label="Örnek görüşme">
           <div class="call-head">
-            <span class="lamp" aria-hidden="true"></span>
+            <span class="lamp" data-lamp aria-hidden="true"></span>
             <div>
-              <p class="call-title" id="try-title">Canlı deneme</p>
-              <p class="call-sub"><span data-try-name>Demo işletme</span> asistanı sizi arar</p>
+              <p class="call-title">Örnek görüşme</p>
+              <p class="call-sub">Bir spa'nın asistanı, gerçek sesiyle</p>
             </div>
             <span class="wave" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></span>
           </div>
-
-          <form class="try-form" data-try-form novalidate aria-labelledby="try-title">
-            <div class="field">
-              <label for="try-phone">Cep numaranız</label>
-              <input id="try-phone" name="phone" type="tel" inputmode="tel" autocomplete="tel-national" placeholder="05xx xxx xx xx" maxlength="16" required aria-describedby="try-error">
-            </div>
-            <label class="check try-consent">
-              <input type="checkbox" name="consent" required>
-              <span>Aranmayı ve görüşmenin kaydedilmesini kabul ediyorum. <a href="#/yasal/kvkk-aydinlatma-metni">KVKK aydınlatma metni</a></span>
-            </label>
-            <input class="try-hp" type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true">
-            <p class="field-error" id="try-error" role="alert" data-try-error hidden></p>
-            <button class="btn btn-lamp btn-lg" type="submit" data-try-submit>Beni arayın</button>
-            <p class="try-fine">En fazla 2 dakika sürer. Bir numara 2 kez deneyebilir.</p>
-          </form>
-
-          <div class="try-live" data-try-live hidden aria-live="polite">
-            <h2 class="try-title" data-try-title tabindex="-1">Telefonunuz çalıyor</h2>
-            <p class="try-lead" data-try-text></p>
-            <div class="try-meter" aria-hidden="true"><span data-try-bar></span></div>
-            <p class="try-time" data-try-time></p>
-            <div class="try-after" data-try-after hidden>
-              <a class="btn" href="#/uye-ol">Hemen başla</a>
-              <button class="btn btn-quiet" type="button" data-try-again hidden>Tekrar dene</button>
+          <ol class="transcript" data-transcript aria-live="off"></ol>
+          <div class="player">
+            <button class="play" type="button" data-play aria-label="Görüşmeyi dinle">
+              <svg class="icon-play" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l11-6.5z"/></svg>
+              <svg class="icon-pause" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5h4v14H7zM13 5h4v14h-4z"/></svg>
+            </button>
+            <div class="timeline">
+              <div class="bar"><span data-progress></span></div>
+              <p class="time"><span data-time>0:00</span> / <span data-duration>0:38</span></p>
             </div>
           </div>
-
-          <p class="try-off" data-try-off hidden>Canlı deneme şu an kapalı. Örnek görüşmeyi aşağıdan dinleyebilirsiniz.</p>
-        </div>
+          <audio data-audio preload="none" src="/audio/demo.m4a"></audio>
+        </figure>
 
         <div class="float float-a glass" data-lag="0.12" aria-hidden="true">
           <svg viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15" rx="3"/><path d="M8 3v4M16 3v4M3.5 10h17M9 15l2 2 4-4"/></svg>
@@ -139,38 +122,6 @@
       <div class="fact"><strong>Aynı anda</strong><span>Birden fazla görüşmeyi birlikte yürütür.</span></div>
       <div class="fact"><strong>15 dk</strong><span>Bilgi formunu doldurmak bu kadar sürer.</span></div>
       <div class="fact"><strong>Aynı numara</strong><span>Müşterileriniz bildikleri numarayı arar.</span></div>
-    </div>
-  </section>
-
-  <!-- ===== Örnek görüşme ===== -->
-  <section class="listen" id="dinle" data-section="dinle" aria-labelledby="dinle-baslik">
-    <div class="wrap listen-grid">
-      <div class="listen-copy">
-        <h2 id="dinle-baslik">Bir randevu telefonda böyle alınır</h2>
-        <p>Asistan boş saati bulur, adı ve numarayı teyit eder, randevuyu yazar. Kaydı dinleyin, yazıya da dökülüyor.</p>
-      </div>
-      <figure class="call" aria-label="Örnek görüşme">
-        <div class="call-head">
-          <span class="lamp" data-lamp aria-hidden="true"></span>
-          <div>
-            <p class="call-title">Örnek görüşme</p>
-            <p class="call-sub">Bir spa'nın asistanı, gerçek sesiyle</p>
-          </div>
-          <span class="wave" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></span>
-        </div>
-        <ol class="transcript" data-transcript aria-live="off"></ol>
-        <div class="player">
-          <button class="play" type="button" data-play aria-label="Görüşmeyi dinle">
-            <svg class="icon-play" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l11-6.5z"/></svg>
-            <svg class="icon-pause" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5h4v14H7zM13 5h4v14h-4z"/></svg>
-          </button>
-          <div class="timeline">
-            <div class="bar"><span data-progress></span></div>
-            <p class="time"><span data-time>0:00</span> / <span data-duration>0:38</span></p>
-          </div>
-        </div>
-        <audio data-audio preload="none" src="/audio/demo.m4a"></audio>
-      </figure>
     </div>
   </section>
 
@@ -1202,6 +1153,6 @@
   </div>
 </footer>
 
-<script src="/site.js?v=39" type="module"></script>
+<script src="/site.js?v=40" type="module"></script>
 </body>
 </html>

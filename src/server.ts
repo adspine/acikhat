@@ -62,7 +62,8 @@ const deps: Deps = {
     }
   },
   demoCalls: new DemoCalls(store.db),
-  demoTenantId: process.env.DEMO_TENANT_ID ?? "demo-spa",
+  // Landing "canlı deneme" varsayılan KAPALI: açmak için DEMO_CALLS=on (docs/canli-deneme-karti.html). Kapalıyken uç 503 döner.
+  ...(process.env.DEMO_CALLS === "on" && { demoTenantId: process.env.DEMO_TENANT_ID ?? "demo-spa" }),
   startDemoCall: async (tenant, call) => {
     const apiKey = process.env.ELEVENLABS_API_KEY;
     if (!apiKey) return { ok: false, error: "ELEVENLABS_API_KEY tanımlı değil" };
