@@ -29,6 +29,8 @@ const VerticalSchema = z.object({
   teamPermissions: z.array(z.enum(PERMISSIONS)),
   /** Panelden iptal edilen randevu için müşteriye mesaj; yer tutucular onay mesajıyla aynı */
   cancellationTemplate: z.string(),
+  /** Konuşma tanıma ipucu: sektöre özgü sözcükler (marka, işlem adı...). Firmanın hizmet ve personel adlarına eklenir. */
+  asrKeywords: z.array(z.string()).default([]),
 });
 export type Vertical = z.infer<typeof VerticalSchema>;
 

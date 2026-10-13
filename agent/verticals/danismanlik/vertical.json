@@ -18,5 +18,15 @@
     "callbacks.edit"
   ],
   "cancellationTemplate": "{firma}: {isim}, {zaman} tarihli {hizmet} görüşmeniz iptal edildi. Yeni zaman için bizi arayabilirsiniz.",
-  "roomLabelPlural": "Görüşme odaları"
+  "roomLabelPlural": "Görüşme odaları",
+  "asrKeywords": [
+    "danışmanlık",
+    "vekâlet",
+    "dava",
+    "sözleşme",
+    "ilk görüşme",
+    "online görüşme",
+    "mali müşavir",
+    "arabuluculuk"
+  ]
 }

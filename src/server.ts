@@ -18,6 +18,8 @@ import { GoogleCalendarClient, loadServiceAccount } from "./integrations/google/
 import { agentEnvFrom } from "./agent/build.ts";
 import { pushAgent } from "./agent/sync.ts";
 import { connectPhoneNumbers } from "./agent/phone.ts";
+import { startDemoCall } from "./agent/demo-call.ts";
+import { DemoCalls } from "./store/demo-calls.ts";
 import { analyzeCall, type PostCallData } from "./domain/call-outcome.ts";
 
 function required(name: string): string {
@@ -58,6 +60,13 @@ const deps: Deps = {
     } catch (err) {
       return { ok: false, error: (err as Error).message };
     }
+  },
+  demoCalls: new DemoCalls(store.db),
+  demoTenantId: process.env.DEMO_TENANT_ID ?? "demo-spa",
+  startDemoCall: async (tenant, call) => {
+    const apiKey = process.env.ELEVENLABS_API_KEY;
+    if (!apiKey) return { ok: false, error: "ELEVENLABS_API_KEY tanımlı değil" };
+    return startDemoCall(tenant, { apiKey }, { ...call, nowUtc: now() });
   },
   connectPhone: async (tenant) => {
     const apiKey = process.env.ELEVENLABS_API_KEY;

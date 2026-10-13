@@ -7,6 +7,8 @@ import type { BookingService } from "../booking/service.ts";
 import type { Users } from "../auth/users.ts";
 import type { AgentPushResult } from "../agent/sync.ts";
 import type { PhoneConnectResult } from "../agent/phone.ts";
+import type { DemoCalls } from "../store/demo-calls.ts";
+import type { DemoCallStart } from "../agent/demo-call.ts";
 import type { Tenant } from "../domain/tenant.ts";
 import type { FirebaseVerifier } from "../auth/firebase.ts";
 import type { VoiceCatalog } from "../integrations/voices.ts";
@@ -27,6 +29,12 @@ export interface Deps {
   /** Ayar yayınlanınca asistanı ElevenLabs'te günceller (testlerde sahte verilir) */
   publishAgent: (tenant: Tenant) => Promise<AgentPushResult>;
   /** Firmanın 0850 numaralarını ElevenLabs SIP trunk olarak asistana bağlar; verilmezse panelden bağlama kapalıdır */
+  /** Landing test görüşmeleri: kayıt ve sınır sayaçları (verilmezse store üzerinden kurulur) */
+  demoCalls?: DemoCalls;
+  /** Test görüşmesinin yapılacağı demo firma (yoksa landing kartı kapalıdır) */
+  demoTenantId?: string;
+  /** Demo firmanın hattından verilen numarayı arar (testlerde sahte verilir) */
+  startDemoCall?: (tenant: Tenant, call: { phone: string; demoId: string }) => Promise<DemoCallStart>;
   connectPhone?: (tenant: Tenant) => Promise<PhoneConnectResult>;
   /** Araç çağrılarındaki Bearer token */
   toolSecret: string;

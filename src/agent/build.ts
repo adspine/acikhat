@@ -5,6 +5,13 @@
 import type { Tenant } from "../domain/tenant.ts";
 import { fill, loadVertical } from "../domain/vertical.ts";
 import { renderPrompt } from "../domain/prompt.ts";
+import { readFileSync } from "node:fs";
+
+/** Konuşma tanıma ipucu: yaygın Türkçe ad ve soyadları (agent/common-names.json) */
+const COMMON_NAMES: string[] = (() => {
+  const j = JSON.parse(readFileSync(new URL("../../agent/common-names.json", import.meta.url), "utf8")) as { names: string[]; surnames: string[] };
+  return [...new Set([...j.names, ...j.surnames])];
+})();
 
 /** Ajan yapılandırmasının ortamdan aldığı değerler (ElevenLabs kimlikleri, sunucu adresi) */
 export interface AgentEnv {
@@ -98,15 +105,26 @@ export function buildAgent(t: Tenant, env: AgentEnv) {
               ["service_id"],
             ),
             webhookTool(
-              env, t, "book_appointment",
-              "Müşterinin seçip açıkça onayladığı randevuyu kaydeder ve onay mesajı gönderir.",
+              env, t, "prepare_confirmation",
+              "Randevudan önce son teyit cümlesini hazırlar. Ad soyad ve cep numarası belli olunca çağır; dönen cümleyi müşteriye aynen oku.",
               {
-                slot_id: { type: "string", description: "check_availability'den gelen seçeneğin slot_id değeri, aynen" },
+                slot_id: { type: "string", description: "Müşterinin seçtiği seçeneğin slot_id değeri, aynen" },
                 customer_name: { type: "string", description: "Müşterinin adı soyadı" },
                 customer_phone: { type: "string", description: "Müşterinin cep numarası, rakamlarla" },
-                confirmed_by_caller: { type: "boolean", description: "YALNIZCA müşteri gün, saat, hizmet, isim ve numarayı içeren son teyit cümlesine açıkça evet dediyse true. Başka bir soruya verilen evet sayılmaz." },
               },
-              ["slot_id", "customer_name", "customer_phone", "confirmed_by_caller"],
+              ["slot_id", "customer_name", "customer_phone"],
+            ),
+            webhookTool(
+              env, t, "book_appointment",
+              "Müşterinin son teyit cümlesine açıkça onay verdiği randevuyu kaydeder ve onay mesajı gönderir. Önce prepare_confirmation çağrılmış olmalı.",
+              {
+                slot_id: { type: "string", description: "check_availability'den gelen seçeneğin slot_id değeri, aynen" },
+                customer_name: { type: "string", description: "prepare_confirmation cevabındaki customer_name, aynen" },
+                customer_phone: { type: "string", description: "prepare_confirmation cevabındaki customer_phone, aynen" },
+                confirmation_token: { type: "string", description: "prepare_confirmation cevabındaki confirmation_token, aynen" },
+                confirmed_by_caller: { type: "boolean", description: "YALNIZCA müşteri prepare_confirmation'ın verdiği cümleye açıkça evet dediyse true. Başka bir soruya verilen evet sayılmaz." },
+              },
+              ["slot_id", "customer_name", "customer_phone", "confirmation_token", "confirmed_by_caller"],
             ),
             webhookTool(
               env, t, "log_callback_request",
@@ -162,7 +180,8 @@ export function buildAgent(t: Tenant, env: AgentEnv) {
         }),
       },
       asr: {
-        keywords: [t.name, ...t.services.flatMap((s) => [s.name.split(" (")[0]!, ...s.aliases]), ...t.staff.map((s) => s.name)],
+        // Firmaya özel sözcükler önce gelir; ardından yaygın ad ve soyadlar (telefonda isim yanlış duyulmasın)
+        keywords: [...new Set([t.name, ...t.services.flatMap((s) => [s.name.split(" (")[0]!, ...s.aliases]), ...t.staff.map((s) => s.name), ...vertical.asrKeywords, ...COMMON_NAMES])],
       },
       turn: {
         // "patient" her tura gecikme ekliyordu ("Onaylıyorum" sonrası 6 sn, 12 Ekim). Soyadı kesilmesine karşı
@@ -181,7 +200,15 @@ export function buildAgent(t: Tenant, env: AgentEnv) {
       // Telefon (SIP) aramalarında arama başında bizim init webhook'umuz çağrılır:
       // tarih tablosu ve arayan numarası buradan gelir. Tarayıcı testinde sayfa bunu kendisi verir.
       // Yönetici "Asistanı dene" sayfası başka sesleri asistanı değiştirmeden denemek için ses geçersiz kılar
-      overrides: { enable_conversation_initiation_client_data_from_webhook: true, conversation_config_override: { tts: { voice_id: true } } },
+      // Landing test görüşmesi (src/agent/demo-call.ts) arama başına karşılama, süre sınırı ve süre dolunca söylenecek cümleyi geçersiz kılar
+      overrides: {
+        enable_conversation_initiation_client_data_from_webhook: true,
+        conversation_config_override: {
+          tts: { voice_id: true },
+          agent: { first_message: true, max_conversation_duration_message: true },
+          conversation: { max_duration_seconds: true },
+        },
+      },
       workspace_overrides: {
         conversation_initiation_client_data_webhook: {
           url: `${env.baseUrl}/webhooks/elevenlabs/init`,

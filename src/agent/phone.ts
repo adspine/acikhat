@@ -46,7 +46,8 @@ export async function connectPhoneNumbers(tenant: Tenant, env: PhoneEnv, fetchFn
         inbound_trunk_config: { media_encryption: "allowed" },
         outbound_trunk_config: {
           address: "sip.netgsm.com.tr",
-          transport: "auto",
+          // UDP'de INVITE paketi MTU'yu aşıyor ("size of packet larger than MTU"); Netgsm TCP 5060'ı kabul eder
+          transport: "tcp",
           media_encryption: "allowed",
           credentials: { username: env.sipUsername, password: env.sipPassword },
         },

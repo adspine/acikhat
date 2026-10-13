@@ -11,6 +11,10 @@ import { TenantSchema } from "../domain/tenant.ts";
 import { mailSuspension, mailTenantReady } from "../notify/emails.ts";
 import { sampleUrl } from "./panel/settings.ts";
 import { loadVertical } from "../domain/vertical.ts";
+import { DemoCalls } from "../store/demo-calls.ts";
+
+/** Başlayıp bu kadar süre sonuç gelmeyen test görüşmesi "sonuç alınamadı" sayılır (en uzun görüşme 2 dk) */
+const STALE_DEMO_MS = 6 * 60_000;
 
 /**
  * Yönetici (agency) paneli API'si: başvurular, müşteriler ve satış/kullanım özeti.
@@ -276,6 +280,30 @@ export function adminRoutes(deps: Deps) {
     return c.json({ ok: true, connected: r.connected.map((x) => x.number) });
   });
 
+  /**
+   * Landing sayfası test görüşmeleri: özet sayılar ve son istekler.
+   * days=0 tüm zamanlar. Numaralar yalnızca yöneticiye tam görünür.
+   */
+  app.get("/demo-calls", (c) => {
+    const days = Math.min(Math.max(Number(c.req.query("days") ?? 30) || 0, 0), 365);
+    const nowMs = deps.now().epochMilliseconds;
+    const since = days ? nowMs - days * 86_400_000 : 0;
+    const calls = deps.demoCalls ?? new DemoCalls(deps.store.db);
+    const stats = calls.stats(since, STALE_DEMO_MS, nowMs);
+    const rows = calls.list(300).filter((r) => r.createdAt > since);
+    return c.json({
+      days,
+      stats,
+      rows: rows.map((r) => ({
+        ...r,
+        // Sonucu hiç gelmeyen arama: yönetici "devam ediyor" sanmasın
+        status: r.status === "calling" && nowMs - r.createdAt > STALE_DEMO_MS ? "unknown" : r.status,
+      })),
+      enabled: !!deps.demoTenantId && !!deps.startDemoCall,
+      tenant: deps.demoTenantId ? deps.tenants.get(deps.demoTenantId)?.name ?? null : null,
+    });
+  });
+
   app.patch("/tenants/:id", async (c) => {
     const id = c.req.param("id");
     const tenant = deps.tenants.get(id);
@@ -343,10 +371,9 @@ export function adminRoutes(deps: Deps) {
     }
     deps.store.audit({ tenantId: id, userId: c.get("admin").id, action: "admin.tenant", target: id, detail: p });
 
-    // Numara değiştiyse ElevenLabs tarafı da kurulur. Başarısız olsa bile numara kaydedilmiştir; panel uyarıyı gösterir, yeniden denenebilir.
+    // Numara gönderildiyse (değişmemiş olsa da) ElevenLabs tarafı da kurulur/güncellenir; böylece yarım kalan bağlama kaydet düğmesiyle tamamlanır. Başarısız olsa bile numara kaydedilmiştir; panel uyarıyı gösterir, yeniden denenebilir.
     let phone: { connected: boolean; error?: string } | undefined;
-    const phonesChanged = !!phones && JSON.stringify(phones) !== JSON.stringify(tenant.phoneNumbers);
-    if (phones && phonesChanged && phones.length) {
+    if (phones?.length) {
       if (!deps.connectPhone) phone = { connected: false, error: "Numara bağlama bu sunucuda kapalı" };
       else if (!next.data.agentIds.length) phone = { connected: false, error: "Numara kaydedildi ama asistan kurulu değil; önce ⋮ > Asistanı kur, sonra \"Hatta bağla\"" };
       else {

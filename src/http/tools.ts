@@ -4,7 +4,8 @@ import type { Deps } from "./deps.ts";
 import { bestSlots, type Slot } from "../domain/slots.ts";
 import { encodeSlotId, decodeSlotId } from "../domain/slot-token.ts";
 import { spokenDateTime } from "../domain/time.ts";
-import { normalizeTrPhone, spokenPhone } from "../domain/phone.ts";
+import { createHmac, timingSafeEqual } from "node:crypto";
+import { isTrMobile, normalizeTrPhone, spelledPhone, spokenPhone } from "../domain/phone.ts";
 import { staffNames, type Tenant } from "../domain/tenant.ts";
 
 const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
@@ -20,11 +21,20 @@ const CheckAvailability = z.object({
   conversation_id: z.string().optional(),
 });
 
+const PrepareConfirmation = z.object({
+  slot_id: z.string(),
+  customer_name: z.string().trim().min(2),
+  customer_phone: z.string(),
+  conversation_id: z.string().optional(),
+});
+
 const BookAppointment = z.object({
   slot_id: z.string(),
   customer_name: z.string().trim().min(2),
   customer_phone: z.string(),
   confirmed_by_caller: z.boolean(),
+  /** prepare_confirmation'ın verdiği jeton: bilgiler okunup onaylanmadan randevu yazılamaz */
+  confirmation_token: z.string().optional(),
   conversation_id: z.string().optional(),
 });
 
@@ -34,6 +44,19 @@ const LogCallback = z.object({
   customer_phone: z.string().optional(),
   conversation_id: z.string().optional(),
 });
+
+/** "oğulcan   YERLİKAYA" → "Oğulcan Yerlikaya" (büyük/küçük harf Türkçe kurallarıyla) */
+export function titleCaseTr(name: string): string {
+  return name
+    .trim()
+    .split(/\s+/)
+    .map((w) => w.charAt(0).toLocaleUpperCase("tr") + w.slice(1).toLocaleLowerCase("tr"))
+    .join(" ");
+}
+
+/** Onay jetonu: slot + isim + numaraya bağlı HMAC. Bilgilerden biri değişirse geçersiz olur. */
+const confirmToken = (key: string, slotId: string, name: string, phone: string) =>
+  createHmac("sha256", key).update(JSON.stringify(["confirm", slotId, name, phone])).digest("base64url").slice(0, 22);
 
 /** Araç cevapları LLM'e gider: kısa, Türkçe ve ne söyleneceğini açıkça belirten metinler */
 const fail = (error: string, instruction: string) => ({ ok: false, error, instruction });
@@ -131,6 +154,40 @@ export function toolRoutes(deps: Deps) {
     });
   });
 
+  /**
+   * Randevudan önce son teyit: müşteriye okunacak cümleyi sunucu hazırlar (isim düzgün yazılmış, numara rakam rakam).
+   * Dönen jeton olmadan book_appointment çalışmaz; böylece teyit adımı atlanamaz ve numarayı model okumaz.
+   */
+  app.post("/:tenant/prepare_confirmation", async (c) => {
+    const tenant = c.get("tenant");
+    const parsed = PrepareConfirmation.safeParse(await c.req.json());
+    if (!parsed.success) return c.json(fail("invalid_input", "Ad soyad ve cep numarasını tekrar al."));
+    const p = parsed.data;
+    const claim = decodeSlotId(p.slot_id, deps.slotKey);
+    if (!claim || claim.tenantId !== tenant.id) {
+      return c.json(fail("invalid_slot", "Bu seçenek geçersiz. check_availability ile yeniden uygun saatlere bak."));
+    }
+    const service = tenant.services.find((s) => s.id === claim.serviceId);
+    if (!service) return c.json(fail("invalid_slot", "check_availability ile yeniden uygun saatlere bak."));
+    const phone = normalizeTrPhone(p.customer_phone);
+    if (!phone || !isTrMobile(phone)) {
+      return c.json(fail("invalid_phone", "Telefon numarası geçersiz görünüyor. 05 ile başlayan cep numarasını müşteriden rakam rakam tekrar iste."));
+    }
+    const name = titleCaseTr(p.customer_name);
+    const when = spokenDateTime(Temporal.Instant.fromEpochMilliseconds(claim.startMs).toZonedDateTimeISO(tenant.timezone));
+    return c.json({
+      ok: true,
+      say: `${when}, ${service.name.split(" (")[0]}, ${name} adına. Onay mesajı ${spelledPhone(phone)} numarasına gelecek. Onaylıyor musunuz?`,
+      customer_name: name,
+      customer_phone: phone,
+      confirmation_token: confirmToken(deps.slotKey, p.slot_id, name, phone),
+      instruction:
+        "\"say\" alanındaki cümleyi AYNEN, hiçbir şey ekleyip çıkarmadan müşteriye oku ve cevabını bekle. Numarayı kendin yeniden yazma. " +
+        "Müşteri açıkça onaylarsa book_appointment'ı bu cevaptaki customer_name, customer_phone ve confirmation_token ile çağır. " +
+        "Müşteri isim veya numarayı düzeltirse düzeltilmiş halini harf harf / rakam rakam iste ve prepare_confirmation'ı yeniden çağır.",
+    });
+  });
+
   app.post("/:tenant/book_appointment", async (c) => {
     const tenant = c.get("tenant");
     const parsed = BookAppointment.safeParse(await c.req.json());
@@ -138,7 +195,7 @@ export function toolRoutes(deps: Deps) {
     const p = parsed.data;
 
     if (!p.confirmed_by_caller) {
-      return c.json(fail("not_confirmed", "Önce tarih, saat, hizmet ve ismi müşteriye tekrar okuyup onay al."));
+      return c.json(fail("not_confirmed", "Önce prepare_confirmation ile hazırlanan cümleyi müşteriye okuyup açık bir onay al."));
     }
     const claim = decodeSlotId(p.slot_id, deps.slotKey);
     if (!claim || claim.tenantId !== tenant.id) {
@@ -147,12 +204,21 @@ export function toolRoutes(deps: Deps) {
     const service = tenant.services.find((s) => s.id === claim.serviceId);
     if (!service) return c.json(fail("invalid_slot", "check_availability ile yeniden uygun saatlere bak."));
 
+    // Teyit atlanamaz: jeton, prepare_confirmation'da okunan isim ve numarayla birebir eşleşmeli
+    const name = titleCaseTr(p.customer_name);
+    const phoneE164 = normalizeTrPhone(p.customer_phone);
+    const expected = phoneE164 ? confirmToken(deps.slotKey, p.slot_id, name, phoneE164) : "";
+    const given = p.confirmation_token ?? "";
+    if (!expected || expected.length !== given.length || !timingSafeEqual(Buffer.from(expected), Buffer.from(given))) {
+      return c.json(fail("not_confirmed", "Önce prepare_confirmation aracını çağır, dönen cümleyi müşteriye aynen oku ve açık onayını al. İsim ya da numara değiştiyse onu yeniden çağır."));
+    }
+
     const outcome = await deps.booking.book(tenant, {
       serviceId: service.id,
       startMs: claim.startMs,
       staffId: claim.staffId,
       roomId: claim.roomId,
-      customerName: p.customer_name,
+      customerName: name,
       customerPhone: p.customer_phone,
       conversationId: p.conversation_id,
       source: "assistant",

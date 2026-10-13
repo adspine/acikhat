@@ -19,5 +19,14 @@
     "callbacks.edit"
   ],
   "cancellationTemplate": "{firma}: {isim}, {zaman} tarihli {hizmet} kaydınız iptal edildi. Yeni kayıt için bizi arayabilirsiniz.",
-  "roomLabelPlural": "Salonlar"
+  "roomLabelPlural": "Salonlar",
+  "asrKeywords": [
+    "deneme seansı",
+    "üyelik",
+    "pilates",
+    "personal trainer",
+    "antrenör",
+    "grup dersi",
+    "reformer"
+  ]
 }

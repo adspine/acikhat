@@ -14,7 +14,7 @@ import { ReportsPage } from "./pages/Reports.tsx";
 import { SettingsPage } from "./pages/Settings.tsx";
 import { UsersPage } from "./pages/Users.tsx";
 import { UsagePage } from "./pages/Usage.tsx";
-import { AdminCustomersPage, AdminOverviewPage, AdminSubmissionsPage } from "./pages/Admin.tsx";
+import { AdminCustomersPage, AdminDemoCallsPage, AdminOverviewPage, AdminSubmissionsPage } from "./pages/Admin.tsx";
 // Ses kütüphanesi büyük: yalnızca "Asistanı dene" açılınca yüklenir
 const TestCallPage = lazy(() => import("./pages/TestCall.tsx").then((m) => ({ default: m.TestCallPage })));
 
@@ -99,6 +99,7 @@ function AdminApp({ session }: { session: Session }) {
     { to: "/", label: "Genel bakış", icon: "chart" },
     { to: "/basvurular", label: "Başvurular", icon: "callback", badge: pending },
     { to: "/musteriler", label: "Müşteriler", icon: "users" },
+    { to: "/test-aramalari", label: "Test aramaları", icon: "phone" },
     { to: "/asistani-dene", label: "Asistanı dene", icon: "mic" },
   ];
   const active = (to: string) => (to === "/" ? loc.path === "/" : loc.path.startsWith(to));
@@ -110,6 +111,8 @@ function AdminApp({ session }: { session: Session }) {
     <AdminSubmissionsPage initialStatus={loc.query.get("durum") ?? ""} />
   ) : loc.path.startsWith("/musteriler") ? (
     <AdminCustomersPage />
+  ) : loc.path.startsWith("/test-aramalari") ? (
+    <AdminDemoCallsPage />
   ) : loc.path.startsWith("/asistani-dene") ? (
     <Suspense fallback={<Loading />}><TestCallPage /></Suspense>
   ) : (

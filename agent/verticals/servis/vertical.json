@@ -18,5 +18,31 @@
     "callbacks.edit"
   ],
   "cancellationTemplate": "{firma}: {isim}, {zaman} tarihli {hizmet} randevunuz iptal edildi. Yeni randevu için bizi arayabilirsiniz.",
-  "roomLabelPlural": "Liftler"
+  "roomLabelPlural": "Liftler",
+  "asrKeywords": [
+    "plaka",
+    "marka",
+    "model",
+    "periyodik bakım",
+    "lastik",
+    "fren",
+    "yağ değişimi",
+    "çekici",
+    "garanti",
+    "Volkswagen",
+    "Renault",
+    "Fiat",
+    "Toyota",
+    "Hyundai",
+    "Ford",
+    "Opel",
+    "Peugeot",
+    "Dacia",
+    "Honda",
+    "Mercedes",
+    "BMW",
+    "Audi",
+    "Skoda",
+    "Kia"
+  ]
 }

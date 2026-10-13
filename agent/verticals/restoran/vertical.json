@@ -19,5 +19,14 @@
     "callbacks.edit"
   ],
   "cancellationTemplate": "{firma}: {isim}, {zaman} tarihli {hizmet} rezervasyonunuz iptal edildi. Yeni rezervasyon için bizi arayabilirsiniz.",
-  "roomLabelPlural": "Masalar"
+  "roomLabelPlural": "Masalar",
+  "asrKeywords": [
+    "rezervasyon",
+    "masa",
+    "teras",
+    "iç mekân",
+    "doğum günü",
+    "kişi",
+    "çocuk sandalyesi"
+  ]
 }

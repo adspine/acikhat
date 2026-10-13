@@ -610,3 +610,104 @@ export function AdminCustomersPage() {
     </section>
   );
 }
+
+/* ---------------- landing test aramaları ---------------- */
+type DemoStatus = "calling" | "done" | "unanswered" | "failed" | "blocked" | "unknown";
+interface DemoRow {
+  id: string; phone: string; status: DemoStatus; blockReason: string | null; error: string | null; attempt: number | null;
+  durationSecs: number | null; endedBy: "agent" | "caller" | "limit" | "other" | null; booked: boolean; createdAt: number;
+}
+interface DemoResponse {
+  days: number; enabled: boolean; tenant: string | null;
+  stats: { requests: number; calls: number; uniquePhones: number; answered: number; unanswered: number; reachedEnd: number; booked: number; blocked: number; failed: number; unknown: number; totalSecs: number };
+  rows: DemoRow[];
+}
+
+const DEMO_STATUS: Record<DemoStatus, { label: string; cls: string }> = {
+  done: { label: "Görüşüldü", cls: "live" },
+  unanswered: { label: "Açmadı", cls: "reviewing" },
+  calling: { label: "Aranıyor", cls: "new" },
+  unknown: { label: "Sonuç alınamadı", cls: "reviewing" },
+  blocked: { label: "Engellendi", cls: "rejected" },
+  failed: { label: "Başlatılamadı", cls: "rejected" },
+};
+const BLOCK_REASONS: Record<string, string> = {
+  limit: "Numara 2 hakkını kullandı", busy: "Görüşme sürüyordu", ip: "Aynı bağlantıdan çok istek", daily: "Günlük kontenjan doldu", hours: "Arama saati dışı",
+};
+const ENDED_BY: Record<string, string> = { agent: "Asistan bitirdi", limit: "Süre doldu", caller: "Arayan kapattı", other: "Diğer" };
+const showPhone = (e164: string) => (e164.startsWith("+90") ? `0${e164.slice(3, 6)} ${e164.slice(6, 9)} ${e164.slice(9, 11)} ${e164.slice(11)}` : e164);
+const dur = (s: number | null) => (s == null ? "" : `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`);
+
+export function AdminDemoCallsPage() {
+  const [days, setDays] = useState<"1" | "7" | "30" | "0">("30");
+  const q = useQuery({ queryKey: ["admin", "demo-calls", days], queryFn: () => api<DemoResponse>(`/api/admin/demo-calls?days=${days}`), refetchInterval: 30_000 });
+  const d = q.data;
+  const s = d?.stats;
+  const pct = (n: number, of: number) => (of ? `%${Math.round((n / of) * 100)}` : undefined);
+  return (
+    <section className="page">
+      <header className="page-head">
+        <div>
+          <h1 className="page-title">Test aramaları</h1>
+          <p className="page-sub">
+            Sitedeki "Beni arayın" kartından gelen istekler{d?.tenant ? `, ${d.tenant} asistanı` : ""}. Her görüşme en fazla 2 dakika sürer, bir numara en fazla 2 kez aranır.
+          </p>
+        </div>
+        <Segmented
+          label="Dönem"
+          value={days}
+          onChange={setDays}
+          options={[{ value: "1", label: "24 saat" }, { value: "7", label: "7 gün" }, { value: "30", label: "30 gün" }, { value: "0", label: "Tümü" }]}
+        />
+      </header>
+      {q.isLoading && <Loading />}
+      {q.error && <ErrorBox error={q.error} onRetry={() => q.refetch()} />}
+      {d && !d.enabled && <p className="muted">Test görüşmesi şu an kapalı: demo firma, asistan ya da hat tanımlı değil. Sitede kart görünmez.</p>}
+      {s && (
+        <>
+          <div className="stat-row stat-row-var" style={{ "--cols": 6 } as React.CSSProperties}>
+            <Stat label="Aranan kişi" value={s.uniquePhones} sub={`${s.calls} arama`} />
+            <Stat label="Telefonu açan" value={s.answered} sub={pct(s.answered, s.calls)} />
+            <Stat label="Sonuna kadar giden" value={s.reachedEnd} sub={s.answered ? `görüşenlerin ${pct(s.reachedEnd, s.answered)}'i` : "asistan bitirdi ya da süre doldu"} />
+            <Stat label="Randevu alan" value={s.booked} sub={pct(s.booked, s.answered)} />
+            <Stat label="Açmayan" value={s.unanswered + s.unknown} sub={s.unknown ? `${s.unknown} sonucu alınamadı` : undefined} />
+            <Stat label="Engellenen istek" value={s.blocked} attention={s.blocked > 0} sub={s.failed ? `${s.failed} başlatılamadı` : undefined} />
+          </div>
+          {s.answered > 0 && <p className="muted small">Ortalama görüşme süresi {dur(Math.round(s.totalSecs / s.answered))}.</p>}
+
+          {!d?.rows.length ? (
+            <Empty title="Henüz test araması yok">Siteden biri numarasını yazıp "Beni arayın"a bastığında burada görünür.</Empty>
+          ) : (
+            <div className="card admin-table-card">
+              <table className="data-table admin-table">
+                <thead>
+                  <tr><th>Zaman</th><th>Numara</th><th>Deneme</th><th>Durum</th><th>Süre</th><th>Nasıl bitti</th><th>Randevu</th></tr>
+                </thead>
+                <tbody>
+                  {d.rows.map((r) => {
+                    const st = DEMO_STATUS[r.status];
+                    return (
+                      <tr key={r.id}>
+                        <td className="cell-main"><strong>{when(r.createdAt)}</strong></td>
+                        <td data-label="Numara">{showPhone(r.phone)}</td>
+                        <td data-label="Deneme">{r.attempt ? `${r.attempt} / 2` : <span className="muted">-</span>}</td>
+                        <td data-label="Durum">
+                          <span className={`pill admin-status admin-status-${st.cls}`}>{st.label}</span>
+                          {r.status === "blocked" && r.blockReason && <span className="muted small admin-ref">{BLOCK_REASONS[r.blockReason] ?? r.blockReason}</span>}
+                          {(r.status === "failed" || r.status === "unanswered") && r.error && <span className="muted small admin-ref">{r.error}</span>}
+                        </td>
+                        <td data-label="Süre">{dur(r.durationSecs) || <span className="muted">-</span>}</td>
+                        <td data-label="Nasıl bitti">{r.endedBy ? ENDED_BY[r.endedBy] : <span className="muted">-</span>}</td>
+                        <td data-label="Randevu">{r.status === "done" ? (r.booked ? "Aldı" : "Almadı") : <span className="muted">-</span>}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </>
+      )}
+    </section>
+  );
+}

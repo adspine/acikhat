@@ -22,7 +22,7 @@ export const MONDAY_9AM = Temporal.ZonedDateTime.from("2026-10-12T09:00[Europe/I
 
 export function makeApp(
   now = MONDAY_9AM,
-  opts: { tenant?: Tenant; tenants?: Tenant[]; google?: CalendarApi; publishAgent?: (t: Tenant) => Promise<AgentPushResult>; connectPhone?: (t: Tenant) => Promise<import("../src/agent/phone.ts").PhoneConnectResult>; firebase?: FirebaseVerifier; paymentTestMode?: boolean; adminEmails?: string[]; voices?: () => Promise<import("../src/integrations/voices.ts").Voice[]> } = {},
+  opts: { tenant?: Tenant; tenants?: Tenant[]; google?: CalendarApi; publishAgent?: (t: Tenant) => Promise<AgentPushResult>; connectPhone?: (t: Tenant) => Promise<import("../src/agent/phone.ts").PhoneConnectResult>; startDemoCall?: NonNullable<import("../src/http/deps.ts").Deps["startDemoCall"]>; demoTenantId?: string; firebase?: FirebaseVerifier; paymentTestMode?: boolean; adminEmails?: string[]; voices?: () => Promise<import("../src/integrations/voices.ts").Voice[]> } = {},
 ) {
   const store = new Store(":memory:");
   const sms = new ConsoleChannel("sms");
@@ -45,6 +45,7 @@ export function makeApp(
     publishAgent:
       opts.publishAgent ?? (async (t: Tenant) => (published.push(t), { ok: true as const, agentId: t.agentIds[0] ?? "agent_test", created: false })),
     ...(opts.connectPhone && { connectPhone: opts.connectPhone }),
+    ...(opts.startDemoCall && { startDemoCall: opts.startDemoCall, demoTenantId: opts.demoTenantId ?? "demo-spa" }),
     firebase: opts.firebase ?? null,
     paymentTestMode: opts.paymentTestMode ?? false,
     adminEmails: opts.adminEmails ?? [],
@@ -59,7 +60,7 @@ export function makeApp(
     now: () => now,
   };
   const app = createApp(deps);
-  const call = async (path: string, body: unknown, headers: Record<string, string> = {}) => {
+  const raw = async (path: string, body: unknown, headers: Record<string, string> = {}) => {
     const res = await app.request(path, {
       method: "POST",
       headers: { "content-type": "application/json", authorization: "Bearer tool-secret", ...headers },
@@ -69,5 +70,18 @@ export function makeApp(
     const json = res.headers.get("content-type")?.includes("json") ? JSON.parse(text) : text;
     return { status: res.status, body: json as any };
   };
-  return { app, store, sms, call, deps, published, mailbox, resets };
+  /**
+   * Araç çağrısı. book_appointment gerçekte prepare_confirmation jetonu ister; testlerin çoğu randevu akışının
+   * kendisini sınadığı için jeton burada otomatik alınır. Jeton kurallarını sınayan testler `raw` kullanır.
+   */
+  const call = async (path: string, body: unknown, headers: Record<string, string> = {}) => {
+    const b = body as Record<string, unknown> | string;
+    if (path.endsWith("/book_appointment") && typeof b === "object" && b.confirmed_by_caller === true && !("confirmation_token" in b)) {
+      const prep = await raw(path.replace(/book_appointment$/, "prepare_confirmation"), { slot_id: b.slot_id, customer_name: b.customer_name, customer_phone: b.customer_phone }, headers);
+      if (!prep.body.ok) return prep;
+      return raw(path, { ...b, customer_name: prep.body.customer_name, customer_phone: prep.body.customer_phone, confirmation_token: prep.body.confirmation_token }, headers);
+    }
+    return raw(path, body, headers);
+  };
+  return { app, store, sms, call, raw, deps, published, mailbox, resets };
 }

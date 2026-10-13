@@ -434,6 +434,143 @@ for (const tabs of $$("[data-tabs]")) {
   });
 }
 
+/* ======================= Hero: canlı test görüşmesi ======================= */
+// Numarayı sunucu arar (en fazla 2 dk, numara başına 2 deneme). Süre ve hak sınırı sunucuda uygulanır;
+// buradaki sayaç yalnızca ziyaretçiye ne kadar zaman kaldığını gösterir.
+(() => {
+  const root = $("[data-try]");
+  if (!root) return;
+  const form = $("[data-try-form]", root);
+  const live = $("[data-try-live]", root);
+  const input = $("#try-phone", root);
+  const submit = $("[data-try-submit]", root);
+  const errorEl = $("[data-try-error]", root);
+  const title = $("[data-try-title]", root);
+  const text = $("[data-try-text]", root);
+  const bar = $("[data-try-bar]", root);
+  const time = $("[data-try-time]", root);
+  const after = $("[data-try-after]", root);
+  const again = $("[data-try-again]", root);
+  let maxSeconds = 120;
+  let timer = 0;
+
+  const mmss = (s) => `${Math.floor(s / 60)}:${String(Math.max(0, s) % 60).padStart(2, "0")}`;
+  const showError = (msg, withSignup = false) => {
+    errorEl.textContent = msg;
+    if (msg && withSignup) {
+      const a = document.createElement("a");
+      a.href = "#/uye-ol";
+      a.textContent = "Hemen başlayın";
+      errorEl.append(" ", a);
+    }
+    errorEl.hidden = !msg;
+    input.setAttribute("aria-invalid", msg ? "true" : "false");
+  };
+
+  // Yazarken 0532 111 22 33 biçimine getirir
+  input.addEventListener("input", () => {
+    const d = input.value.replace(/\D/g, "").slice(0, 11);
+    input.value = [d.slice(0, 4), d.slice(4, 7), d.slice(7, 9), d.slice(9, 11)].filter(Boolean).join(" ");
+    if (errorEl.textContent) showError("");
+  });
+
+  // Sunucuda kapalıysa kart boş kalmaz: form yerine kısa bir açıklama gösterilir
+  function closed() {
+    form.hidden = true;
+    $("[data-try-off]", root).hidden = false;
+  }
+
+  fetch("/api/demo-call")
+    .then((r) => (r.ok ? r.json() : null))
+    .then((cfg) => {
+      if (!cfg?.enabled) return closed();
+      maxSeconds = cfg.maxSeconds || 120;
+      if (cfg.name) for (const el of $("[data-try-name]", root)) el.textContent = cfg.name;
+    })
+    .catch(closed);
+
+  const stop = () => { clearInterval(timer); timer = 0; };
+
+  function startCountdown(masked, remaining, name) {
+    form.hidden = true;
+    live.hidden = false;
+    root.classList.add("is-playing");
+    after.hidden = true;
+    again.hidden = true;
+    title.textContent = "Telefonunuz çalıyor";
+    text.textContent = `${masked} numarasını arıyoruz. Açtığınızda ${name || "Demo işletme"} asistanı sizi karşılayacak. Bir randevu almayı deneyin.`;
+    title.focus();
+    const t0 = Date.now();
+    // Arama birkaç sn içinde çalmaya başlar; sayaç görüşme süresi dolana kadar kalan zamanı gösterir
+    const total = maxSeconds + 15;
+    const tick = () => {
+      const used = Math.floor((Date.now() - t0) / 1000);
+      const left = total - used;
+      bar.style.width = `${Math.min(100, (used / total) * 100)}%`;
+      if (left > 0) {
+        time.textContent = `Görüşme en fazla ${mmss(maxSeconds)} sürer. Kalan süre ${mmss(left)}`;
+        return;
+      }
+      stop();
+      root.classList.remove("is-playing");
+      title.textContent = "Görüşme bitti";
+      text.textContent = "Asistanı kendi işletmeniz için kurmak 15 dakika sürer. Numaranız değişmez, müşterileriniz bildikleri numarayı aramaya devam eder.";
+      time.textContent = remaining > 0 ? "Bir hakkınız daha var." : "Bu numaranın test hakkı doldu.";
+      after.hidden = false;
+      again.hidden = remaining <= 0;
+    };
+    tick();
+    timer = setInterval(tick, 1000);
+  }
+
+  again.addEventListener("click", () => {
+    stop();
+    root.classList.remove("is-playing");
+    live.hidden = true;
+    form.hidden = false;
+    submit.disabled = false;
+    input.focus();
+  });
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    showError("");
+    const data = new FormData(form);
+    const phone = String(data.get("phone") || "").trim();
+    if (phone.replace(/\D/g, "").length < 10) {
+      showError("Cep numaranızı 05xx xxx xx xx biçiminde yazın.");
+      input.focus();
+      return;
+    }
+    if (!data.get("consent")) {
+      showError("Aranmak için onay kutusunu işaretleyin.");
+      return;
+    }
+    submit.disabled = true;
+    submit.textContent = "Aranıyor";
+    try {
+      const res = await fetch("/api/demo-call", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ phone, consent: true, website: String(data.get("website") || "") }),
+      });
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        // Hak dolduysa yapılacak şey artık denemek değil, kurmaktır
+        showError(body.error || "Arama başlatılamadı. Biraz sonra tekrar deneyin.", body.code === "limit");
+        return;
+      }
+      maxSeconds = body.maxSeconds || maxSeconds;
+      startCountdown(body.masked || "Numaranızı", body.remaining ?? 0, $("[data-try-name]", root)?.textContent);
+    } catch {
+      showError("Bağlantı kurulamadı. İnternetinizi kontrol edip tekrar deneyin.");
+    } finally {
+      submit.disabled = false;
+      submit.textContent = "Beni arayın";
+    }
+  });
+})();
+
 window.addEventListener("hashchange", route);
 loadAccount();
 route();

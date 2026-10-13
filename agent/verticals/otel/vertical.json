@@ -19,5 +19,16 @@
     "callbacks.edit"
   ],
   "cancellationTemplate": "{firma}: {isim}, {zaman} tarihli {hizmet} rezervasyonunuz iptal edildi. Yeni rezervasyon için bizi arayabilirsiniz.",
-  "roomLabelPlural": "Odalar"
+  "roomLabelPlural": "Odalar",
+  "asrKeywords": [
+    "rezervasyon",
+    "oda",
+    "konaklama",
+    "gece",
+    "kahvaltı",
+    "check-in",
+    "check-out",
+    "suit",
+    "yarım pansiyon"
+  ]
 }

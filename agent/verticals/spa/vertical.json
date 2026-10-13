@@ -19,5 +19,14 @@
     "callbacks.edit"
   ],
   "cancellationTemplate": "{firma}: {isim}, {zaman} tarihli {hizmet} randevunuz iptal edildi. Yeni randevu için bizi arayabilirsiniz.",
-  "roomLabelPlural": "Odalar"
+  "roomLabelPlural": "Odalar",
+  "asrKeywords": [
+    "masaj",
+    "aromaterapi",
+    "hamam",
+    "kese köpük",
+    "terapist",
+    "çift masajı",
+    "sıcak taş"
+  ]
 }

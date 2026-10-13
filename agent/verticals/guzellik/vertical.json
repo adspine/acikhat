@@ -18,5 +18,18 @@
     "callbacks.edit"
   ],
   "cancellationTemplate": "{firma}: {isim}, {zaman} tarihli {hizmet} randevunuz iptal edildi. Yeni randevu için bizi arayabilirsiniz.",
-  "roomLabelPlural": "Koltuklar"
+  "roomLabelPlural": "Koltuklar",
+  "asrKeywords": [
+    "manikür",
+    "pedikür",
+    "lazer epilasyon",
+    "cilt bakımı",
+    "fön",
+    "röfle",
+    "ombre",
+    "makyaj",
+    "gelin saçı",
+    "kaş laminasyonu",
+    "kalıcı oje"
+  ]
 }

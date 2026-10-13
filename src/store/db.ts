@@ -132,6 +132,26 @@ CREATE TABLE IF NOT EXISTS audit_log (
 );
 CREATE INDEX IF NOT EXISTS audit_tenant ON audit_log (tenant_id, at);
 
+-- Landing sayfasındaki "test görüşmesi": ziyaretçinin numarasını 0850 hattımızdan arayan demo çağrıları (yönetici panelinde izlenir)
+CREATE TABLE IF NOT EXISTS demo_calls (
+  id               TEXT PRIMARY KEY,
+  phone            TEXT NOT NULL,
+  ip               TEXT,
+  status           TEXT NOT NULL,   -- calling | done | unanswered | failed | blocked
+  block_reason     TEXT,            -- limit | busy | ip | daily | hours
+  error            TEXT,
+  conversation_id  TEXT,
+  attempt          INTEGER,         -- bu numaranın kaçıncı denemesi
+  duration_secs    INTEGER,
+  ended_by         TEXT,            -- agent | caller | limit | other
+  booked           INTEGER NOT NULL DEFAULT 0,
+  created_at       INTEGER NOT NULL,
+  finished_at      INTEGER
+);
+CREATE INDEX IF NOT EXISTS demo_calls_phone ON demo_calls (phone, created_at);
+CREATE INDEX IF NOT EXISTS demo_calls_time ON demo_calls (created_at);
+CREATE INDEX IF NOT EXISTS demo_calls_conv ON demo_calls (conversation_id);
+
 CREATE TABLE IF NOT EXISTS calls (
   conversation_id  TEXT PRIMARY KEY,
   tenant_id        TEXT,

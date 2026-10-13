@@ -18,5 +18,17 @@
     "callbacks.edit"
   ],
   "cancellationTemplate": "{firma}: {isim}, {zaman} tarihli {hizmet} görüşmeniz iptal edildi. Yeni zaman için bizi arayabilirsiniz.",
-  "roomLabelPlural": "Alanlar"
+  "roomLabelPlural": "Alanlar",
+  "asrKeywords": [
+    "satılık",
+    "kiralık",
+    "daire",
+    "villa",
+    "arsa",
+    "tapu",
+    "ilan numarası",
+    "değerleme",
+    "yer gösterme",
+    "dubleks"
+  ]
 }

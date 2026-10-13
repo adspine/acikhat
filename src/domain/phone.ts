@@ -17,6 +17,17 @@ export function isTrMobile(e164: string): boolean {
   return /^\+905\d{9}$/.test(e164);
 }
 
+const DIGIT_WORDS = ["sıfır", "bir", "iki", "üç", "dört", "beş", "altı", "yedi", "sekiz", "dokuz"];
+
+/**
+ * Telefonda geri okumak için rakam rakam: "0532 015 10 95" → "sıfır beş üç iki, sıfır bir beş, bir sıfır, dokuz beş".
+ * Model rakamları kendisi okuyunca "otuz iki, on beş" gibi sayılara çeviriyordu; metin sunucudan hazır gelir.
+ */
+export function spelledPhone(e164: string): string {
+  const words = (s: string) => [...s].map((d) => DIGIT_WORDS[Number(d)]).join(" ");
+  return spokenPhone(e164).split(" ").map(words).join(", ");
+}
+
 /** Telefonda geri okumak için: "0532 111 22 33" */
 export function spokenPhone(e164: string): string {
   const d = e164.replace(/^\+90/, "");

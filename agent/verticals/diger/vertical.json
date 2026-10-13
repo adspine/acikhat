@@ -17,5 +17,6 @@
     "callbacks.edit"
   ],
   "cancellationTemplate": "{firma}: {isim}, {zaman} tarihli {hizmet} randevunuz iptal edildi. Yeni randevu için bizi arayabilirsiniz.",
-  "roomLabelPlural": "Alanlar"
+  "roomLabelPlural": "Alanlar",
+  "asrKeywords": []
 }

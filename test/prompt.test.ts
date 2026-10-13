@@ -35,7 +35,7 @@ describe("prompt birleştirme (ortak + sektör)", () => {
     expect(p).toContain("Sen Lavanta Spa adlı spa ve masaj merkezinin telefon resepsiyonistisin.");
     expect(p).toContain("Terapistler: Ayşe (kadın), Elif (kadın), Murat (erkek)");
     expect(p).toContain("Çift masajı (60 dakika): 4800 TL (id: cift-masaj-60), 2 terapist birlikte yapar");
-    expect(p).toContain("Hassas bir konu (sağlık durumu, kayıp eşya, fatura itirazı)");
+    expect(p).toContain("Hassas bir konu (sağlık durumu, kayıp eşya, fatura itirazı, uygunsuz talep)");
     expect(p).toContain("# Hitap");
   });
 

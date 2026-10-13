@@ -1,0 +1,17 @@
+{
+  "_": "Konuşma tanıma (ASR) ipucu listesi: yaygın Türkçe ad ve soyadları. Telefonda 'Oğulcan' → 'Oğulci' gibi hataları azaltır. src/agent/build.ts asr.keywords içine eklenir.",
+  "names": [
+    "Ahmet", "Mehmet", "Mustafa", "Ali", "Hasan", "Hüseyin", "İbrahim", "İsmail", "Yusuf", "Murat", "Ömer", "Osman", "Emre", "Burak", "Can", "Cem", "Kerem", "Serkan", "Onur", "Barış",
+    "Oğuz", "Oğulcan", "Emrecan", "Burakcan", "Yiğit", "Efe", "Arda", "Mert", "Eren", "Berk", "Kaan", "Tolga", "Volkan", "Uğur", "Hakan", "Gökhan", "Erhan", "Orhan", "Selçuk", "Furkan",
+    "Enes", "Batuhan", "Berkay", "Ozan", "Doğukan", "Alperen", "Yağız", "Umut", "Taner", "Tuncay", "Cengiz", "Deniz", "Koray", "Levent", "Metin", "Mete", "Okan", "Özgür", "Sinan", "Tarık",
+    "Fatma", "Ayşe", "Emine", "Hatice", "Zeynep", "Elif", "Merve", "Esra", "Büşra", "Selin", "Ece", "Derya", "Gamze", "Pınar", "Seda", "Sibel", "Özlem", "Tuğba", "Burcu", "Dilara",
+    "Ebru", "Eda", "Gül", "Gizem", "Hande", "Hülya", "İrem", "Kübra", "Melek", "Melike", "Nazlı", "Nur", "Nihal", "Rabia", "Sevgi", "Sultan", "Yasemin", "Yıldız", "Aslı", "Ayça",
+    "Beyza", "Ceren", "Damla", "Defne", "Duygu", "Ezgi", "Fadime", "Gülay", "Gülşen", "Hilal", "İpek", "Leyla", "Meltem", "Nilay", "Öykü", "Sevda", "Şeyma", "Tuba", "Zehra", "Zerrin",
+    "Ahsen", "Aysel", "Banu", "Cansu", "Çağla", "Dicle", "Ece", "Esin", "Feride", "Gonca", "Hacer", "Işıl", "Jale", "Kader", "Lale", "Müge", "Neslihan", "Nuray", "Pelin", "Rüya"
+  ],
+  "surnames": [
+    "Yılmaz", "Kaya", "Demir", "Şahin", "Çelik", "Yıldız", "Yıldırım", "Öztürk", "Aydın", "Özdemir", "Arslan", "Doğan", "Kılıç", "Aslan", "Çetin", "Kara", "Koç", "Kurt", "Özkan", "Şimşek",
+    "Polat", "Korkmaz", "Özer", "Çakır", "Erdoğan", "Yavuz", "Can", "Acar", "Şen", "Aktaş", "Güneş", "Bulut", "Avcı", "Aksoy", "Türk", "Taş", "Karaca", "Tekin", "Bayram", "Karakaya",
+    "Yerlikaya", "Uçar", "Duman", "Güler", "Kaplan", "Çiftçi", "Ateş", "Tunç", "Erol", "Bozkurt", "Ersoy", "Keskin", "Ünal", "Sezer", "Akın", "Demirci", "Sarı", "Coşkun", "Başaran", "Tuncer"
+  ]
+}

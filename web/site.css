@@ -838,3 +838,48 @@ select[hidden] { display: none !important; }
 @media (max-width: 600px) {
   .row:not(.row-3) > .field { grid-row: auto; grid-template-rows: none; display: grid; gap: 7px; }
 }
+
+/* ---------- hero: canlı deneme (örnek görüşme kartıyla aynı koyu yüzey) ---------- */
+.try { gap: 14px; }
+.try [hidden] { display: none; }
+.try-form, .try-live { display: grid; gap: 12px; }
+.try .field { gap: 6px; }
+.try .field label { font-size: 0.9rem; color: #d3e0dc; }
+.try input[type="tel"] { min-height: 52px; padding-inline: 20px; border-radius: 999px; border-color: transparent; font-size: 1.1rem; letter-spacing: 0.01em; }
+.try input[type="tel"]:focus { border-color: var(--lamba); box-shadow: 0 0 0 3px rgb(228 161 27 / 0.35); }
+.try input[aria-invalid="true"] { border-color: #ff9d94; }
+.try-consent { gap: 10px; font-size: 0.85rem; line-height: 1.45; color: #b8cac5; }
+.try-consent input { width: 20px; height: 20px; margin-top: 1px; accent-color: var(--lamba); }
+.try-consent a { color: #fff; text-decoration: underline; text-underline-offset: 3px; }
+.try .field-error { margin: 0; color: #ffb4ab; font-size: 0.9rem; }
+.try .field-error a { color: #fff; text-decoration: underline; text-underline-offset: 3px; }
+.try .btn-lamp { width: 100%; }
+.try-fine { margin: 0; text-align: center; font-size: 0.85rem; color: #a9bdb7; }
+.try-hp { position: absolute; left: -9999px; width: 1px; height: 1px; opacity: 0; }
+.try-off { margin: 0; font-size: 0.92rem; color: #b8cac5; }
+
+.try-title { margin: 0; font: 700 1.2rem/1.3 var(--display); letter-spacing: -0.02em; color: #fff; }
+.try-lead { margin: 0; font-size: 0.95rem; line-height: 1.5; color: #d3e0dc; }
+.try-meter { height: 6px; border-radius: 999px; background: rgb(255 255 255 / 0.12); overflow: hidden; }
+.try-meter span { display: block; width: 0; height: 100%; border-radius: inherit; background: var(--lamba); transition: width 1s linear; }
+.try-time { margin: 0; font-size: 0.9rem; font-variant-numeric: tabular-nums; color: #a9bdb7; }
+.try-after { display: flex; flex-wrap: wrap; gap: 10px; }
+.try-after .btn-quiet { color: #fff; box-shadow: inset 0 0 0 1.5px rgb(255 255 255 / 0.5); }
+.try-after .btn-quiet:hover { background: rgb(255 255 255 / 0.1); color: #fff; box-shadow: inset 0 0 0 1.5px #fff; }
+/* Görüşme sürerken kartın dalgası ve lambası canlıdır (örnek görüşmedeki "çalıyor" durumuyla aynı dil) */
+.try.is-playing .call-head .lamp { background: rgb(228 161 27 / 0.16) radial-gradient(circle at center, var(--lamba) 0 6px, transparent 7px); animation: ring 1.6s ease-out infinite; }
+.try.is-playing .wave i { background: var(--lamba); animation: wave 1s ease-in-out infinite; }
+
+/* ---------- örnek görüşme bölümü ---------- */
+.listen { padding: clamp(24px, 4vw, 56px) 0 clamp(56px, 8vw, 100px); }
+.listen-grid { display: grid; grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr); gap: clamp(28px, 5vw, 72px); align-items: center; }
+.listen-copy h2 { max-width: 14ch; }
+.listen-copy p { margin-top: 16px; max-width: 34ch; color: var(--cam-soluk); }
+
+@media (max-width: 860px) {
+  .listen-grid { grid-template-columns: 1fr; }
+  .listen-copy h2, .listen-copy p { max-width: none; }
+}
+@media (max-width: 560px) {
+  .try-after .btn { flex: 1 1 100%; }
+}

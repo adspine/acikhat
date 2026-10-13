@@ -18,5 +18,17 @@
     "callbacks.edit"
   ],
   "cancellationTemplate": "{firma}: {isim}, {zaman} tarihli {hizmet} randevunuz iptal edildi. Yeni randevu için bizi arayabilirsiniz.",
-  "roomLabelPlural": "Muayene odaları"
+  "roomLabelPlural": "Muayene odaları",
+  "asrKeywords": [
+    "muayene",
+    "kontrol",
+    "dolgu",
+    "implant",
+    "kanal tedavisi",
+    "diş taşı",
+    "ortodonti",
+    "diş eti",
+    "hekim",
+    "poliklinik"
+  ]
 }
