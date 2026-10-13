@@ -151,7 +151,7 @@
   },
   {
     "name": "17-isim-numara-teyidi",
-    "scenario": "Sen Türkçe konuşan bir müşterisin, adın Oğulcan Yerlikaya. Yarın akşam için klasik masaj randevusu istiyorsun. Ajanın önerdiği ilk saati kabul et. Adını sorduğunda 'Oğulcan Yerlikaya' de. Numaranı sorarsa arandığın numarayı kullanabileceğini söyle. Ajan son teyit cümlesini okuyunca 'evet, onaylıyorum' de. Randevu alındıktan sonra başka isteğin olmadığını söyle ve vedalaş.",
+    "scenario": "Sen Türkçe konuşan bir müşterisin, adın Oğulcan Yerlikaya. Yarın akşam için klasik masaj randevusu istiyorsun. Ajan birkaç saat önerirse SON söylediği saati seç. Adını sorduğunda 'Oğulcan Yerlikaya' de. Numaranı sorarsa arandığın numarayı kullanabileceğini söyle. Ajan son teyit cümlesini okuyunca 'evet, onaylıyorum' de. Randevu alındıktan sonra başka isteğin olmadığını söyle ve vedalaş.",
     "success_conditions": [
       "Ajan randevuyu yazmadan önce ad, gün, saat, hizmet ve telefon numarasını tek cümlede okuyup onay istedi",
       "Ajan telefon numarasını rakam rakam okudu; 'otuz iki', 'on bir', 'yirmi iki' gibi iki haneli sayılar kullanmadı",
@@ -163,7 +163,7 @@
   },
   {
     "name": "18-numara-duzeltme",
-    "scenario": "Sen Türkçe konuşan bir müşterisin, adın Burcu Şimşek. Yarın öğleden sonra klasik masaj istiyorsun, ilk seçeneği kabul et. Adını söyle. Numara sorulursa arandığın numaranın doğru olmadığını, asıl numarasının 0544 111 22 33 olduğunu söyle (rakam rakam söyle). Ajan teyit cümlesini okuyunca bir kez 'numarada hata var, 0544 111 22 34 olacaktı' diye düzelt, düzeltilmiş teyidi duyunca 'evet, onaylıyorum' de.",
+    "scenario": "Sen Türkçe konuşan bir müşterisin, adın Burcu Şimşek. Yarın öğleden sonra klasik masaj istiyorsun, ajanın önerdiği İKİNCİ saati seç. Adını söyle. Numara sorulursa arandığın numaranın doğru olmadığını, asıl numarasının 0544 111 22 33 olduğunu söyle (rakam rakam söyle). Ajan teyit cümlesini okuyunca bir kez 'numarada hata var, 0544 111 22 34 olacaktı' diye düzelt, düzeltilmiş teyidi duyunca 'evet, onaylıyorum' de.",
     "success_conditions": [
       "Ajan numara düzeltmesinden sonra teyit cümlesini yeni numarayla yeniden okudu",
       "Ajan yeni teyit cümlesine verilen açık evet'ten önce randevuyu kaydetmedi",
@@ -175,7 +175,7 @@
   },
   {
     "name": "19-numara-kelimeyle",
-    "scenario": "Sen Türkçe konuşan bir müşterisin, adın Selin Aksoy. Yarın akşam klasik masaj istiyorsun, ilk seçeneği kabul et. Adını söyle. Numaranı sorunca bunu kelimelerle, grup grup söyle: 'sıfır beş otuz iki, yüz on bir, yirmi iki, otuz üç'. Teyitte 'evet' de.",
+    "scenario": "Sen Türkçe konuşan bir müşterisin, adın Selin Aksoy. Yarın akşam klasik masaj istiyorsun, ajanın önerdiği İKİNCİ saati seç. Adını söyle. Numaranı sorunca bunu kelimelerle, grup grup söyle: 'sıfır beş otuz iki, yüz on bir, yirmi iki, otuz üç'. Teyitte 'evet' de.",
     "success_conditions": [
       "Ajan numarayı 05321112233 olarak doğru anladı",
       "Ajan numarayı teyitte rakam rakam geri okudu",
@@ -186,7 +186,7 @@
   },
   {
     "name": "20-veda-sonrasi-kapatma",
-    "scenario": "Sen Türkçe konuşan bir müşterisin, adın Ece Karaca. Yarın akşam klasik masaj istiyorsun, ilk seçeneği kabul et, adını söyle, arandığın numarayı kullan, teyitte evet de. Randevu alındıktan sonra ajan başka isteğin olup olmadığını sorunca 'Yok, teşekkürler, görüşürüz' de ve başka hiçbir şey söyleme.",
+    "scenario": "Sen Türkçe konuşan bir müşterisin, adın Ece Karaca. Yarın akşam klasik masaj istiyorsun, ajanın önerdiği SON saati seç, adını söyle, arandığın numarayı kullan, teyitte evet de. Randevu alındıktan sonra ajan başka isteğin olup olmadığını sorunca 'Yok, teşekkürler, görüşürüz' de ve başka hiçbir şey söyleme.",
     "success_conditions": [
       "Ajan kısa bir veda cümlesinden sonra görüşmeyi end_call aracıyla kendisi sonlandırdı",
       "Ajan vedadan sonra müşteriden yeni bir cevap beklemedi ya da 'hâlâ hatta mısınız' gibi bir şey sormadı"

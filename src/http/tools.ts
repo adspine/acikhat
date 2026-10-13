@@ -54,6 +54,10 @@ export function titleCaseTr(name: string): string {
     .join(" ");
 }
 
+/** Modelin ismi almadan yazdığı yer tutucular: gerçek isim sayılmaz */
+const PLACEHOLDER_NAMES = new Set(["bilinmiyor", "bilinmeyen", "müşteri", "musteri", "isimsiz", "unknown", "yok", "belirtilmedi", "null", "n/a"]);
+export const isPlaceholderName = (name: string) => PLACEHOLDER_NAMES.has(name.trim().toLocaleLowerCase("tr").replace(/[.!?]+$/, ""));
+
 /** Onay jetonu: slot + isim + numaraya bağlı HMAC. Bilgilerden biri değişirse geçersiz olur. */
 const confirmToken = (key: string, slotId: string, name: string, phone: string) =>
   createHmac("sha256", key).update(JSON.stringify(["confirm", slotId, name, phone])).digest("base64url").slice(0, 22);
@@ -169,6 +173,9 @@ export function toolRoutes(deps: Deps) {
     }
     const service = tenant.services.find((s) => s.id === claim.serviceId);
     if (!service) return c.json(fail("invalid_slot", "check_availability ile yeniden uygun saatlere bak."));
+    if (isPlaceholderName(p.customer_name)) {
+      return c.json(fail("name_missing", "İsim henüz alınmadı. Müşteriden adını ve soyadını sor, sonra bu aracı gerçek isimle yeniden çağır."));
+    }
     const phone = normalizeTrPhone(p.customer_phone);
     if (!phone || !isTrMobile(phone)) {
       return c.json(fail("invalid_phone", "Telefon numarası geçersiz görünüyor. 05 ile başlayan cep numarasını müşteriden rakam rakam tekrar iste."));

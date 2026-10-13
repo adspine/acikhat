@@ -81,7 +81,7 @@
     { "id": "cift-1", "type": "cift" },
     { "id": "hamam-1", "type": "hamam" }
   ],
-  "handoff": { "transferNumber": "+905000000000" },
+  "handoff": {},
   "sms": { "sender": "LAVANTASPA" },
   "faq": [
     { "q": "Adres", "a": "Örnek Mahallesi, Lavanta Sokak No: 1, Kadıköy, İstanbul." },

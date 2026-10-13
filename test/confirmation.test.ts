@@ -73,3 +73,15 @@ describe("son teyit adımı (prepare_confirmation)", () => {
     expect(store.db.prepare("SELECT customer_name FROM appointments").get()).toMatchObject({ customer_name: "Zeynep Kaya" });
   });
 });
+
+describe("yer tutucu isim", () => {
+  it("model isim almadan 'Bilinmiyor' yazarsa teyit cümlesi üretilmez", async () => {
+    const { raw } = makeApp();
+    const avail = await raw(`${base}/check_availability`, { service_id: "klasik-masaj-60" });
+    const slot_id = avail.body.options[0].slot_id as string;
+    for (const customer_name of ["Bilinmiyor", "müşteri", "UNKNOWN", "Yok."]) {
+      const r = await raw(`${base}/prepare_confirmation`, { slot_id, customer_name, customer_phone: "05321112233" });
+      expect(r.body.error).toBe("name_missing");
+    }
+  });
+});

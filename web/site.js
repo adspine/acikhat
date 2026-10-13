@@ -480,14 +480,22 @@ for (const tabs of $$("[data-tabs]")) {
     $("[data-try-off]", root).hidden = false;
   }
 
-  fetch("/api/demo-call")
-    .then((r) => (r.ok ? r.json() : null))
-    .then((cfg) => {
-      if (!cfg?.enabled) return closed();
+  // Sunucu yeniden başlıyorsa (deploy) birkaç saniye cevap vermeyebilir: pes etmeden 3 kez dener.
+  // Yalnızca sunucu "kapalı" derse kart kapalı gösterilir.
+  async function loadConfig(attempt = 0) {
+    try {
+      const r = await fetch("/api/demo-call", { cache: "no-store" });
+      if (!r.ok) throw new Error(String(r.status));
+      const cfg = await r.json();
+      if (!cfg.enabled) return closed();
       maxSeconds = cfg.maxSeconds || 120;
-      if (cfg.name) for (const el of $("[data-try-name]", root)) el.textContent = cfg.name;
-    })
-    .catch(closed);
+      if (cfg.name) for (const el of $$("[data-try-name]", root)) el.textContent = cfg.name;
+    } catch {
+      if (attempt < 3) setTimeout(() => loadConfig(attempt + 1), 2000 * (attempt + 1));
+      else closed();
+    }
+  }
+  loadConfig();
 
   const stop = () => { clearInterval(timer); timer = 0; };
 
