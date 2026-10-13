@@ -421,7 +421,32 @@ function TenantDrawer({ tenant, onClose }: { tenant: TenantItem | null; onClose:
     if (!plan) return toast("Önce paket seçin", "error");
     void patch({ plan, ...(minutes && { includedMinutes: Number(minutes) }) }, "Paket güncellendi");
   };
-  const savePhones = () => void patch({ phoneNumbers: phones.split(/[\n,]/).map((x) => x.trim()).filter(Boolean) }, "Telefon hattı kaydedildi");
+  const savePhones = async () => {
+    if (!tenant) return;
+    setBusy(true);
+    try {
+      const r = await api<{ phone?: { connected: boolean; error?: string } }>(`/api/admin/tenants/${tenant.id}`, { method: "PATCH", body: { phoneNumbers: phones.split(/[\n,]/).map((x) => x.trim()).filter(Boolean) } });
+      if (r.phone && !r.phone.connected) toast(`Numara kaydedildi ama asistana bağlanamadı: ${r.phone.error}`, "error");
+      else toast(r.phone ? "Numara kaydedildi ve asistana bağlandı" : "Telefon hattı kaydedildi");
+      void qc.invalidateQueries({ queryKey: ["admin"] });
+    } catch (e) {
+      toast(e instanceof ApiError ? e.message : "Kaydedilemedi", "error");
+    } finally {
+      setBusy(false);
+    }
+  };
+  const connectPhones = async () => {
+    if (!tenant) return;
+    setBusy(true);
+    try {
+      const r = await api<{ connected: string[] }>(`/api/admin/tenants/${tenant.id}/phone/connect`, { method: "POST" });
+      toast(`Asistana bağlandı: ${r.connected.join(", ")}`);
+    } catch (e) {
+      toast(e instanceof ApiError ? e.message : "Bağlanamadı", "error");
+    } finally {
+      setBusy(false);
+    }
+  };
 
   return (
     <Drawer open={!!tenant} onClose={onClose} title={tenant?.name ?? "Firma"}>
@@ -445,7 +470,11 @@ function TenantDrawer({ tenant, onClose }: { tenant: TenantItem | null; onClose:
 
           <Detail title="Telefon hattı">
             <Field label="Asistanın karşıladığı numaralar" hint="Her satıra bir numara. 0850 ... ya da +90 ... yazabilirsiniz.">{(id) => <Textarea id={id} rows={3} value={phones} onChange={(e) => setPhones(e.target.value)} />}</Field>
-            <div className="row-actions"><Button variant="quiet" onClick={savePhones} busy={busy}>Numaraları kaydet</Button></div>
+            <p className="muted small">Kaydedince numara ElevenLabs'te otomatik asistana bağlanır. Netgsm panelinde SIP Trunk (sip.rtc.elevenlabs.io, 5060, Aranan Prefix +90) ayrıca elle açık olmalı.</p>
+            <div className="row-actions">
+              <Button variant="quiet" onClick={() => void savePhones()} busy={busy}>Numaraları kaydet</Button>
+              {tenant.phoneNumbers.length > 0 && <Button variant="ghost" onClick={() => void connectPhones()} busy={busy}>Hatta yeniden bağla</Button>}
+            </div>
           </Detail>
 
           <Detail title="Hizmet durumu">

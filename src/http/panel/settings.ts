@@ -153,6 +153,7 @@ export function settingsRoutes(deps: Deps) {
         roomTypes: v.roomTypes,
         defaultGreeting: v.greeting,
         defaultConfirmation: v.confirmationTemplate,
+        phoneNumbers: tenant.phoneNumbers,
         permissionLabels: PERMISSION_LABELS,
       },
     });

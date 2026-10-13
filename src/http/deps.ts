@@ -6,6 +6,7 @@ import type { Calendars } from "../calendar/calendars.ts";
 import type { BookingService } from "../booking/service.ts";
 import type { Users } from "../auth/users.ts";
 import type { AgentPushResult } from "../agent/sync.ts";
+import type { PhoneConnectResult } from "../agent/phone.ts";
 import type { Tenant } from "../domain/tenant.ts";
 import type { FirebaseVerifier } from "../auth/firebase.ts";
 import type { VoiceCatalog } from "../integrations/voices.ts";
@@ -25,6 +26,8 @@ export interface Deps {
   booking: BookingService;
   /** Ayar yayınlanınca asistanı ElevenLabs'te günceller (testlerde sahte verilir) */
   publishAgent: (tenant: Tenant) => Promise<AgentPushResult>;
+  /** Firmanın 0850 numaralarını ElevenLabs SIP trunk olarak asistana bağlar; verilmezse panelden bağlama kapalıdır */
+  connectPhone?: (tenant: Tenant) => Promise<PhoneConnectResult>;
   /** Araç çağrılarındaki Bearer token */
   toolSecret: string;
   slotKey: string;

@@ -261,6 +261,21 @@ export function adminRoutes(deps: Deps) {
     return c.json({ ok: true, created: pushed.created });
   });
 
+  /**
+   * Firmanın numaralarını ElevenLabs'te asistana bağlar (numara kaydedilince otomatik çalışır; bu uç yeniden denemek içindir).
+   * Netgsm panelindeki SIP Trunk ayarı elle yapılır; burası yalnızca ElevenLabs tarafını kurar.
+   */
+  app.post("/tenants/:id/phone/connect", async (c) => {
+    const id = c.req.param("id");
+    const tenant = deps.tenants.get(id);
+    if (!tenant) return c.json({ error: "Firma bulunamadı" }, 404);
+    if (!deps.connectPhone) return c.json({ error: "Numara bağlama bu sunucuda kapalı" }, 501);
+    const r = await deps.connectPhone(tenant);
+    if (!r.ok) return c.json({ error: r.error }, 502);
+    deps.store.audit({ tenantId: id, userId: c.get("admin").id, action: "admin.phone", target: id, detail: { numbers: r.connected.map((x) => x.number) } });
+    return c.json({ ok: true, connected: r.connected.map((x) => x.number) });
+  });
+
   app.patch("/tenants/:id", async (c) => {
     const id = c.req.param("id");
     const tenant = deps.tenants.get(id);
@@ -327,7 +342,19 @@ export function adminRoutes(deps: Deps) {
       db.prepare("UPDATE users SET plan = ? WHERE tenant_id = ? AND role = 'owner'").run(p.plan, id);
     }
     deps.store.audit({ tenantId: id, userId: c.get("admin").id, action: "admin.tenant", target: id, detail: p });
-    return c.json({ ok: true });
+
+    // Numara değiştiyse ElevenLabs tarafı da kurulur. Başarısız olsa bile numara kaydedilmiştir; panel uyarıyı gösterir, yeniden denenebilir.
+    let phone: { connected: boolean; error?: string } | undefined;
+    const phonesChanged = !!phones && JSON.stringify(phones) !== JSON.stringify(tenant.phoneNumbers);
+    if (phones && phonesChanged && phones.length) {
+      if (!deps.connectPhone) phone = { connected: false, error: "Numara bağlama bu sunucuda kapalı" };
+      else if (!next.data.agentIds.length) phone = { connected: false, error: "Numara kaydedildi ama asistan kurulu değil; önce ⋮ > Asistanı kur, sonra \"Hatta bağla\"" };
+      else {
+        const r = await deps.connectPhone(next.data);
+        phone = r.ok ? { connected: true } : { connected: false, error: r.error };
+      }
+    }
+    return c.json({ ok: true, ...(phone && { phone }) });
   });
 
   return app;

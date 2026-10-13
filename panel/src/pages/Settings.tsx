@@ -283,13 +283,14 @@ export function SettingsPage() {
 
           {section === "telefon" && (
             <Group title="Telefon ve aktarma">
+              <ForwardingGuide assistantNumbers={meta.phoneNumbers} publicNumber={config.handoff.publicNumber} onPublicNumber={(v) => set("handoff", { ...config.handoff, publicNumber: v } as TenantConfig["handoff"])} error={issue("handoff.publicNumber")} />
               <Field
                 label="Aktarma numarası"
                 hint="Müşteri bir yetkiliyle görüşmek isterse asistan çağrıyı buraya aktarır. Asistana yönlendirdiğiniz numaradan farklı olmalı; aynıysa çağrı tekrar asistana döner. Boş bırakırsanız asistan geri arama notu alır."
                 error={issue("handoff")}
                 optional
               >
-                {(id, d) => <Input id={id} aria-describedby={d} type="tel" placeholder="+905xxxxxxxxx" value={config.handoff.transferNumber ?? ""} onChange={(e) => set("handoff", { transferNumber: e.target.value.trim() || undefined } as TenantConfig["handoff"])} />}
+                {(id, d) => <Input id={id} aria-describedby={d} type="tel" placeholder="+905xxxxxxxxx" value={config.handoff.transferNumber ?? ""} onChange={(e) => set("handoff", { ...config.handoff, transferNumber: e.target.value.trim() || undefined } as TenantConfig["handoff"])} />}
               </Field>
               <Checkbox
                 label="Kaçan çağrılar için otomatik geri arama notu aç"
@@ -435,6 +436,49 @@ function RoomCounts({ rooms, types, onChange }: { rooms: TenantConfig["rooms"]; 
           {(id) => <Input id={id} type="number" min={0} max={50} value={count(t)} onChange={(e) => setCount(t, Math.max(0, Number(e.target.value)))} />}
         </Field>
       ))}
+    </div>
+  );
+}
+
+/** +908503038332 → 0850 303 83 32 */
+const showPhone = (e164: string) => {
+  const d = e164.replace("+90", "");
+  return d.length === 10 ? `0${d.slice(0, 3)} ${d.slice(3, 6)} ${d.slice(6, 8)} ${d.slice(8)}` : e164;
+};
+
+/** Asistanın 0850 numarası ve firmanın mevcut numarasının oraya nasıl yönlendirileceği */
+function ForwardingGuide({ assistantNumbers, publicNumber, onPublicNumber, error }: { assistantNumbers: string[]; publicNumber?: string; onPublicNumber: (v: string | undefined) => void; error?: string }) {
+  const target = assistantNumbers[0];
+  // Operatör kodlarında numara başında 0 ile yazılır
+  const dial = target ? target.replace("+90", "0") : "0850XXXXXXX";
+  return (
+    <div className="field">
+      <p className="field-label">Asistanınızın numarası</p>
+      {target ? (
+        <p><strong>{assistantNumbers.map(showPhone).join(" · ")}</strong></p>
+      ) : (
+        <p className="muted">Henüz bağlanmadı. Hat açıldığında numara burada görünür.</p>
+      )}
+      <Field
+        label="Yönlendireceğiniz numara"
+        hint="Müşterilerinizin bugün aradığı, işletmenizin mevcut numarası. Bu numarayı asistanın numarasına yönlendirirsiniz; buraya yazmanız yalnızca kayıt içindir."
+        error={error}
+        optional
+      >
+        {(id, d) => <Input id={id} aria-describedby={d} type="tel" placeholder="0212 000 00 00 ya da 05xx xxx xx xx" value={publicNumber ?? ""} onChange={(e) => onPublicNumber(e.target.value.trim() || undefined)} />}
+      </Field>
+      <details className="note">
+        <summary>Çağrıları asistana nasıl yönlendiririm?</summary>
+        <p>Yönlendirme, mevcut numaranızın operatöründe yapılır. Telefondan şu kodlardan birini tuşlayıp arayın:</p>
+        <ul>
+          <li><strong>Tüm aramalar:</strong> <code>**21*{dial}#</code></li>
+          <li><strong>Açılmazsa:</strong> <code>**61*{dial}#</code></li>
+          <li><strong>Meşgulse:</strong> <code>**67*{dial}#</code></li>
+          <li><strong>Kapalı/ulaşılamıyorsa:</strong> <code>**62*{dial}#</code></li>
+          <li><strong>Yönlendirmeyi kapatmak için:</strong> <code>##002#</code></li>
+        </ul>
+        <p className="muted">Sabit hat (0212 gibi) için kodlar operatöre göre değişir; Türk Telekom/operatörünüzün çağrı yönlendirme hizmetini isteyin. Tüm aramaları yönlendirirseniz o numaradan size ulaşılamaz; aktarma numarasını bu numaradan farklı bir hat yapın.</p>
+      </details>
     </div>
   );
 }

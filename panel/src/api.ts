@@ -222,7 +222,7 @@ export interface TenantConfig {
   services: { id?: string; name: string; aliases: string[]; durationMin: number; bufferMin: number; priceTRY: number; roomType: string; staffCount: number }[];
   staff: { id?: string; name: string; gender: "kadin" | "erkek"; services: string[]; hours?: TenantConfig["hours"] }[];
   rooms: { id?: string; type: string }[];
-  handoff: { transferNumber?: string };
+  handoff: { transferNumber?: string; publicNumber?: string };
   notifications: { channels: ("sms" | "whatsapp")[]; confirmationTemplate?: string };
   calls: { maxConcurrent: number; queueWaitSeconds: number; callbackOnMissed: boolean };
   faq: { q: string; a: string }[];
@@ -238,7 +238,7 @@ export interface SettingsResponse {
   publishedAt: number | null;
   meta: {
     staffTerm: string; staffLabel: string; roomLabel: string; roomLabelPlural: string; roomTypes: Record<string, string>;
-    defaultGreeting: string; defaultConfirmation: string;
+    defaultGreeting: string; defaultConfirmation: string; phoneNumbers: string[];
   };
 }
 

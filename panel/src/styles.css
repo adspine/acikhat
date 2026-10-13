@@ -555,3 +555,9 @@ a.side-usage:hover { background: rgb(255 255 255 / 0.11); }
 .banner-info { background: #e6f0f3; color: #1b4a56; }
 .stat-note { margin: -6px 0 -8px; }
 .stat-delta { white-space: nowrap; }
+
+/* Yönlendirme rehberi (Telefon ve aktarma) */
+details.note { margin-top: 10px; padding: 10px 14px; border: 1px solid var(--line, #d9e2df); border-radius: 10px; font-size: 14px; line-height: 1.55; }
+details.note summary { cursor: pointer; font-weight: 600; }
+details.note ul { margin: 8px 0; padding-left: 18px; }
+details.note code { padding: 1px 6px; border-radius: 6px; background: rgba(127, 127, 127, 0.14); font-size: 13px; }

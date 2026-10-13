@@ -158,6 +158,37 @@ describe("yönetici firma işlemleri ve paket talebi", () => {
     expect((await admin("PATCH", "/api/admin/tenants/deniz-emlak", { phoneNumbers: ["12"] })).status).toBe(422);
   });
 
+  it("numara kaydedilince asistana bağlanır; bağlanamazsa numara yine kaydedilir ve uyarı döner", async () => {
+    const { admin, deps } = await approve();
+    const connected: string[][] = [];
+    let fail = false;
+    (deps as { connectPhone?: unknown }).connectPhone = async (t: { phoneNumbers: string[] }) => {
+      if (fail) return { ok: false as const, error: "ElevenLabs reddetti" };
+      connected.push(t.phoneNumbers);
+      return { ok: true as const, connected: t.phoneNumbers.map((number) => ({ number, created: true, phoneNumberId: "p1" })) };
+    };
+    // asistan kurulu değilken: numara kaydedilir, bağlanma uyarısı döner
+    const noAgent = await admin("PATCH", "/api/admin/tenants/deniz-emlak", { phoneNumbers: ["0850 123 45 67"] });
+    expect(noAgent.body.phone).toMatchObject({ connected: false });
+    expect(connected).toHaveLength(0);
+    // asistan varken bağlanır
+    const live = deps.tenantStore.getLiveRaw("deniz-emlak") as { agentIds: string[] };
+    deps.tenantStore.publish({ ...deps.tenants.get("deniz-emlak")!, ...live, agentIds: ["agent_x"] } as never);
+    const ok = await admin("PATCH", "/api/admin/tenants/deniz-emlak", { phoneNumbers: ["0850 123 45 68"] });
+    expect(ok.body.phone).toEqual({ connected: true });
+    expect(connected).toEqual([["+908501234568"]]);
+    // bağlanamazsa numara yine kaydedilmiştir
+    fail = true;
+    const bad = await admin("PATCH", "/api/admin/tenants/deniz-emlak", { phoneNumbers: ["0850 123 45 69"] });
+    expect(bad.status).toBe(200);
+    expect(bad.body.phone).toEqual({ connected: false, error: "ElevenLabs reddetti" });
+    expect(deps.tenants.get("deniz-emlak")?.phoneNumbers).toEqual(["+908501234569"]);
+    // yeniden deneme ucu
+    expect((await admin("POST", "/api/admin/tenants/deniz-emlak/phone/connect")).status).toBe(502);
+    fail = false;
+    expect((await admin("POST", "/api/admin/tenants/deniz-emlak/phone/connect")).body.connected).toEqual(["+908501234569"]);
+  });
+
   it("askıya alınan firma gelen çağrıyı karşılamaz, geri açılınca karşılar", async () => {
     const { admin, deps, app } = await approve();
     await admin("PATCH", "/api/admin/tenants/deniz-emlak", { phoneNumbers: ["+908501234567"] });

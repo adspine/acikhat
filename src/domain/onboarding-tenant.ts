@@ -147,7 +147,7 @@ export function buildTenantDraft(f: OnboardingForm): { tenant: Record<string, un
     services,
     staff,
     rooms,
-    handoff: transfer && isTrMobile(transfer) ? { transferNumber: transfer } : {},
+    handoff: { ...(transfer && isTrMobile(transfer) && { transferNumber: transfer }), ...(normalizeTrPhone(f.phone.publicNumber) && { publicNumber: normalizeTrPhone(f.phone.publicNumber)! }) },
     ...(channels.includes("sms") && { sms: { sender } }),
     faq,
   };

@@ -1,4 +1,5 @@
 import type { Tenant } from "../domain/tenant.ts";
+import { NetgsmSmsChannel } from "./netgsm-sms.ts";
 
 export type Channel = Tenant["notifications"]["channels"][number];
 
@@ -48,7 +49,14 @@ export class Notifier {
 export function createNotifier(env: NodeJS.ProcessEnv): Notifier {
   const sms = env.SMS_PROVIDER ?? "console";
   const whatsapp = env.WHATSAPP_PROVIDER ?? "console";
-  if (sms !== "console") throw new Error(`Bilinmeyen SMS_PROVIDER: ${sms}`);
+  if (sms !== "console" && sms !== "netgsm") throw new Error(`Bilinmeyen SMS_PROVIDER: ${sms}`);
   if (whatsapp !== "console") throw new Error(`Bilinmeyen WHATSAPP_PROVIDER: ${whatsapp}`);
-  return new Notifier({ sms: new ConsoleChannel("sms"), whatsapp: new ConsoleChannel("whatsapp") });
+  let smsChannel: MessageChannel = new ConsoleChannel("sms");
+  if (sms === "netgsm") {
+    const username = env.NETGSM_SMS_USERNAME;
+    const password = env.NETGSM_SMS_PASSWORD;
+    if (!username || !password) throw new Error("SMS_PROVIDER=netgsm için NETGSM_SMS_USERNAME ve NETGSM_SMS_PASSWORD gerekli");
+    smsChannel = new NetgsmSmsChannel({ username, password });
+  }
+  return new Notifier({ sms: smsChannel, whatsapp: new ConsoleChannel("whatsapp") });
 }

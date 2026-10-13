@@ -118,30 +118,34 @@ export function buildAgent(t: Tenant, env: AgentEnv) {
               },
               ["reason"],
             ),
-          ],
-          built_in_tools: {
-            end_call: {
+            // Sistem araçları da "tools" içinde olmalı: ElevenLabs aynı istekte tools ile built_in_tools gelirse built_in_tools'u
+            // siliyor (13 Ekim: canlı aramada end_call çalışmadı). "type: system" de şart.
+            {
+              type: "system",
               name: "end_call",
               description: "Müşteri vedalaştığında veya başka isteği olmadığında görüşmeyi bitirir.",
               params: { system_tool_type: "end_call" },
             },
             // Aktarma numarası yoksa araç eklenmez; ajan geri arama notu alır
-            ...(t.handoff?.transferNumber && {
-              transfer_to_number: {
-                name: "transfer_to_number",
-                description: "Görüşmeyi işletmedeki bir yetkiliye aktarır.",
-                params: {
-                  system_tool_type: "transfer_to_number",
-                  transfers: [
-                    {
-                      transfer_destination: { type: "phone", phone_number: t.handoff.transferNumber },
-                      condition: "Şikâyet, öfke, hassas konu, insan/yetkili talebi veya iki kez anlaşılamama durumunda",
+            ...(t.handoff?.transferNumber
+              ? [
+                  {
+                    type: "system",
+                    name: "transfer_to_number",
+                    description: "Görüşmeyi işletmedeki bir yetkiliye aktarır.",
+                    params: {
+                      system_tool_type: "transfer_to_number",
+                      transfers: [
+                        {
+                          transfer_destination: { type: "phone", phone_number: t.handoff.transferNumber },
+                          condition: "Şikâyet, öfke, hassas konu, insan/yetkili talebi veya iki kez anlaşılamama durumunda",
+                        },
+                      ],
                     },
-                  ],
-                },
-              },
-            }),
-          },
+                  },
+                ]
+              : []),
+          ],
         },
       },
       tts: {

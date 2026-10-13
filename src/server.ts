@@ -17,6 +17,7 @@ import { staffNames } from "./domain/tenant.ts";
 import { GoogleCalendarClient, loadServiceAccount } from "./integrations/google/client.ts";
 import { agentEnvFrom } from "./agent/build.ts";
 import { pushAgent } from "./agent/sync.ts";
+import { connectPhoneNumbers } from "./agent/phone.ts";
 import { analyzeCall, type PostCallData } from "./domain/call-outcome.ts";
 
 function required(name: string): string {
@@ -57,6 +58,11 @@ const deps: Deps = {
     } catch (err) {
       return { ok: false, error: (err as Error).message };
     }
+  },
+  connectPhone: async (tenant) => {
+    const apiKey = process.env.ELEVENLABS_API_KEY;
+    if (!apiKey) return { ok: false, error: "ELEVENLABS_API_KEY tanımlı değil" };
+    return connectPhoneNumbers(tenant, { apiKey, sipUsername: process.env.NETGSM_SIP_USERNAME ?? "", sipPassword: process.env.NETGSM_SIP_PASSWORD ?? "" });
   },
   toolSecret: required("TOOL_SECRET"),
   slotKey: required("SLOT_SIGNING_KEY"),

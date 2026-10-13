@@ -94,7 +94,7 @@ describe("araç uçları", () => {
 describe("webhook'lar", () => {
   it("init: tarih tablosu ve arayan numarasını döner", async () => {
     const { call } = makeApp();
-    const res = await call("/webhooks/elevenlabs/init", { caller_id: "+905321112233", called_number: "+908500000000", agent_id: "x" });
+    const res = await call("/webhooks/elevenlabs/init", { caller_id: "+905321112233", called_number: "+908503038332", agent_id: "x" });
     expect(res.body.type).toBe("conversation_initiation_client_data");
     const v = res.body.dynamic_variables;
     expect(v.tenant_id).toBe("demo-spa");
@@ -177,7 +177,7 @@ describe("çağrı kaydı ve kaçan çağrılar", () => {
     return app.request("/webhooks/elevenlabs/post-call", { method: "POST", body, headers: { "elevenlabs-signature": sign(body) } });
   };
   const init = (call: any, sid: string, caller?: string) =>
-    call("/webhooks/elevenlabs/init", { caller_id: caller, called_number: "+908500000000", agent_id: "x", call_sid: sid });
+    call("/webhooks/elevenlabs/init", { caller_id: caller, called_number: "+908503038332", agent_id: "x", call_sid: sid });
   const row = (store: any, sid: string) => store.db.prepare("SELECT status, result FROM call_log WHERE call_sid = ?").get(sid);
   const callbacks = (store: any) => store.db.prepare("SELECT phone, reason FROM callback_requests").all();
 

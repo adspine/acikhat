@@ -130,6 +130,8 @@ export const TenantSchema = z.object({
     .object({
       /** Yönlendirme kuralı OLMAYAN bir hat olmalı, yoksa çağrı ajana geri döner. Yoksa ajan geri arama notu alır. */
       transferNumber: e164.optional(),
+      /** Firmanın bilinen/mevcut numarası: müşterilerin aradığı, 0850 hattına yönlendirilecek numara (yalnızca bilgi; panelde yönlendirme talimatı için) */
+      publicNumber: e164.optional(),
     })
     .prefault({}),
   /** SMS başlığı (gönderici adı); SMS kanalı kullanılıyorsa gerekir */
