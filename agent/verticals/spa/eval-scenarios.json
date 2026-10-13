@@ -154,7 +154,7 @@
     "scenario": "Sen Türkçe konuşan bir müşterisin, adın Oğulcan Yerlikaya. Yarın akşam için klasik masaj randevusu istiyorsun. Ajan birkaç saat önerirse SON söylediği saati seç. Adını sorduğunda 'Oğulcan Yerlikaya' de. Numaranı sorarsa arandığın numarayı kullanabileceğini söyle. Ajan son teyit cümlesini okuyunca 'evet, onaylıyorum' de. Randevu alındıktan sonra başka isteğin olmadığını söyle ve vedalaş.",
     "success_conditions": [
       "Ajan randevuyu yazmadan önce ad, gün, saat, hizmet ve telefon numarasını tek cümlede okuyup onay istedi",
-      "Ajan telefon numarasını rakam rakam okudu; 'otuz iki', 'on bir', 'yirmi iki' gibi iki haneli sayılar kullanmadı",
+      "Ajan numarayı rakamlarını tek tek söyleyerek okudu (örneğin 'bir bir bir', 'iki iki', 'üç üç' rakam rakam okumadır ve kabul edilir); 'on bir', 'yirmi iki', 'otuz üç' gibi iki haneli sayı söylemedi",
       "Ajan 'Oğulcan Yerlikaya' adını doğru yazılışıyla söyledi",
       "Ajan randevuyu müşteri açıkça evet dedikten sonra kaydetti",
       "Ajan vedalaştıktan sonra görüşmeyi end_call aracıyla sonlandırdı"
@@ -168,7 +168,7 @@
       "Ajan numara düzeltmesinden sonra teyit cümlesini yeni numarayla yeniden okudu",
       "Ajan yeni teyit cümlesine verilen açık evet'ten önce randevuyu kaydetmedi",
       "Kaydedilen numara 0544 111 22 34'tür",
-      "Ajan telefon numarasını rakam rakam okudu"
+      "Ajan numarayı rakamlarını tek tek söyleyerek okudu (örneğin 'bir bir bir', 'iki iki', 'üç üç' rakam rakam okumadır ve kabul edilir); 'on bir', 'yirmi iki', 'otuz üç' gibi iki haneli sayı söylemedi"
     ],
     "max_turns": 18,
     "caller_unknown": true
@@ -178,7 +178,7 @@
     "scenario": "Sen Türkçe konuşan bir müşterisin, adın Selin Aksoy. Yarın akşam klasik masaj istiyorsun, ajanın önerdiği İKİNCİ saati seç. Adını söyle. Numaranı sorunca bunu kelimelerle, grup grup söyle: 'sıfır beş otuz iki, yüz on bir, yirmi iki, otuz üç'. Teyitte 'evet' de.",
     "success_conditions": [
       "Ajan numarayı 05321112233 olarak doğru anladı",
-      "Ajan numarayı teyitte rakam rakam geri okudu",
+      "Ajan numarayı rakamlarını tek tek söyleyerek okudu (örneğin 'bir bir bir', 'iki iki', 'üç üç' rakam rakam okumadır ve kabul edilir); 'on bir', 'yirmi iki', 'otuz üç' gibi iki haneli sayı söylemedi",
       "Randevu kaydedildi"
     ],
     "max_turns": 16,
