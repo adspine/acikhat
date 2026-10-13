@@ -283,21 +283,30 @@ export function SettingsPage() {
 
           {section === "telefon" && (
             <Group title="Telefon ve aktarma">
-              <ForwardingGuide assistantNumbers={meta.phoneNumbers} publicNumber={config.handoff.publicNumber} onPublicNumber={(v) => set("handoff", { ...config.handoff, publicNumber: v } as TenantConfig["handoff"])} error={issue("handoff.publicNumber")} />
-              <Field
-                label="Aktarma numarası"
-                hint="Müşteri bir yetkiliyle görüşmek isterse asistan çağrıyı buraya aktarır. Asistana yönlendirdiğiniz numaradan farklı olmalı; aynıysa çağrı tekrar asistana döner. Boş bırakırsanız asistan geri arama notu alır."
-                error={issue("handoff")}
-                optional
-              >
-                {(id, d) => <Input id={id} aria-describedby={d} type="tel" placeholder="+905xxxxxxxxx" value={config.handoff.transferNumber ?? ""} onChange={(e) => set("handoff", { ...config.handoff, transferNumber: e.target.value.trim() || undefined } as TenantConfig["handoff"])} />}
-              </Field>
-              <Checkbox
-                label="Kaçan çağrılar için otomatik geri arama notu aç"
-                hint="Hat doluyken bekleyip kapatan arayanlar Geri aramalar listesine düşer"
-                checked={config.calls.callbackOnMissed}
-                onChange={(v) => set("calls", { ...config.calls, callbackOnMissed: v })}
-              />
+              <AssistantNumber tenantId={config.id} numbers={meta.phoneNumbers} canEdit={me.user.role === "agency"} onSaved={() => void qc.invalidateQueries({ queryKey: ["settings"] })} />
+
+              <div className="phone-block">
+                <h3 className="phone-sub">Mevcut numaranızı yönlendirin</h3>
+                <PublicNumber assistantNumber={meta.phoneNumbers[0]} value={config.handoff.publicNumber} onChange={(v) => set("handoff", { ...config.handoff, publicNumber: v } as TenantConfig["handoff"])} error={issue("handoff.publicNumber")} />
+              </div>
+
+              <div className="phone-block">
+                <h3 className="phone-sub">Yetkiliye aktarma</h3>
+                <Field
+                  label="Aktarma numarası"
+                  hint="Müşteri bir yetkiliyle görüşmek isterse çağrı buraya aktarılır. Asistanın numarasından ve yönlendirdiğiniz numaradan farklı olmalı. Boş bırakırsanız asistan geri arama notu alır."
+                  error={issue("handoff")}
+                  optional
+                >
+                  {(id, d) => <Input id={id} aria-describedby={d} type="tel" placeholder="+905xxxxxxxxx" value={config.handoff.transferNumber ?? ""} onChange={(e) => set("handoff", { ...config.handoff, transferNumber: e.target.value.trim() || undefined } as TenantConfig["handoff"])} />}
+                </Field>
+                <Checkbox
+                  label="Kaçan çağrılar için otomatik geri arama notu aç"
+                  hint="Hat doluyken bekleyip kapatan arayanlar Geri aramalar listesine düşer"
+                  checked={config.calls.callbackOnMissed}
+                  onChange={(v) => set("calls", { ...config.calls, callbackOnMissed: v })}
+                />
+              </div>
             </Group>
           )}
 
@@ -446,39 +455,73 @@ const showPhone = (e164: string) => {
   return d.length === 10 ? `0${d.slice(0, 3)} ${d.slice(3, 6)} ${d.slice(6, 8)} ${d.slice(8)}` : e164;
 };
 
-/** Asistanın 0850 numarası ve firmanın mevcut numarasının oraya nasıl yönlendirileceği */
-function ForwardingGuide({ assistantNumbers, publicNumber, onPublicNumber, error }: { assistantNumbers: string[]; publicNumber?: string; onPublicNumber: (v: string | undefined) => void; error?: string }) {
-  const target = assistantNumbers[0];
-  // Operatör kodlarında numara başında 0 ile yazılır
-  const dial = target ? target.replace("+90", "0") : "0850XXXXXXX";
+/**
+ * Asistanın 0850 numarası. Numara sunucuda korunan alandır: yalnızca yönetici değiştirebilir,
+ * kaydedince ElevenLabs'te asistana da bağlanır. Firma sahibi yalnızca görür.
+ */
+function AssistantNumber({ tenantId, numbers, canEdit, onSaved }: { tenantId: string; numbers: string[]; canEdit: boolean; onSaved: () => void }) {
+  const toast = useToast();
+  const key = numbers.join(", ");
+  const [value, setValue] = useState(key);
+  const [busy, setBusy] = useState(false);
+  useEffect(() => setValue(key), [key]);
+  const save = async () => {
+    setBusy(true);
+    try {
+      const r = await api<{ phone?: { connected: boolean; error?: string } }>(`/api/admin/tenants/${tenantId}`, {
+        method: "PATCH",
+        body: { phoneNumbers: value.split(/[\n,]/).map((x) => x.trim()).filter(Boolean) },
+      });
+      if (r.phone && !r.phone.connected) toast(`Numara kaydedildi ama asistana bağlanamadı: ${r.phone.error}`, "error");
+      else toast(r.phone ? "Numara kaydedildi ve asistana bağlandı" : "Numara kaydedildi");
+      onSaved();
+    } catch (e) {
+      toast(e instanceof ApiError ? e.message : "Kaydedilemedi", "error");
+    } finally {
+      setBusy(false);
+    }
+  };
   return (
-    <div className="field">
-      <p className="field-label">Asistanınızın numarası</p>
-      {target ? (
-        <p><strong>{assistantNumbers.map(showPhone).join(" · ")}</strong></p>
+    <div className="phone-block">
+      <h3 className="phone-sub">Asistanın numarası</h3>
+      {canEdit ? (
+        <>
+          <Field label="0850 numarası" hint="Birden fazla numara varsa virgülle ayırın. Kaydedince asistana bağlanır; bu değişiklik taslağı beklemeden canlıya uygulanır.">
+            {(id, d) => <Input id={id} aria-describedby={d} type="tel" placeholder="0850 000 00 00" value={value} onChange={(e) => setValue(e.target.value)} />}
+          </Field>
+          <div className="row-actions"><Button variant="quiet" onClick={() => void save()} busy={busy}>Numarayı kaydet ve bağla</Button></div>
+        </>
+      ) : numbers.length ? (
+        <p className="phone-number">{numbers.map(showPhone).join(" · ")}</p>
       ) : (
         <p className="muted">Henüz bağlanmadı. Hat açıldığında numara burada görünür.</p>
       )}
-      <Field
-        label="Yönlendireceğiniz numara"
-        hint="Müşterilerinizin bugün aradığı, işletmenizin mevcut numarası. Bu numarayı asistanın numarasına yönlendirirsiniz; buraya yazmanız yalnızca kayıt içindir."
-        error={error}
-        optional
-      >
-        {(id, d) => <Input id={id} aria-describedby={d} type="tel" placeholder="0212 000 00 00 ya da 05xx xxx xx xx" value={publicNumber ?? ""} onChange={(e) => onPublicNumber(e.target.value.trim() || undefined)} />}
+      <p className="muted small">Müşterileriniz bu numarayı aradığında ya da numaranız buraya yönlendirildiğinde asistan cevap verir.</p>
+    </div>
+  );
+}
+
+/** Firmanın mevcut numarası ve oraya çağrı yönlendirme kodları (kapalı açılır liste) */
+function PublicNumber({ assistantNumber, value, onChange, error }: { assistantNumber?: string; value?: string | undefined; onChange: (v: string | undefined) => void; error?: string | undefined }) {
+  // Operatör kodlarında numara başında 0 ile yazılır
+  const dial = assistantNumber ? assistantNumber.replace("+90", "0") : "0850XXXXXXX";
+  return (
+    <>
+      <Field label="Şu an müşterilerin aradığı numara" hint="Yalnızca kayıt içindir; yönlendirmeyi operatörden siz yaparsınız." error={error} optional>
+        {(id, d) => <Input id={id} aria-describedby={d} type="tel" placeholder="0212 000 00 00 ya da 05xx xxx xx xx" value={value ?? ""} onChange={(e) => onChange(e.target.value.trim() || undefined)} />}
       </Field>
       <details className="note">
-        <summary>Çağrıları asistana nasıl yönlendiririm?</summary>
-        <p>Yönlendirme, mevcut numaranızın operatöründe yapılır. Telefondan şu kodlardan birini tuşlayıp arayın:</p>
+        <summary>Yönlendirme kodları</summary>
+        <p>Yönlendirilecek telefondan tuşlayıp arayın:</p>
         <ul>
-          <li><strong>Tüm aramalar:</strong> <code>**21*{dial}#</code></li>
-          <li><strong>Açılmazsa:</strong> <code>**61*{dial}#</code></li>
-          <li><strong>Meşgulse:</strong> <code>**67*{dial}#</code></li>
-          <li><strong>Kapalı/ulaşılamıyorsa:</strong> <code>**62*{dial}#</code></li>
-          <li><strong>Yönlendirmeyi kapatmak için:</strong> <code>##002#</code></li>
+          <li>Tüm aramalar: <code>**21*{dial}#</code></li>
+          <li>Açılmazsa: <code>**61*{dial}#</code></li>
+          <li>Meşgulse: <code>**67*{dial}#</code></li>
+          <li>Ulaşılamıyorsa: <code>**62*{dial}#</code></li>
+          <li>Hepsini kapatmak için: <code>##002#</code></li>
         </ul>
-        <p className="muted">Sabit hat (0212 gibi) için kodlar operatöre göre değişir; Türk Telekom/operatörünüzün çağrı yönlendirme hizmetini isteyin. Tüm aramaları yönlendirirseniz o numaradan size ulaşılamaz; aktarma numarasını bu numaradan farklı bir hat yapın.</p>
+        <p className="muted small">Sabit hatlarda (0212 gibi) kodlar operatöre göre değişir; operatörünüzden çağrı yönlendirme isteyin. Tüm aramaları yönlendirirseniz o numaradan size ulaşılamaz.</p>
       </details>
-    </div>
+    </>
   );
 }
