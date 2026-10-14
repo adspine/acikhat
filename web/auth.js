@@ -15,6 +15,14 @@ const MIN_PASSWORD = 10;
 
 const $ = (sel, root = document) => root.querySelector(sel);
 
+/**
+ * Instagram, Facebook, TikTok gibi uygulamaların içindeki tarayıcılarda Google girişi çalışmaz
+ * (Google bu gömülü tarayıcılarda OAuth'u engeller). E-posta ve şifre çalışır; kullanıcıyı baştan yönlendiririz.
+ */
+const IN_APP_BROWSER = /Instagram|FBAN|FBAV|FB_IAB|FBIOS|TikTok|musical_ly|Snapchat|LinkedInApp|MicroMessenger/i;
+export const isInAppBrowser = (ua = typeof navigator === "undefined" ? "" : navigator.userAgent) => IN_APP_BROWSER.test(ua);
+const IN_APP_MESSAGE = "Bu sayfayı bir uygulamanın içinde (Instagram, Facebook gibi) açtınız; Google ile giriş burada çalışmaz. E-posta ve şifreyle devam edebilir ya da sayfayı sağ üstteki menüden Safari veya Chrome'da açabilirsiniz.";
+
 /* ---------- Firebase'i yalnızca bu sayfalara girilince yükle ---------- */
 let sdkPromise = null;
 function loadSdk() {
@@ -145,13 +153,16 @@ function bind(root) {
     }
   };
 
-  googleBtn.addEventListener("click", () =>
+  const inApp = isInAppBrowser();
+  if (inApp) say(errorEl, IN_APP_MESSAGE, true);
+  googleBtn.addEventListener("click", () => {
+    if (inApp) return say(errorEl, IN_APP_MESSAGE, true);
     run(async () => {
       const { auth, au } = await loadSdk();
       const { user } = await auth.signInWithPopup(au, new auth.GoogleAuthProvider());
       await finish(user);
-    }),
-  );
+    });
+  });
 
   form.addEventListener("submit", (e) => {
     e.preventDefault();

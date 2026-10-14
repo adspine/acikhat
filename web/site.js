@@ -89,7 +89,7 @@ function guard(view) {
     $('[data-view="hesap"]').hidden = false;
     import("/onboarding.js?v=33").then((m) => m.showHesap(account, { refresh: loadAccount }));
   }
-  if (view === "giris" || view === "uye-ol") import("/auth.js?v=33").then((m) => m.mountAuth(view));
+  if (view === "giris" || view === "uye-ol") import("/auth.js?v=34").then((m) => m.mountAuth(view));
   if (view === "kurulum" && u) {
     // Üyenin adı ve e-postası forma hazır gelsin (boşsa)
     for (const [name, value] of [["contact.person", u.name], ["contact.email", u.email]]) {
@@ -119,7 +119,7 @@ document.addEventListener("click", async (e) => {
   }
   if (e.target.closest("[data-logout]")) {
     await fetch("/api/auth/logout", { method: "POST", headers: { "x-panel": "1" }, credentials: "same-origin" }).catch(() => {});
-    import("/auth.js?v=33").then((m) => m.signOutFirebase()).catch(() => {});
+    import("/auth.js?v=34").then((m) => m.signOutFirebase()).catch(() => {});
     Object.assign(account, { user: null, hasTenant: false, onboarding: null });
     renderChrome();
     goTo("#/");
