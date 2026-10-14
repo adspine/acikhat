@@ -253,6 +253,71 @@ describe("hat havuzu: yönetici API'si ve otomatik atama", () => {
   });
 });
 
+describe("deneme numaraları (gerçek numara almadan akışı denemek için)", () => {
+  it("sıralı sanal numara verir, firmaya tekrar çağrılınca aynısını döner, serbest bırakınca silinir, stokta sayılmaz", () => {
+    const pool = new PhonePool(new Store(":memory:").db);
+    pool.add([N(1)], { nowMs: NOW });
+    expect(pool.assignTest("a", NOW)).toEqual({ number: "+908509990001", created: true });
+    expect(pool.assignTest("a", NOW)).toEqual({ number: "+908509990001", created: false });
+    expect(pool.assignTest("b", NOW)).toEqual({ number: "+908509990002", created: true });
+    expect(pool.stats()).toMatchObject({ available: 1, assigned: 0, total: 1, test: 2 }); // gerçek stok etkilenmez
+    // gerçek numara kullanmadan otomatik atama hiçbir zaman sanal numara seçmez
+    expect(pool.assign("c", NOW)).toEqual({ number: N(1), created: true });
+    expect(pool.release("+908509990001", NOW)).toBe(true); // karantina yok, silinir
+    expect(pool.get("+908509990001")).toBeUndefined();
+    expect(pool.assignTest("d", NOW).number).toBe("+908509990003"); // numaralar yeniden kullanılmaz karışmasın diye ilerler
+    expect(pool.renewalsDue(NOW + 999 * DAY).every((r) => r.kind === "real")).toBe(true);
+  });
+
+  it("deneme aralığı gerçek numara olarak eklenemez", () => {
+    const pool = new PhonePool(new Store(":memory:").db);
+    expect(pool.add(["0850 999 00 01"], { nowMs: NOW })).toMatchObject({ added: [], skipped: [{ reason: expect.stringContaining("Deneme numarası aralığı") }] });
+  });
+
+  it("yönetici deneme hattı verince akış gerçek numara olmadan tamamlanır: ElevenLabs'e bağlanmaz, [DENEME] e-postası gider, bırakınca silinir", async () => {
+    const t = await setup();
+    const ref = await t.member("z@ornek.com", "Deneme Firma", true);
+    const r = await t.admin("POST", `/api/admin/submissions/${ref}/create-tenant`);
+    expect(r.body.line).toMatchObject({ reason: "empty" }); // gerçek havuz boş: beklemesi normal
+    t.mailbox.length = 0;
+
+    const give = await t.admin("POST", "/api/admin/tenants/deneme-firma/assign-number", { test: true });
+    expect(give).toMatchObject({ status: 200, body: { ok: true, test: true } });
+    const number = give.body.number as string;
+    expect(number.startsWith("+90850999")).toBe(true);
+    expect(t.deps.tenants.get("deneme-firma")!.phoneNumbers).toEqual([number]);
+
+    const a = await t.admin("POST", "/api/admin/tenants/deneme-firma/assistant");
+    expect(a.body).toMatchObject({ ok: true, phone: { connected: true } });
+    expect(t.connected).toEqual([]); // gerçek hat yok: ElevenLabs'e gidilmedi
+    const mail = t.mailbox.find((m) => m.to.includes("z@ornek.com") && m.subject.includes("Telefon hattınız hazır"))!;
+    expect(mail.subject.startsWith("[DENEME]")).toBe(true);
+    expect(mail.text).toContain("DENEME numarasıdır");
+
+    // havuz ekranı: gerçek stok etkilenmez, deneme numarası ayrı görünür
+    const pool = (await t.admin("GET", "/api/admin/phone-pool")).body;
+    expect(pool.stats).toMatchObject({ available: 0, total: 0, test: 1 });
+    expect(pool.numbers[0]).toMatchObject({ number, kind: "test", status: "assigned", tenantName: "Deneme Firma" });
+
+    // bırakınca silinir, ElevenLabs'e dokunulmaz
+    const rel = await t.admin("POST", `/api/admin/phone-pool/${encodeURIComponent(number)}/release`);
+    expect(rel).toMatchObject({ status: 200, body: { ok: true, disconnected: true } });
+    expect(t.disconnected).toEqual([]);
+    expect((await t.admin("GET", "/api/admin/phone-pool")).body.numbers).toEqual([]);
+  });
+
+  it("otomatik atama deneme numarasını başka bir (gerçek) müşteriye vermez", async () => {
+    const t = await setup();
+    const ref1 = await t.member("y@ornek.com", "Birinci Deneme", true);
+    await t.admin("POST", `/api/admin/submissions/${ref1}/create-tenant`);
+    await t.admin("POST", "/api/admin/tenants/birinci-deneme/assign-number", { test: true });
+    const ref2 = await t.member("x@ornek.com", "Ikinci Gercek", true);
+    const r2 = await t.admin("POST", `/api/admin/submissions/${ref2}/create-tenant`);
+    expect(r2.body.line).toMatchObject({ reason: "empty" }); // gerçek numara yok; sanal numara verilmedi
+    expect(t.deps.tenants.get("ikinci-gercek")!.phoneNumbers).toEqual([]);
+  });
+});
+
 describe("hizmet sonu silme ve hat havuzu", () => {
   it("firma verisi silinirken hat numarası karantinaya alınır", () => {
     const { store, deps } = makeApp(MONDAY_9AM);

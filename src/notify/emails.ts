@@ -200,10 +200,12 @@ export function mailBillingSuspension(deps: Deps, tenant: Tenant, suspended: boo
 const lineText = (e164: string) => spokenPhone(e164);
 
 /** Havuzdan atanan hat hazır olunca müşteriye (numara başına bir kez): ne olduğunu, ne yapacağını ve maliyet notunu söyler */
-export function mailLineReady(deps: Deps, tenant: Tenant, number: string) {
-  send(deps, ownerEmails(deps, tenant.id), `Telefon hattınız hazır: ${tenant.name}`, {
+export function mailLineReady(deps: Deps, tenant: Tenant, number: string, opts: { test?: boolean } = {}) {
+  const tag = opts.test ? "[DENEME] " : "";
+  send(deps, ownerEmails(deps, tenant.id), `${tag}Telefon hattınız hazır: ${tenant.name}`, {
     title: "Asistanınızın telefon hattı hazır",
     lines: [
+      ...(opts.test ? ["Bu bir DENEME numarasıdır: gerçek bir hat değildir ve aramaları karşılamaz. Satın alma ve kurulum akışını denemek içindir."] : []),
       `${tenant.name} için asistanın hattı hazırlandı. Bu numara yalnızca bir yönlendirme hedefidir: müşterileriniz bildikleri numarayı aramaya devam eder, siz açamadığınızda çağrı bu numaraya geçer.`,
       "Önerdiğimiz kurulum koşullu yönlendirmedir (meşgul, cevapsız, kapalı): telefonu siz açarsınız, yalnızca açamadığınız çağrıları asistan karşılar.",
       "Yönlendirilen her çağrı hattınızın operatörü tarafından ücretlendirilebilir (örneğin Turkcell yönlendirme servis ücreti alabiliyor). Güncel ücreti operatörünüzden öğrenin.",
@@ -212,7 +214,7 @@ export function mailLineReady(deps: Deps, tenant: Tenant, number: string) {
     facts: [["Yönlendirme numarası", lineText(number)], ["Önerilen yönlendirme", "Koşullu: meşgul, cevapsız, kapalı"]],
     cta: { label: "Yönlendirme rehberini aç", url: `${deps.baseUrl ?? ""}/#/rehber` },
   });
-  send(deps, admins(deps), `Hat atandı ve bağlandı: ${tenant.name}`, {
+  send(deps, admins(deps), `${tag}Hat atandı ve bağlandı: ${tenant.name}`, {
     title: "Hat havuzundan numara atandı",
     lines: [`${tenant.name} firmasına ${lineText(number)} numarası atandı ve asistana bağlandı. Müşteriye yönlendirme rehberi gönderildi.`],
   });

@@ -553,10 +553,10 @@ export function AdminCustomersPage() {
       toast(e instanceof ApiError ? e.message : "Asistan kurulamadı", "error");
     }
   };
-  const assignLine = async (t: TenantItem) => {
+  const assignLine = async (t: TenantItem, test = false) => {
     try {
-      const r = await api<{ number: string; connected: boolean; note?: string }>(`/api/admin/tenants/${t.id}/assign-number`, { method: "POST" });
-      toast(r.connected ? `${t.name} firmasına ${r.number} atandı ve asistana bağlandı` : `${t.name} firmasına ${r.number} atandı. ${r.note ?? ""}`, r.connected ? "ok" : "error");
+      const r = await api<{ number: string; connected: boolean; note?: string }>(`/api/admin/tenants/${t.id}/assign-number`, { method: "POST", ...(test && { body: { test: true } }) });
+      toast(r.connected ? `${t.name} firmasına ${test ? "deneme numarası " : ""}${r.number} atandı${test ? " (gerçek hat değil)" : " ve asistana bağlandı"}` : `${t.name} firmasına ${r.number} atandı. ${r.note ?? ""}`, r.connected ? "ok" : "error");
       await qc.invalidateQueries({ queryKey: ["admin"] });
     } catch (e) {
       toast(e instanceof ApiError ? e.message : "Hat atanamadı", "error");
@@ -604,7 +604,7 @@ export function AdminCustomersPage() {
                       actions={[
                         { label: "Yönet", icon: "settings", onClick: () => setOpenId(t.id) },
                         ...(t.assistantReady ? [{ label: "Asistanı düzenle", icon: "users", onClick: () => setAssistantId(t.id) }] : [{ label: "Asistanı kur", icon: "mic", onClick: () => void setup(t) }]),
-                        ...(!t.hasPhone ? [{ label: "Havuzdan hat ata", icon: "phone", onClick: () => void assignLine(t) }] : []),
+                        ...(!t.hasPhone ? [{ label: "Havuzdan hat ata", icon: "phone", onClick: () => void assignLine(t) }, { label: "Deneme hattı ata (gerçek değil)", icon: "phone", onClick: () => void assignLine(t, true) }] : []),
                         { label: "Müşteri panelini aç", icon: "chart", onClick: () => { setAdminTenant(t.id); location.assign("/panel/"); } },
                       ]}
                     />

@@ -17,6 +17,9 @@ Netgsm'de numara siparişi için API uç noktası bulamadık; alım elle yapıl�
 - Ödemesi doğrulanmamış üyeye otomatik atama yapılmaz. Yönetici, Müşteriler > ⋮ > "Havuzdan hat ata" ile elle verebilir.
 - Müsait numara 2'ye düşünce yöneticiye (günde en çok bir) uyarı gider. Her zaman en az 3 yedek tutun.
 
+## 2b. Deneme numarası (canlı satın alma akışını denemek için)
+Gerçek numara almadan akışı (ödeme, firma oluşturma, asistan kurma, "hat hazır" e-postası) denemek için: Müşteriler > ⋮ > **"Deneme hattı ata (gerçek değil)"**. Numara sanaldır (`0850 999 xxxx`): ElevenLabs'e bağlanmaz, arama karşılamaz, e-postası `[DENEME]` etiketli gelir. Otomatik atama hiçbir zaman deneme numarası seçmez (gerçek müşteri sanal numara almaz); deneme numarası stok sayısına katılmaz. Bırakılınca karantinaya girmeden silinir. Gerçek arama testi için gerçek bir numara gerekir.
+
 ## 3. Bırakma ve karantina
 **Karantina:** Bırakılan numara 180 gün kimseye verilmez. Neden: eski müşterinin telefonu hâlâ o numaraya yönlendiriyor olabilir; hemen başkasına verilirse onun arayanları yeni firmaya düşer (yanlış firma ve gizlilik sorunu). 180 gün dolunca numara yeniden müsait olur. Bırakma anında numara firmadan ve ElevenLabs'ten kaldırılır.
 - Hizmeti biten firma için: `scripts/erase-tenant.ts` numarayı otomatik karantinaya alır; ElevenLabs asistanı, Google Takvim erişimi ve Polar aboneliği elle kapatılır.

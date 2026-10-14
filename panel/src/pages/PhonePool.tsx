@@ -6,11 +6,11 @@ import { ActionMenu } from "../components/ActionMenu.tsx";
 
 type PoolStatus = "available" | "assigned" | "quarantine" | "retired";
 interface PoolNumber {
-  number: string; status: PoolStatus; tenantId: string | null; tenantName: string | null; note: string | null;
+  number: string; kind: "real" | "test"; status: PoolStatus; tenantId: string | null; tenantName: string | null; note: string | null;
   addedAt: number; assignedAt: number | null; releasedAt: number | null; quarantineUntil: number | null; renewAt: number | null;
 }
 interface PoolResponse {
-  stats: Record<PoolStatus, number> & { total: number };
+  stats: Record<PoolStatus, number> & { total: number; test: number };
   lowStockAt: number; quarantineDays: number; initialSize: number;
   numbers: PoolNumber[]; waiting: { id: string; name: string }[];
 }
@@ -91,7 +91,7 @@ export function PhonePoolPage() {
             <div className={`stat${low ? " is-attention" : ""}`}><p className="stat-label">Müsait</p><p className="stat-value">{d.stats.available}</p><p className="stat-sub">atanabilir</p></div>
             <div className="stat"><p className="stat-label">Atanmış</p><p className="stat-value">{d.stats.assigned}</p><p className="stat-sub">firmalarda</p></div>
             <div className="stat"><p className="stat-label">Karantina</p><p className="stat-value">{d.stats.quarantine}</p><p className="stat-sub">{d.quarantineDays} gün kimseye verilmez</p></div>
-            <div className="stat"><p className="stat-label">Toplam</p><p className="stat-value">{d.stats.total}</p><p className="stat-sub">emekliler dahil</p></div>
+            <div className="stat"><p className="stat-label">Toplam</p><p className="stat-value">{d.stats.total}</p><p className="stat-sub">emekliler dahil{d.stats.test ? `, ${d.stats.test} deneme hariç` : ""}</p></div>
           </div>
 
           <section className="card">
@@ -117,6 +117,7 @@ export function PhonePoolPage() {
                       <td className="cell-main"><strong>{showPhone(n.number)}</strong></td>
                       <td data-label="Durum">
                         <span className={`pill admin-status admin-status-${STATUS_CLASS[n.status]}`}>{STATUS_LABEL[n.status]}</span>
+                        {n.kind === "test" && <span className="pill admin-status admin-status-new" title="Gerçek bir hat değildir; aramaları karşılamaz">Deneme</span>}
                         {n.status === "quarantine" && n.quarantineUntil && <span className="muted small"> {day(n.quarantineUntil)} tarihine kadar</span>}
                       </td>
                       <td data-label="Firma">{n.tenantName ?? (n.tenantId ? n.tenantId : <span className="muted">—</span>)}</td>
@@ -127,10 +128,13 @@ export function PhonePoolPage() {
                           <ActionMenu
                             label={`${showPhone(n.number)} için işlemler`}
                             actions={[
-                              ...(n.status === "assigned"
+                              ...(n.status === "assigned" && n.kind === "test"
+                                ? [{ label: "Deneme numarasını sil", icon: "close", danger: true, onClick: () => { if (confirm(`${showPhone(n.number)} bir deneme numarasıdır. Silinecek ve firma hat bekleyenler listesine düşecek. Devam edilsin mi?`)) void act(`/api/admin/phone-pool/${enc(n.number)}/release`, "Deneme numarası silindi"); } }]
+                                : []),
+                              ...(n.status === "assigned" && n.kind !== "test"
                                 ? [{ label: "Bırak (karantinaya al)", icon: "close", danger: true, onClick: () => { if (confirm(`${showPhone(n.number)} firmadan alınıp ${d.quarantineDays} gün karantinaya alınacak ve ElevenLabs'ten kaldırılacak. Firma hat bekleyenler listesine düşer. Devam edilsin mi?`)) void act(`/api/admin/phone-pool/${enc(n.number)}/release`, "Numara karantinaya alındı"); } }]
                                 : []),
-                              ...(n.status !== "assigned"
+                              ...(n.status !== "assigned" && n.kind !== "test"
                                 ? [{ label: "Emekli et (Netgsm'de bırakıldı)", icon: "close", danger: true, onClick: () => { if (confirm(`${showPhone(n.number)} havuzdan kalıcı çıkarılacak. Netgsm aboneliğini de bıraktıysanız devam edin.`)) void act(`/api/admin/phone-pool/${enc(n.number)}/retire`, "Numara emekli edildi"); } }]
                                 : []),
                             ]}

@@ -427,9 +427,12 @@ export function adminRoutes(deps: Deps) {
   app.post("/tenants/:id/assign-number", async (c) => {
     const tenant = deps.tenants.get(c.req.param("id"));
     if (!tenant) return c.json({ error: "Firma bulunamadı" }, 404);
-    const r = await assignLine(deps, tenant, { requirePaid: false, actorId: c.get("admin").id });
+    // test: true → canlı satın alma akışını gerçek numara almadan denemek için sanal "deneme numarası" (ElevenLabs'e bağlanmaz)
+    const body = z.object({ test: z.boolean().optional() }).safeParse(await c.req.json().catch(() => ({})));
+    const test = body.success && body.data.test === true;
+    const r = await assignLine(deps, tenant, { requirePaid: false, actorId: c.get("admin").id, ...(test && { test: true }) });
     if (!r.ok) return c.json({ error: r.message, reason: r.reason }, r.reason === "no_tenant" ? 404 : 409);
-    return c.json({ ok: true, number: r.number, connected: r.connected, ...(r.note && { note: r.note }) });
+    return c.json({ ok: true, number: r.number, connected: r.connected, ...(test && { test: true }), ...(r.note && { note: r.note }) });
   });
 
   /** Atanmış numarayı bırak: karantinaya alınır, firmadan ve ElevenLabs'ten kaldırılır */

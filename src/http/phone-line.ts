@@ -52,14 +52,18 @@ export function checkPoolStock(deps: Deps): void {
  */
 export async function connectTenantLine(deps: Deps, tenant: Tenant): Promise<{ connected: boolean; error?: string }> {
   if (!tenant.phoneNumbers.length) return { connected: false, error: "Firmaya atanmış numara yok" };
-  if (!deps.connectPhone) return { connected: false, error: "Numara bağlama bu sunucuda kapalı" };
   if (!tenant.agentIds.length) return { connected: false, error: "Numara kaydedildi ama asistan kurulu değil; önce asistanı kurun, sonra hat bağlanır" };
-  const r = await deps.connectPhone(tenant);
-  if (!r.ok) return { connected: false, error: r.error };
   const pool = poolOf(deps);
+  // Deneme numaraları sanaldır: ElevenLabs'e bağlanmaz
+  const real = tenant.phoneNumbers.filter((n) => pool.get(n)?.kind !== "test");
+  if (real.length) {
+    if (!deps.connectPhone) return { connected: false, error: "Numara bağlama bu sunucuda kapalı" };
+    const r = await deps.connectPhone({ ...tenant, phoneNumbers: real });
+    if (!r.ok) return { connected: false, error: r.error };
+  }
   for (const n of tenant.phoneNumbers) {
     const row = pool.get(n);
-    if (row?.status === "assigned" && row.tenantId === tenant.id && once(deps, `line-ready:${tenant.id}:${n}`, "once")) mailLineReady(deps, tenant, n);
+    if (row?.status === "assigned" && row.tenantId === tenant.id && once(deps, `line-ready:${tenant.id}:${n}`, "once")) mailLineReady(deps, tenant, n, { test: row.kind === "test" });
   }
   return { connected: true };
 }
@@ -73,7 +77,7 @@ export type AssignResult =
  * requirePaid: otomatik yolda zorunlu (ödemeyen numara tüketemez); yönetici düğmesinde kapatılabilir.
  * Tekrar çağrılabilir: firmanın zaten havuz numarası varsa aynısı döner.
  */
-export async function assignLine(deps: Deps, tenantIn: Tenant, opts: { requirePaid: boolean; actorId: string | null }): Promise<AssignResult> {
+export async function assignLine(deps: Deps, tenantIn: Tenant, opts: { requirePaid: boolean; actorId: string | null; test?: boolean }): Promise<AssignResult> {
   const tenant = deps.tenants.get(tenantIn.id);
   if (!tenant) return { ok: false, reason: "no_tenant", message: "Firma bulunamadı" };
   const pool = poolOf(deps);
@@ -82,7 +86,8 @@ export async function assignLine(deps: Deps, tenantIn: Tenant, opts: { requirePa
   if (!mine && tenant.phoneNumbers.length) return { ok: false, reason: "has_number", message: "Firmanın elle girilmiş bir numarası var; havuzdan ek numara atanmadı" };
 
   pool.promoteExpired(nowMs(deps));
-  const picked = pool.assign(tenant.id, nowMs(deps));
+  // Deneme hattı yalnızca yöneticinin açık isteğiyle verilir; otomatik atama hiçbir zaman sanal numara seçmez
+  const picked = opts.test ? pool.assignTest(tenant.id, nowMs(deps)) : pool.assign(tenant.id, nowMs(deps));
   if (!picked) {
     if (once(deps, `pool-empty:${tenant.id}`, day(deps))) mailPoolEmpty(deps, tenant);
     deps.store.audit({ tenantId: tenant.id, userId: opts.actorId, action: "pool.empty", target: tenant.id });
@@ -92,7 +97,7 @@ export async function assignLine(deps: Deps, tenantIn: Tenant, opts: { requirePa
   const withNumber = tenant.phoneNumbers.includes(picked.number) ? tenant : writePhones(deps, tenant, [...tenant.phoneNumbers, picked.number]);
   deps.store.audit({ tenantId: tenant.id, userId: opts.actorId, action: "pool.assign", target: picked.number });
   const link = await connectTenantLine(deps, withNumber);
-  checkPoolStock(deps);
+  if (!opts.test) checkPoolStock(deps);
   return { ok: true, number: picked.number, created: picked.created, connected: link.connected, ...(link.error && { note: link.error }) };
 }
 
@@ -124,7 +129,8 @@ export async function releaseLine(deps: Deps, number: string, actorId: string | 
   if (tenant) writePhones(deps, tenant, tenant.phoneNumbers.filter((n) => n !== number));
   let disconnected = false;
   let warning: string | undefined;
-  if (!deps.disconnectPhone) warning = "ElevenLabs bağlantısı bu sunucuda kapalı; numarayı ElevenLabs panelinden elle kaldırın.";
+  if (row.kind === "test") disconnected = true; // sanal numara ElevenLabs'te hiç yoktu
+  else if (!deps.disconnectPhone) warning = "ElevenLabs bağlantısı bu sunucuda kapalı; numarayı ElevenLabs panelinden elle kaldırın.";
   else {
     const r = await deps.disconnectPhone(number);
     disconnected = r.ok;
@@ -144,7 +150,7 @@ export async function syncPoolWithTenantNumbers(deps: Deps, tenantId: string, be
     const row = pool.get(n);
     if (row?.status === "assigned" && row.tenantId === tenantId) {
       pool.release(n, nowMs(deps));
-      if (deps.disconnectPhone) await deps.disconnectPhone(n).catch(() => undefined);
+      if (row.kind !== "test" && deps.disconnectPhone) await deps.disconnectPhone(n).catch(() => undefined);
       deps.store.audit({ tenantId, userId: actorId, action: "pool.release", target: n, detail: { source: "tenant-edit" } });
     }
   }
