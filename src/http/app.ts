@@ -14,6 +14,7 @@ import { panelRoutes } from "./panel/index.ts";
 import { authRoutes } from "./panel/session.ts";
 import { serveStatic } from "@hono/node-server/serve-static";
 import { compress } from "hono/compress";
+import { sectorRoutes } from "./sector-pages.ts";
 import { canonicalHost, legalRoutes, noindexPrivate, notFoundHtml } from "./seo.ts";
 import { cspReportRoutes, limitBody, noStore, rateLimit, securityHeaders } from "./security.ts";
 
@@ -78,6 +79,8 @@ export function createApp(deps: Deps) {
   });
   // Yasal metinler gerçek adreslerde (/yasal/<sayfa>): arama motorları tarayabilsin
   app.route("/", legalRoutes(deps.baseUrl));
+  // Sektör iniş sayfaları (/spa, /klinik, /otel)
+  app.route("/", sectorRoutes(deps.baseUrl));
   app.use("/*", serveStatic({ root: "./web" }));
   // Firma paneli (panel/ derlemesi web/panel/ altında): kendi yönlendiricisi olduğu için bilinmeyen alt yollar panele düşer
   app.get("/panel", (c) => c.redirect("/panel/"));

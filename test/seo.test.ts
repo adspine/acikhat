@@ -74,7 +74,7 @@ describe("tarama ve adresler", () => {
     const { app } = makeApp(MONDAY_9AM);
     const xml = await (await app.request("/sitemap.xml")).text();
     const urls = [...xml.matchAll(/<loc>(.*?)<\/loc>/g)].map((m) => m[1]!);
-    expect(urls.length).toBeGreaterThanOrEqual(7);
+    expect(urls.length).toBeGreaterThanOrEqual(10);
     expect(new Set(urls).size).toBe(urls.length);
     for (const url of urls) {
       const path = new URL(url).pathname;

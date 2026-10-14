@@ -1,8 +1,8 @@
 import { readFileSync } from "node:fs";
 import { Hono, type MiddlewareHandler } from "hono";
 
-const BRAND = "Açık Hat";
-const esc = (v: string) => v.replace(/[&<>"]/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[ch]!);
+export const BRAND = "Açık Hat";
+export const esc = (v: string) => v.replace(/[&<>"]/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[ch]!);
 
 /**
  * Tek adres: www ve eski *.fly.dev adresleri ana alan adına 301 ile yönlendirilir (aynı içeriğin birden çok adreste
@@ -53,7 +53,7 @@ function readLegalPages(path = "./web/index.html"): LegalPage[] {
   return pages;
 }
 
-const STYLE = `
+export const STYLE = `
   :root { --cam:#13332d; --cam-soluk:#4a645e; --gol:#1b5e73; --sis:#edf1ef; --kagit:#fbfcfb; --cizgi:#ccd7d3; --lamba:#e4a11b; }
   * { box-sizing: border-box; }
   body { margin:0; font:17px/1.65 "Onest", system-ui, sans-serif; color:var(--cam); background:var(--sis); }
@@ -76,7 +76,7 @@ const STYLE = `
   @media (max-width:760px) { main { grid-template-columns:1fr; } nav.legal-nav { position:static; flex-direction:row; flex-wrap:wrap; } dl.facts-list div { grid-template-columns:1fr; gap:2px; } }
 `;
 
-const head = (opts: { title: string; description: string; canonical: string | null; robots: string }) => `<!doctype html>
+export const head = (opts: { title: string; description: string; canonical: string | null; robots: string; jsonLd?: string; extraStyle?: string }) => `<!doctype html>
 <html lang="tr">
 <head>
 <meta charset="utf-8">
@@ -97,11 +97,11 @@ ${opts.canonical ? `<link rel="canonical" href="${esc(opts.canonical)}">\n` : ""
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700&display=swap" rel="stylesheet">
-<style>${STYLE}</style>
-</head>`;
+<style>${STYLE}${opts.extraStyle ?? ""}</style>
+${opts.jsonLd ? `<script type="application/ld+json">\n${opts.jsonLd}\n</script>\n` : ""}</head>`;
 
-const header = `<header class="top"><a class="brand" href="/"><i aria-hidden="true"></i>${BRAND}</a><a class="cta" href="/#/uye-ol">Hemen başla</a></header>`;
-const footer = `<footer>© 2026 ${BRAND} · <a href="mailto:support@acikhat.si">support@acikhat.si</a> · <a href="/">Ana sayfa</a></footer>`;
+export const header = `<header class="top"><a class="brand" href="/"><i aria-hidden="true"></i>${BRAND}</a><a class="cta" href="/#/uye-ol">Hemen başla</a></header>`;
+export const footer = `<footer>© 2026 ${BRAND} · <a href="mailto:support@acikhat.si">support@acikhat.si</a> · <a href="/">Ana sayfa</a></footer>`;
 
 export function notFoundHtml(): string {
   return `${head({ title: `Sayfa bulunamadı | ${BRAND}`, description: "Aradığınız sayfa bulunamadı.", canonical: null, robots: "noindex, follow" })}

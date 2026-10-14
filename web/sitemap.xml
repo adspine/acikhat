@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url><loc>https://acikhat.si/</loc></url>
+  <url><loc>https://acikhat.si/spa</loc></url>
+  <url><loc>https://acikhat.si/klinik</loc></url>
+  <url><loc>https://acikhat.si/otel</loc></url>
   <url><loc>https://acikhat.si/yasal/gizlilik-politikasi</loc></url>
   <url><loc>https://acikhat.si/yasal/kvkk-aydinlatma-metni</loc></url>
   <url><loc>https://acikhat.si/yasal/kullanim-kosullari</loc></url>
