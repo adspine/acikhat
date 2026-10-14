@@ -27,3 +27,10 @@ Polar secret'ları boşsa ödeme kapalıdır (`PAYMENT_TEST_MODE=1` yalnızca ü
 ## Bilinen sınırlar
 - Kota dönemi takvim ayı; Polar yenilemesi satın alma gününe göre. Yükseltme farkını Polar kendi döngüsüne göre hesaplar, panelde gösterilen "bu ay için fark" tahmindir.
 - Ödeme sayfasında müşterinin ülkesine göre yerel para birimi gösterilebilir; tahsilat USD fiyatı esas alır.
+
+## Canlıya geçiş (sandbox → production)
+Ön koşullar: canlı Polar organizasyonunda kimlik + Stripe payout doğrulaması bitmiş; canlı token ve webhook secret `.env` içinde `POLAR_PRODUCTION_ACCESS_TOKEN` / `POLAR_PRODUCTION_WEBHOOK_SECRET` olarak durur (sandbox değerleri ezilmez).
+1. Canlı ürünler: `POLAR_SERVER=production POLAR_ACCESS_TOKEN=$POLAR_PRODUCTION_ACCESS_TOKEN node scripts/setup-polar.ts` → çıkan `POLAR_PRODUCTS` değerini al.
+2. `fly secrets set POLAR_SERVER=production POLAR_ACCESS_TOKEN=… POLAR_WEBHOOK_SECRET=… POLAR_PRODUCTS=…` ve `fly secrets unset PAYMENT_TEST_MODE`.
+3. Küçük bir tutarla gerçek kartla ilk ödemeyi dene (Başlangıç: $149; sonra Polar panelinden iade et), webhook'un paketi ödenmiş yaptığını ve Türkçe e-postanın geldiğini doğrula.
+4. Sandbox aboneliklerinin canlıya taşınmadığını unutma: test üyeleri canlıda yeniden ödeme yapar.
