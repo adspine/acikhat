@@ -46,6 +46,11 @@ function loginLimiter() {
       return !!a && a.count >= 5 && a.until > Date.now();
     },
     fail(key: string) {
+      // Saldırgan sürekli yeni anahtar üretip belleği şişirmesin: süresi dolanlar atılır, hâlâ çok fazlaysa sayaç sıfırlanır
+      if (attempts.size > 5_000) {
+        for (const [k, v] of attempts) if (v.until < Date.now()) attempts.delete(k);
+        if (attempts.size > 50_000) attempts.clear();
+      }
       const a = attempts.get(key);
       if (!a || a.until < Date.now()) attempts.set(key, { count: 1, until: Date.now() + 15 * 60_000 });
       else a.count++;
@@ -225,14 +230,14 @@ export function authRoutes(deps: Deps) {
         });
         return c.json({ checkoutUrl: checkout.url });
       } catch (err) {
-        console.error(`[ödeme] Polar ödeme sayfası açılamadı (${user.email}): ${(err as Error).message}`);
+        console.error(`[ödeme] Polar ödeme sayfası açılamadı (üye ${user.id}): ${(err as Error).message}`);
         return c.json({ error: "Ödeme sayfası şu an açılamadı. Biraz sonra tekrar deneyin." }, 502);
       }
     }
     if (!deps.paymentTestMode) return c.json({ error: "Online ödeme çok yakında. Şimdilik bizimle iletişime geçin." }, 501);
     if (!o.plan) return c.json({ error: "Önce bir paket seçin" }, 400);
     if (!o.paidAt && deps.users.markPaid(user.id)) mailMembershipPaid(deps, user, o.plan);
-    console.info(`[ödeme:test] ${user.email} → ${PLANS[o.plan].name} (test, ücret alınmadı)`);
+    console.info(`[ödeme:test] üye ${user.id} → ${PLANS[o.plan].name} (test, ücret alınmadı)`);
     return c.json(accountOf(user));
   });
 
@@ -258,7 +263,7 @@ export function authRoutes(deps: Deps) {
     try {
       await deps.passwordReset(user.email);
     } catch (err) {
-      console.error(`[şifre] e-posta gönderilemedi (${user.email}): ${(err as Error).message}`);
+      console.error(`[şifre] e-posta gönderilemedi (üye ${user.id}): ${(err as Error).message}`);
       return c.json({ error: "Şifre e-postası gönderilemedi. Biraz sonra tekrar deneyin." }, 502);
     }
     lastReset.set(user.id, Date.now());

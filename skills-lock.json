@@ -55,6 +55,12 @@
       "skillPath": "SKILL.md",
       "computedHash": "3af2b92182cad80b542ea1a5fb5ad8f3edfcc89817697b9a565f2c41d27c3492"
     },
+    "security-and-hardening": {
+      "source": "addyosmani/agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/security-and-hardening/SKILL.md",
+      "computedHash": "32a1243d6eb45fd342c1f4e9f9ee5f1651a1e9fdccb86dcbbbee5d6f455ed362"
+    },
     "seo-audit": {
       "source": "coreyhaines31/marketingskills",
       "sourceType": "github",

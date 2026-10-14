@@ -62,6 +62,12 @@ CREATE TABLE IF NOT EXISTS onboarding_submissions (
   created_at       INTEGER NOT NULL
 );
 
+-- İşlenmiş Polar webhook olayları (tekrar gelen olay ikinci kez işlenmesin); 30 günden eskisi silinir
+CREATE TABLE IF NOT EXISTS webhook_events (
+  id          TEXT PRIMARY KEY,
+  received_at INTEGER NOT NULL
+);
+
 -- Müşteriye gönderilen tekrarsız bildirimler (kota uyarısı gibi): aynı uyarı aynı dönemde bir kez gider
 CREATE TABLE IF NOT EXISTS notice_log (
   tenant_id  TEXT NOT NULL,

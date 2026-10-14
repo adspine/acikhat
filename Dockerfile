@@ -2,7 +2,8 @@
 FROM node:26-slim AS panel
 WORKDIR /build
 COPY panel/package.json panel/package-lock.json panel/
-RUN cd panel && npm ci
+# Kurulum betikleri çalıştırılmaz (tedarik zinciri); derleme betik gerektirmez
+RUN cd panel && npm ci --ignore-scripts
 COPY panel panel
 COPY web/tokens.css web/tokens.css
 RUN cd panel && npm run build
@@ -13,7 +14,7 @@ WORKDIR /app
 ENV NODE_ENV=production
 
 COPY package.json package-lock.json ./
-RUN npm ci --omit=dev && npm cache clean --force
+RUN npm ci --omit=dev --ignore-scripts && npm cache clean --force
 
 # Çalışma için gerekenler: kod, web sitesi, sektör şablonları, firma ayarları (tohum), kullanıcı açma komutu
 COPY src ./src

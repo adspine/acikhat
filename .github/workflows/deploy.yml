@@ -7,6 +7,10 @@ on:
     branches: [main]
   workflow_dispatch: # GitHub'da Actions sekmesinden elle yeniden çalıştırmak için
 
+# Varsayılan GITHUB_TOKEN yalnızca okuma yetkisiyle çalışır (gerekmedikçe yazma yetkisi verilmez)
+permissions:
+  contents: read
+
 # Aynı anda iki dağıtım olmasın; yenisi gelirse sıradaki bekler, yarıda kesilmez
 concurrency:
   group: deploy-production
@@ -16,23 +20,30 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
-      - uses: actions/setup-node@v5
+      # Üçüncü taraf eylemler sürüm etiketine değil, gözden geçirilmiş commit kimliğine sabitlenir (etiket sonradan taşınabilir)
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
         with:
           node-version: 26
           cache: npm
-      - run: npm ci
+      # Bağımlılık kurulum betikleri çalıştırılmaz (tedarik zinciri); derleme ve testler betik gerektirmez
+      - run: npm ci --ignore-scripts
+      - name: Bağımlılık denetimi (canlıya giden paketlerde yüksek/kritik açık varsa dağıtım durur)
+        run: |
+          npm audit --omit=dev --audit-level=high
+          cd panel && npm ci --ignore-scripts && npm audit --omit=dev --audit-level=high
       - run: npm test
       - name: Panel derlemesi
-        run: cd panel && npm ci && npm run build
+        run: cd panel && npm run build
 
   deploy:
     needs: test
     runs-on: ubuntu-latest
     environment: production
     steps:
-      - uses: actions/checkout@v5
-      - uses: superfly/flyctl-actions/setup-flyctl@master
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+      # Fly erişim anahtarını taşıyan eylem: master yerine bugünkü commit kimliğine sabitlendi
+      - uses: superfly/flyctl-actions/setup-flyctl@ed8efb33836e8b2096c7fd3ba1c8afe303ebbff1 # master (2026-10-14)
       # İmaj Fly'ın kendi derleyicisinde üretilir
       - run: flyctl deploy --remote-only --ha=false
         env:

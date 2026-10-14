@@ -12,6 +12,8 @@ interface PolarEvent {
   data: {
     id?: string;
     status?: string;
+    product_id?: string;
+    product?: { id?: string } | null;
     metadata?: Meta;
     subscription_id?: string | null;
     subscription?: { id?: string; metadata?: Meta } | null;
@@ -75,28 +77,43 @@ export function polarWebhookRoutes(deps: Deps) {
     } catch {
       return c.json({ error: "Gövde okunamadı" }, 400);
     }
-    const d = event.data ?? {};
+    // Polar aynı olayı yeniden gönderebilir (zaman aşımı, elle yeniden gönderim): işlenmiş olay ikinci kez işlenmez
+    const eventId = c.req.header("webhook-id");
+    if (eventId && deps.store.db.prepare("SELECT 1 FROM webhook_events WHERE id = ?").get(eventId)) return c.json({ ok: true, duplicate: true });
+    const done = () => {
+      if (eventId) deps.store.db.prepare("INSERT OR IGNORE INTO webhook_events (id, received_at) VALUES (?, ?)").run(eventId, Date.now());
+      return c.json({ ok: true });
+    };
+    const d = event.data ?? {};    // Ödenen ürün, ödeme sayfasını açarken seçtiğimiz paketle aynı olmalı (metadata'ya tek başına güvenilmez)
+    const productId = d.product_id ?? d.product?.id;
+    const productMatches = (item: string) => !productId || deps.polar?.itemOf(productId) === item;
+
     // Metadata ödeme sayfasından siparişe ve aboneliğe kopyalanır; yenileme siparişlerinde yalnızca abonelikte olabilir
     const meta: Meta = { ...(d.subscription?.metadata ?? {}), ...(d.metadata ?? {}) };
     const subscriptionId = d.subscription_id ?? d.subscription?.id ?? (event.type.startsWith("subscription.") ? d.id : undefined) ?? undefined;
 
     if (event.type === "order.paid") {
       if (meta.kind === "membership" && typeof meta.user_id === "string" && isPlanId(meta.plan)) {
+        if (!productMatches(meta.plan)) {
+          console.error(`[polar] üyelik ödemesinde ürün, seçilen paketle uyuşmuyor (${meta.plan}); işlenmedi`);
+          return done();
+        }
         const user = deps.users.get(meta.user_id);
         if (!user) {
           console.error(`[polar] üyelik ödemesi için kullanıcı yok: ${meta.user_id}`);
-          return c.json({ ok: true });
+          return done();
         }
         if (subscriptionId) deps.users.setPolarSubscription(user.id, subscriptionId);
         deps.users.selectPlan(user.id, meta.plan);
         if (deps.users.markPaid(user.id)) {
           mailMembershipPaid(deps, user, meta.plan);
-          console.info(`[polar] üyelik ödendi: ${user.email} → ${PLANS[meta.plan].name}`);
+          console.info(`[polar] üyelik ödendi: üye ${user.id} → ${PLANS[meta.plan].name}`);
         }
       } else if (meta.kind === "addon" && typeof meta.order_id === "string") {
         const order = deps.store.db.prepare("SELECT * FROM orders WHERE id = ?").get(meta.order_id) as unknown as OrderRow | undefined;
         const tenant = order && deps.tenants.get(order.tenant_id);
-        if (order && tenant && fulfillOrder(deps, tenant, order.id)) {
+        if (order && !productMatches(order.item)) console.error(`[polar] ek paket ödemesinde ürün sipariş kaydıyla uyuşmuyor (${order.item}); işlenmedi`);
+        else if (order && tenant && fulfillOrder(deps, tenant, order.id)) {
           deps.store.audit({ tenantId: tenant.id, userId: null, action: "billing.addon", target: order.item, detail: { amountUsd: order.amount_usd, polar: d.id } });
         }
       }
@@ -107,7 +124,7 @@ export function polarWebhookRoutes(deps: Deps) {
           mailRenewal(deps, tenant, { amountUsd: (d.total_amount ?? 0) / 100, planName: tenant.plan.id ? PLANS[tenant.plan.id].name : "Aylık paket" });
         }
       }
-      return c.json({ ok: true });
+      return done();
     }
 
     const subTenant = event.type.startsWith("subscription.") ? tenantOfSubscription(subscriptionId) : null;
@@ -120,11 +137,11 @@ export function polarWebhookRoutes(deps: Deps) {
     }
 
     if (event.type === "subscription.revoked" || event.type === "subscription.past_due" || (event.type === "subscription.canceled" && !d.cancel_at_period_end)) {
-      const who = d.customer?.email ?? String(meta.user_id ?? d.customer?.external_id ?? "?");
+      const who = String(meta.user_id ?? d.customer?.external_id ?? d.customer?.email ?? "?");
       console.warn(`[polar] ${event.type}: ${who} (${subscriptionId ?? "?"})`);
       mailSubscriptionIssue(deps, { event: event.type, who, detail: `abonelik ${subscriptionId ?? "?"}, durum ${d.status ?? "?"}` });
     }
-    return c.json({ ok: true });
+    return done();
   });
 
   return app;

@@ -40,7 +40,17 @@ export function testUiRoutes(deps: Deps) {
   return app;
 }
 
-const page = (name: string, vars: Record<string, string>) => `<!doctype html>
+const esc = (v: string) => String(v).replace(/[&<>"']/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[ch]!);
+/** <script> içine JSON yazarken "</script>" ve satır ayracı karakterleri betiği bitiremesin */
+const scriptJson = (v: unknown) => JSON.stringify(v).replace(/</g, "\\u003c").replace(/\u2028/g, "\\u2028").replace(/\u2029/g, "\\u2029");
+
+const page = (rawName: string, rawVars: Record<string, string>) => {
+  const name = esc(rawName);
+  const vars = Object.fromEntries(Object.entries(rawVars).map(([k, v]) => [k, esc(v)]));
+  return pageHtml(name, vars, rawVars);
+};
+
+const pageHtml = (name: string, vars: Record<string, string>, rawVars: Record<string, string>) => `<!doctype html>
 <html lang="tr">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
@@ -75,7 +85,7 @@ const page = (name: string, vars: Record<string, string>) => `<!doctype html>
 </main>
 <script type="module">
   import { Conversation } from "https://cdn.jsdelivr.net/npm/@elevenlabs/client@1.27.0/+esm";
-  const vars = ${JSON.stringify(vars)};
+  const vars = ${scriptJson(rawVars)};
   const $ = (id) => document.getElementById(id);
   const log = (who, text, cls = "") => {
     const p = document.createElement("p"); p.className = "m " + cls;

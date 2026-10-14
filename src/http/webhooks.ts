@@ -8,6 +8,7 @@ import { analyzeCall, type PostCallData } from "../domain/call-outcome.ts";
 import { dateTable, spokenDate, spokenTime } from "../domain/time.ts";
 import { normalizeTrPhone, spokenPhone } from "../domain/phone.ts";
 import { DemoCalls, type DemoEnd } from "../store/demo-calls.ts";
+import { safeEqual } from "./security.ts";
 
 /** Görüşmeyi kimin bitirdiği: ElevenLabs'in kapanış nedeninden */
 export function endedBy(reason: string | undefined): DemoEnd {
@@ -66,8 +67,9 @@ export function webhookRoutes(deps: Deps) {
    * Dönen dinamik değişkenler system prompt'taki {{...}} yerlerine yazılır.
    */
   app.post("/elevenlabs/init", async (c) => {
-    if (c.req.header("authorization") !== `Bearer ${deps.toolSecret}`) return c.json({ error: "unauthorized" }, 401);
-    const body = (await c.req.json()) as { caller_id?: string; agent_id?: string; called_number?: string; call_sid?: string };
+    if (!safeEqual(c.req.header("authorization"), `Bearer ${deps.toolSecret}`)) return c.json({ error: "unauthorized" }, 401);
+    const body = (await c.req.json().catch(() => null)) as { caller_id?: string; agent_id?: string; called_number?: string; call_sid?: string } | null;
+    if (!body || typeof body !== "object") return c.json({ error: "bad request" }, 400);
     const tenant = deps.tenants.find({
       agentId: body.agent_id,
       calledNumber: normalizeTrPhone(body.called_number) ?? body.called_number,

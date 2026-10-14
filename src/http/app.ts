@@ -13,10 +13,13 @@ import { adminRoutes } from "./admin.ts";
 import { panelRoutes } from "./panel/index.ts";
 import { authRoutes } from "./panel/session.ts";
 import { serveStatic } from "@hono/node-server/serve-static";
+import { cspReportRoutes, limitBody, noStore, rateLimit, securityHeaders } from "./security.ts";
 
 export function createApp(deps: Deps) {
   const app = new Hono();
 
+  // Her yanıta güvenlik başlıkları (CSP, HSTS, çerçeve engeli...). Ayrıntı ve gerekçe: security.ts
+  app.use("*", securityHeaders({ https: deps.secureCookies }));
   app.get("/health", (c) => c.json({ ok: true }));
 
   // Araç ve webhook çağrılarının kısa kaydı (gövde ve kişisel veri loglanmaz)
@@ -25,6 +28,15 @@ export function createApp(deps: Deps) {
     await next();
     if (/^\/(tools|webhooks|api)\//.test(c.req.path)) console.info(`[http] ${c.req.method} ${c.req.path} ${c.res.status} ${Math.round(performance.now() - t0)}ms`);
   });
+
+  // Gövde ve istek sınırları: kimliksiz uçlara sınırsız gövde veya yüksek hızda istek gönderilemesin
+  app.use("/api/*", noStore);
+  app.use("/api/*", limitBody(1_000_000));
+  app.use("/tools/*", limitBody(256 * 1024));
+  app.use("/webhooks/*", limitBody(25 * 1024 * 1024)); // ElevenLabs görüşme sesi base64 ile gelebilir
+  app.use("/api/*", rateLimit({ windowMs: 60_000, max: 600 }));
+  app.use("/api/auth/*", rateLimit({ windowMs: 60_000, max: 120 }));
+  app.use("/api/demo-call", rateLimit({ windowMs: 60_000, max: 20 }));
 
   app.use("/tools/*", bearerAuth({ token: deps.toolSecret }));
   app.route("/tools", toolRoutes(deps));
@@ -40,6 +52,7 @@ export function createApp(deps: Deps) {
   app.route("/api/auth", authRoutes(deps));
   app.route("/api/panel", panelRoutes(deps));
   app.route("/api/admin", adminRoutes(deps));
+  app.route("/api", cspReportRoutes());
   app.route("/api", demoRoutes(deps));
   app.route("/api", onboardingRoutes(deps));
   // Bilinmeyen API yolları siteye düşmesin

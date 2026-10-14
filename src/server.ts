@@ -135,3 +135,5 @@ setInterval(() => {
 
 // Süresi dolan oturumları günde bir temizle
 setInterval(() => new Users(store.db).purgeExpiredSessions(), 86_400_000).unref();
+// Eski webhook olay kayıtlarını temizle (tekrar koruması için 30 gün yeter)
+setInterval(() => store.db.prepare("DELETE FROM webhook_events WHERE received_at < ?").run(Date.now() - 30 * 86_400_000), 86_400_000).unref();

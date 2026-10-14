@@ -49,8 +49,9 @@ async function setup() {
     const res = await app.request(path, { method, headers: { cookie, "x-panel": "1", "content-type": "application/json" }, body: body === undefined ? undefined : JSON.stringify(body) });
     return { status: res.status, body: (await res.json()) as any };
   };
-  const hook = async (event: unknown, signature = "ok") => {
-    const res = await app.request("/webhooks/polar", { method: "POST", headers: { "content-type": "application/json", "webhook-id": "w1", "webhook-timestamp": "1", "webhook-signature": signature }, body: JSON.stringify(event) });
+  let seq = 0;
+  const hook = async (event: unknown, signature = "ok", id = `w${++seq}`) => {
+    const res = await app.request("/webhooks/polar", { method: "POST", headers: { "content-type": "application/json", "webhook-id": id, "webhook-timestamp": "1", "webhook-signature": signature }, body: JSON.stringify(event) });
     return res.status;
   };
   return { ...ctx, owner, as, hook, calls };
@@ -136,6 +137,26 @@ describe("abonelik yaşam döngüsü", () => {
     await t.hook({ type: "order.paid", data: { id: "o9", subscription_id: "sub_7", billing_reason: "subscription_cycle", total_amount: 29900 } });
     expect(suspended(t.deps)).toBe(false);
     expect(t.mailbox.some((m) => m.subject.includes("yeniden açıldı"))).toBe(true);
+  });
+
+  it("aynı webhook-id ikinci kez gelirse işlenmez (tekrar e-postası ve çift işlem olmaz)", async () => {
+    const t = await paid();
+    const cycle = { type: "order.paid", data: { id: "o20", subscription_id: "sub_7", billing_reason: "subscription_cycle", total_amount: 29900 } };
+    expect(await t.hook(cycle, "ok", "msg_tekrar")).toBe(200);
+    expect(await t.hook(cycle, "ok", "msg_tekrar")).toBe(200);
+    expect(t.mailbox.filter((m) => m.subject.startsWith("Aylık ödemeniz alındı"))).toHaveLength(1);
+  });
+
+  it("ödenen ürün seçilen paketle uyuşmuyorsa üyelik ödenmiş sayılmaz", async () => {
+    const t = await setup();
+    // sahte Polar tüm ürünleri tanımaz: ters arama pro ürününü "pro" diye döner
+    (t.deps as any).polar.itemOf = (id: string) => (id === "urun-pro" ? "pro" : undefined);
+    const body = (productId: string) => ({ type: "order.paid", data: { id: "o30", subscription_id: "sub_1", product_id: productId, metadata: { kind: "membership", user_id: t.owner.id, plan: "standart" } } });
+    await t.hook(body("urun-pro")); // standart seçilmiş ama pro ürünü ödenmiş: uyuşmaz
+    expect(t.deps.users.onboardingOf(t.owner.id).paidAt).toBeNull();
+    (t.deps as any).polar.itemOf = (id: string) => (id === "urun-standart" ? "standart" : undefined);
+    await t.hook(body("urun-standart"));
+    expect(t.deps.users.onboardingOf(t.owner.id).paidAt).not.toBeNull();
   });
 
   it("yenileme ödemesi: müşteriye 'ödemeniz alındı' e-postası gider", async () => {

@@ -27,3 +27,6 @@ samples/
 tenants/*.json
 !tenants/demo-spa.json
 sesli_ai_resepsiyonist_proje_ozeti.md
+
+# Kurulan ajan becerileri (skills): yerel araç, repoya girmez
+.agents/
