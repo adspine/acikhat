@@ -1,5 +1,6 @@
 import type { DatabaseSync } from "node:sqlite";
 import { RETENTION } from "../domain/retention.ts";
+import { POOL } from "../domain/phone-pool.ts";
 
 const DAY = 86_400_000;
 /** Anonimleştirilen randevularda ad yerine yazılır; ikinci çalıştırmada tekrar işlenmesin diye de işaret görevi görür */
@@ -50,6 +51,8 @@ export interface EraseResult {
   submissions: number;
   notices: number;
   tenant: number;
+  /** Karantinaya alınan hat havuzu numaraları (ElevenLabs bağlantısı elle kaldırılmalı) */
+  poolNumbers: string[];
 }
 
 /**
@@ -57,7 +60,7 @@ export interface EraseResult {
  * Güvenlik: firma var olmalı, askıda olmalı (canlı bir firma yanlışlıkla silinmesin) ve onay metni firma kimliğiyle birebir aynı olmalı.
  * Fatura ve ödeme kayıtları (orders) yasal saklama için kalır. ElevenLabs asistanı ve 0850 numarası dış sistemlerdedir, elle kapatılır.
  */
-export function eraseTenantData(db: DatabaseSync, tenantId: string, confirm: string): EraseResult {
+export function eraseTenantData(db: DatabaseSync, tenantId: string, confirm: string, nowMs: number = Date.now()): EraseResult {
   if (!tenantId || confirm !== tenantId) throw new Error("Onay metni firma kimliğiyle aynı olmalı");
   const row = db.prepare("SELECT config_live FROM tenants WHERE id = ?").get(tenantId) as { config_live: string } | undefined;
   if (!row) throw new Error(`Firma bulunamadı: ${tenantId}`);
@@ -72,7 +75,11 @@ export function eraseTenantData(db: DatabaseSync, tenantId: string, confirm: str
   const run = (sql: string) => Number(db.prepare(sql).run(tenantId).changes);
   db.exec("BEGIN");
   try {
+    // Hat havuzu numaraları kimseye verilmez, karantinaya alınır (eski yönlendirmeler hâlâ o numarayı arıyor olabilir)
+    const poolNumbers = (db.prepare("SELECT number FROM phone_pool WHERE tenant_id = ? AND status = 'assigned'").all(tenantId) as { number: string }[]).map((r) => r.number);
+    db.prepare("UPDATE phone_pool SET status = 'quarantine', tenant_id = NULL, released_at = ?, quarantine_until = ? WHERE tenant_id = ? AND status = 'assigned'").run(nowMs, nowMs + POOL.quarantineDays * 86_400_000, tenantId);
     const result: EraseResult = {
+      poolNumbers,
       sessions: run("DELETE FROM sessions WHERE user_id IN (SELECT id FROM users WHERE tenant_id = ?)"),
       users: run("DELETE FROM users WHERE tenant_id = ?"),
       appointments: run("DELETE FROM appointments WHERE tenant_id = ?"),

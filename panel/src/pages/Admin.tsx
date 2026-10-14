@@ -553,6 +553,15 @@ export function AdminCustomersPage() {
       toast(e instanceof ApiError ? e.message : "Asistan kurulamadı", "error");
     }
   };
+  const assignLine = async (t: TenantItem) => {
+    try {
+      const r = await api<{ number: string; connected: boolean; note?: string }>(`/api/admin/tenants/${t.id}/assign-number`, { method: "POST" });
+      toast(r.connected ? `${t.name} firmasına ${r.number} atandı ve asistana bağlandı` : `${t.name} firmasına ${r.number} atandı. ${r.note ?? ""}`, r.connected ? "ok" : "error");
+      await qc.invalidateQueries({ queryKey: ["admin"] });
+    } catch (e) {
+      toast(e instanceof ApiError ? e.message : "Hat atanamadı", "error");
+    }
+  };
   const open = rows.find((t) => t.id === openId) ?? null;
   const assistantTenant = rows.find((t) => t.id === assistantId) ?? null;
   return (
@@ -595,6 +604,7 @@ export function AdminCustomersPage() {
                       actions={[
                         { label: "Yönet", icon: "settings", onClick: () => setOpenId(t.id) },
                         ...(t.assistantReady ? [{ label: "Asistanı düzenle", icon: "users", onClick: () => setAssistantId(t.id) }] : [{ label: "Asistanı kur", icon: "mic", onClick: () => void setup(t) }]),
+                        ...(!t.hasPhone ? [{ label: "Havuzdan hat ata", icon: "phone", onClick: () => void assignLine(t) }] : []),
                         { label: "Müşteri panelini aç", icon: "chart", onClick: () => { setAdminTenant(t.id); location.assign("/panel/"); } },
                       ]}
                     />

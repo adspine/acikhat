@@ -1,3 +1,4 @@
+import { spokenPhone } from "../domain/phone.ts";
 import type { Deps } from "../http/deps.ts";
 import type { Tenant } from "../domain/tenant.ts";
 import { PLANS, type PlanId } from "../domain/plans.ts";
@@ -191,5 +192,54 @@ export function mailBillingSuspension(deps: Deps, tenant: Tenant, suspended: boo
       ? `${tenant.name} aboneliği sona erdiği veya ödeme alınamadığı için asistan hizmeti askıya alındı; gelen aramalar şu an karşılanmıyor. Aboneliği yeniden başlatıp ödeme yaptığınızda hizmet kendiliğinden açılır.`
       : `${tenant.name} için ödemeniz alındı; asistan gelen aramaları yeniden karşılıyor.`],
     cta: { label: "Paketim", url: panelUrl(deps, "paketim") },
+  });
+}
+
+/* ---------------- telefon hattı ve havuz ---------------- */
+
+const lineText = (e164: string) => spokenPhone(e164);
+
+/** Havuzdan atanan hat hazır olunca müşteriye (numara başına bir kez): ne olduğunu, ne yapacağını ve maliyet notunu söyler */
+export function mailLineReady(deps: Deps, tenant: Tenant, number: string) {
+  send(deps, ownerEmails(deps, tenant.id), `Telefon hattınız hazır: ${tenant.name}`, {
+    title: "Asistanınızın telefon hattı hazır",
+    lines: [
+      `${tenant.name} için asistanın hattı hazırlandı. Bu numara yalnızca bir yönlendirme hedefidir: müşterileriniz bildikleri numarayı aramaya devam eder, siz açamadığınızda çağrı bu numaraya geçer.`,
+      "Önerdiğimiz kurulum koşullu yönlendirmedir (meşgul, cevapsız, kapalı): telefonu siz açarsınız, yalnızca açamadığınız çağrıları asistan karşılar.",
+      "Yönlendirilen her çağrı hattınızın operatörü tarafından ücretlendirilebilir (örneğin Turkcell yönlendirme servis ücreti alabiliyor). Güncel ücreti operatörünüzden öğrenin.",
+      "Yönlendirmeyi açmadan önce asistanı panelden deneyin.",
+    ],
+    facts: [["Yönlendirme numarası", lineText(number)], ["Önerilen yönlendirme", "Koşullu: meşgul, cevapsız, kapalı"]],
+    cta: { label: "Yönlendirme rehberini aç", url: `${deps.baseUrl ?? ""}/#/rehber` },
+  });
+  send(deps, admins(deps), `Hat atandı ve bağlandı: ${tenant.name}`, {
+    title: "Hat havuzundan numara atandı",
+    lines: [`${tenant.name} firmasına ${lineText(number)} numarası atandı ve asistana bağlandı. Müşteriye yönlendirme rehberi gönderildi.`],
+  });
+}
+
+export function mailPoolLow(deps: Deps, available: number) {
+  send(deps, admins(deps), available ? `Hat havuzunda ${available} numara kaldı` : "Hat havuzu boş", {
+    title: available ? "Hat havuzu azaldı" : "Hat havuzu boş",
+    lines: [available ? `Müsait numara sayısı ${available}. Yeni müşteriler için Netgsm'den numara alıp havuza ekleyin (önerilen: her zaman en az 3 yedek).` : "Müsait numara yok. Yeni firmalara hat atanamaz; Netgsm'den numara alıp havuza ekleyin. Havuza eklenince bekleyen firmalar kendiliğinden atanır."],
+    cta: { label: "Hat havuzu", url: panelUrl(deps, "hat-havuzu") },
+  });
+}
+
+export function mailPoolEmpty(deps: Deps, tenant: Tenant) {
+  send(deps, admins(deps), `Hat bekleyen firma: ${tenant.name}`, {
+    title: "Hat havuzu boş, firma hat bekliyor",
+    lines: [`${tenant.name} ödemesini yaptı ama havuzda müsait numara yok. Netgsm'den numara alıp havuza eklediğinizde bu firmaya kendiliğinden atanır.`],
+    cta: { label: "Hat havuzu", url: panelUrl(deps, "hat-havuzu") },
+  });
+}
+
+export function mailPoolRenewal(deps: Deps, rows: { number: string; renewAt: number | null; tenantName: string | null }[]) {
+  const fmt = (ms: number | null) => (ms ? new Date(ms).toLocaleDateString("tr-TR") : "?");
+  send(deps, admins(deps), `Numara yenilemesi yaklaşıyor (${rows.length})`, {
+    title: "Netgsm numara yenilemesi yaklaşıyor",
+    lines: ["Yıllık numara ücreti ödenmezse numara düşer ve o numaraya yönlendiren müşterilerin çağrıları kaybolur. Netgsm hesabınızda bakiye ve yenileme tarihini kontrol edin."],
+    facts: rows.slice(0, 10).map((r) => [lineText(r.number), `Yenileme ${fmt(r.renewAt)}${r.tenantName ? ` · ${r.tenantName}` : ""}`] as [string, string]),
+    cta: { label: "Hat havuzu", url: panelUrl(deps, "hat-havuzu") },
   });
 }

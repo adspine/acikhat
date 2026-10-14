@@ -22,7 +22,7 @@ export const MONDAY_9AM = Temporal.ZonedDateTime.from("2026-10-12T09:00[Europe/I
 
 export function makeApp(
   now = MONDAY_9AM,
-  opts: { tenant?: Tenant; tenants?: Tenant[]; google?: CalendarApi; publishAgent?: (t: Tenant) => Promise<AgentPushResult>; connectPhone?: (t: Tenant) => Promise<import("../src/agent/phone.ts").PhoneConnectResult>; startDemoCall?: NonNullable<import("../src/http/deps.ts").Deps["startDemoCall"]>; demoTenantId?: string; firebase?: FirebaseVerifier; paymentTestMode?: boolean; adminEmails?: string[]; voices?: () => Promise<import("../src/integrations/voices.ts").Voice[]> } = {},
+  opts: { tenant?: Tenant; tenants?: Tenant[]; google?: CalendarApi; publishAgent?: (t: Tenant) => Promise<AgentPushResult>; connectPhone?: (t: Tenant) => Promise<import("../src/agent/phone.ts").PhoneConnectResult>; disconnectPhone?: (n: string) => Promise<import("../src/agent/phone.ts").PhoneDisconnectResult>; startDemoCall?: NonNullable<import("../src/http/deps.ts").Deps["startDemoCall"]>; demoTenantId?: string; firebase?: FirebaseVerifier; paymentTestMode?: boolean; adminEmails?: string[]; voices?: () => Promise<import("../src/integrations/voices.ts").Voice[]> } = {},
 ) {
   const store = new Store(":memory:");
   const sms = new ConsoleChannel("sms");
@@ -45,6 +45,7 @@ export function makeApp(
     publishAgent:
       opts.publishAgent ?? (async (t: Tenant) => (published.push(t), { ok: true as const, agentId: t.agentIds[0] ?? "agent_test", created: false })),
     ...(opts.connectPhone && { connectPhone: opts.connectPhone }),
+    ...(opts.disconnectPhone && { disconnectPhone: opts.disconnectPhone }),
     ...(opts.startDemoCall && { startDemoCall: opts.startDemoCall, demoTenantId: opts.demoTenantId ?? "demo-spa" }),
     firebase: opts.firebase ?? null,
     paymentTestMode: opts.paymentTestMode ?? false,

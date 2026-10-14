@@ -12,6 +12,8 @@ import { mailSuspension, mailTenantReady } from "../notify/emails.ts";
 import { sampleUrl } from "./panel/settings.ts";
 import { loadVertical } from "../domain/vertical.ts";
 import { DemoCalls } from "../store/demo-calls.ts";
+import { POOL } from "../domain/phone-pool.ts";
+import { assignLine, assignWaiting, checkPoolStock, connectTenantLine, poolOf, releaseLine, syncPoolWithTenantNumbers, waitingTenants } from "./phone-line.ts";
 
 /** Başlayıp bu kadar süre sonuç gelmeyen test görüşmesi "sonuç alınamadı" sayılır (en uzun görüşme 2 dk) */
 const STALE_DEMO_MS = 6 * 60_000;
@@ -149,7 +151,7 @@ export function adminRoutes(deps: Deps) {
    * Başvuruyu onayla: form bilgilerinden firma ayarı oluşturur ve (üyeyse) üyeyi firmaya bağlar.
    * Üye bundan sonra kendi panosuna girer. Ayar canlıya alınmadan önce panelden gözden geçirilip yayınlanır.
    */
-  app.post("/submissions/:ref/create-tenant", (c) => {
+  app.post("/submissions/:ref/create-tenant", async (c) => {
     const ref = c.req.param("ref");
     const row = db.prepare(`${SUBMISSION_SQL} WHERE s.reference = ?`).get(ref) as SubmissionRow | undefined;
     if (!row) return c.json({ error: "Başvuru bulunamadı" }, 404);
@@ -171,7 +173,12 @@ export function adminRoutes(deps: Deps) {
     if (row.user_id) deps.users.assignTenant(row.user_id, id);
     mailTenantReady(deps, tenant);
     db.prepare("UPDATE onboarding_submissions SET status = 'approved', tenant_id = ? WHERE reference = ?").run(id, ref);
-    return c.json({ ok: true, tenantId: id, linkedMember: !!row.user_id, checklist: todo });
+    // Ödemesi doğrulanmış üyenin firmasına hat havuzundan numara atanır (asistan kurulunca ElevenLabs'e bağlanır)
+    const line = await assignLine(deps, tenant, { requirePaid: true, actorId: c.get("admin").id });
+    return c.json({
+      ok: true, tenantId: id, linkedMember: !!row.user_id, checklist: todo,
+      line: line.ok ? { number: line.number, connected: line.connected, ...(line.note && { note: line.note }) } : { reason: line.reason, error: line.message },
+    });
   });
 
   /** Müşteri firmaları ve son 30 günlük kullanım */
@@ -262,7 +269,9 @@ export function adminRoutes(deps: Deps) {
       if (editable?.hasDraft) deps.tenantStore.saveDraft(id, { ...(editable.config as Record<string, unknown>), agentIds: [pushed.agentId] });
     }
     deps.store.audit({ tenantId: id, userId: c.get("admin").id, action: "admin.assistant", target: id, detail: { created: pushed.created } });
-    return c.json({ ok: true, created: pushed.created });
+    // Asistan ilk kez kurulduysa ve firmanın numarası varsa (havuzdan atanmış olabilir) hat da bağlanır
+    const phone = pushed.created && deps.tenants.get(id)?.phoneNumbers.length ? await connectTenantLine(deps, deps.tenants.get(id)!) : undefined;
+    return c.json({ ok: true, created: pushed.created, ...(phone && { phone }) });
   });
 
   /**
@@ -274,10 +283,10 @@ export function adminRoutes(deps: Deps) {
     const tenant = deps.tenants.get(id);
     if (!tenant) return c.json({ error: "Firma bulunamadı" }, 404);
     if (!deps.connectPhone) return c.json({ error: "Numara bağlama bu sunucuda kapalı" }, 501);
-    const r = await deps.connectPhone(tenant);
-    if (!r.ok) return c.json({ error: r.error }, 502);
-    deps.store.audit({ tenantId: id, userId: c.get("admin").id, action: "admin.phone", target: id, detail: { numbers: r.connected.map((x) => x.number) } });
-    return c.json({ ok: true, connected: r.connected.map((x) => x.number) });
+    const r = await connectTenantLine(deps, tenant);
+    if (!r.connected) return c.json({ error: r.error }, 502);
+    deps.store.audit({ tenantId: id, userId: c.get("admin").id, action: "admin.phone", target: id, detail: { numbers: tenant.phoneNumbers } });
+    return c.json({ ok: true, connected: tenant.phoneNumbers });
   });
 
   /**
@@ -321,6 +330,9 @@ export function adminRoutes(deps: Deps) {
         if (!n) return c.json({ error: `Geçersiz numara: ${raw}` }, 422);
         const other = deps.tenants.all().find((t) => t.id !== id && t.phoneNumbers.includes(n));
         if (other) return c.json({ error: `${n} numarası ${other.name} firmasına atanmış` }, 409);
+        const inPool = poolOf(deps).get(n);
+        if (inPool && (inPool.status === "quarantine" || inPool.status === "retired")) return c.json({ error: `${n} numarası havuzda ${inPool.status === "quarantine" ? "karantinada" : "emekli"}; atanamaz` }, 409);
+        if (inPool?.status === "assigned" && inPool.tenantId !== id) return c.json({ error: `${n} numarası havuzda başka bir firmaya atanmış` }, 409);
         if (!phones.includes(n)) phones.push(n);
       }
     }
@@ -372,16 +384,79 @@ export function adminRoutes(deps: Deps) {
     deps.store.audit({ tenantId: id, userId: c.get("admin").id, action: "admin.tenant", target: id, detail: p });
 
     // Numara gönderildiyse (değişmemiş olsa da) ElevenLabs tarafı da kurulur/güncellenir; böylece yarım kalan bağlama kaydet düğmesiyle tamamlanır. Başarısız olsa bile numara kaydedilmiştir; panel uyarıyı gösterir, yeniden denenebilir.
+    if (phones) await syncPoolWithTenantNumbers(deps, id, tenant.phoneNumbers, phones, c.get("admin").id);
     let phone: { connected: boolean; error?: string } | undefined;
-    if (phones?.length) {
-      if (!deps.connectPhone) phone = { connected: false, error: "Numara bağlama bu sunucuda kapalı" };
-      else if (!next.data.agentIds.length) phone = { connected: false, error: "Numara kaydedildi ama asistan kurulu değil; önce ⋮ > Asistanı kur, sonra \"Hatta bağla\"" };
-      else {
-        const r = await deps.connectPhone(next.data);
-        phone = r.ok ? { connected: true } : { connected: false, error: r.error };
-      }
-    }
+    if (phones?.length) phone = await connectTenantLine(deps, next.data);
     return c.json({ ok: true, ...(phone && { phone }) });
+  });
+
+  /* ---------------- hat havuzu ---------------- */
+
+  /** Havuz envanteri: durum sayıları, numaralar, hat bekleyen firmalar */
+  app.get("/phone-pool", (c) => {
+    const pool = poolOf(deps);
+    pool.promoteExpired(deps.now().epochMilliseconds);
+    const names = new Map(deps.tenants.all().map((t) => [t.id, t.name]));
+    return c.json({
+      stats: pool.stats(),
+      lowStockAt: POOL.lowStockAt,
+      quarantineDays: POOL.quarantineDays,
+      initialSize: POOL.initialSize,
+      numbers: pool.list().map((r) => ({ ...r, tenantName: r.tenantId ? (names.get(r.tenantId) ?? null) : null })),
+      waiting: waitingTenants(deps).map((t) => ({ id: t.id, name: t.name })),
+    });
+  });
+
+  /** Netgsm'den alınan numaraları havuza ekler; hat bekleyen (ödemiş) firmalar varsa kendiliğinden atanır */
+  app.post("/phone-pool", async (c) => {
+    const parsed = z
+      .object({ numbers: z.string().min(1).max(5000), note: z.string().trim().max(200).optional(), renewAt: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional() })
+      .safeParse(await c.req.json().catch(() => ({})));
+    if (!parsed.success) return c.json({ error: "Numaraları her satıra bir tane yazın; yenileme tarihi YYYY-AA-GG olmalı" }, 400);
+    const raws = parsed.data.numbers.split(/[\n,;]+/).map((x) => x.trim()).filter(Boolean);
+    if (raws.length > 50) return c.json({ error: "Tek seferde en fazla 50 numara eklenebilir" }, 422);
+    const renewAt = parsed.data.renewAt ? Temporal.PlainDate.from(parsed.data.renewAt).toZonedDateTime(deps.now().timeZoneId).epochMilliseconds : undefined;
+    const r = poolOf(deps).add(raws, { nowMs: deps.now().epochMilliseconds, note: parsed.data.note, renewAt, inUse: (n) => deps.tenants.all().some((t) => t.phoneNumbers.includes(n)) });
+    deps.store.audit({ tenantId: null, userId: c.get("admin").id, action: "pool.add", detail: { added: r.added.length, skipped: r.skipped.length } });
+    const assigned = r.added.length ? await assignWaiting(deps) : [];
+    checkPoolStock(deps);
+    return c.json({ ok: true, added: r.added, skipped: r.skipped, assigned });
+  });
+
+  /** Firmaya havuzdan elle numara ata (ödeme şartı aranmaz: yönetici kararıdır) */
+  app.post("/tenants/:id/assign-number", async (c) => {
+    const tenant = deps.tenants.get(c.req.param("id"));
+    if (!tenant) return c.json({ error: "Firma bulunamadı" }, 404);
+    const r = await assignLine(deps, tenant, { requirePaid: false, actorId: c.get("admin").id });
+    if (!r.ok) return c.json({ error: r.message, reason: r.reason }, r.reason === "no_tenant" ? 404 : 409);
+    return c.json({ ok: true, number: r.number, connected: r.connected, ...(r.note && { note: r.note }) });
+  });
+
+  /** Atanmış numarayı bırak: karantinaya alınır, firmadan ve ElevenLabs'ten kaldırılır */
+  app.post("/phone-pool/:number/release", async (c) => {
+    const r = await releaseLine(deps, c.req.param("number"), c.get("admin").id);
+    if (!r.ok) return c.json({ error: r.error }, 409);
+    return c.json({ ok: true, disconnected: r.disconnected, ...(r.warning && { warning: r.warning }) });
+  });
+
+  /** Müsait ya da karantinadaki numarayı havuzdan kalıcı çıkar (Netgsm'de abonelik bırakıldığında) */
+  app.post("/phone-pool/:number/retire", (c) => {
+    const n = c.req.param("number");
+    if (!poolOf(deps).retire(n)) return c.json({ error: "Yalnızca müsait ya da karantinadaki numara emekli edilebilir" }, 409);
+    deps.store.audit({ tenantId: null, userId: c.get("admin").id, action: "pool.retire", target: n });
+    checkPoolStock(deps);
+    return c.json({ ok: true });
+  });
+
+  /** Not ve yıllık yenileme tarihi */
+  app.patch("/phone-pool/:number", async (c) => {
+    const parsed = z
+      .object({ note: z.string().trim().max(200).nullable().optional(), renewAt: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable().optional() })
+      .safeParse(await c.req.json().catch(() => ({})));
+    if (!parsed.success) return c.json({ error: "Geçersiz değer" }, 400);
+    const renewAt = parsed.data.renewAt === undefined ? undefined : parsed.data.renewAt === null ? null : Temporal.PlainDate.from(parsed.data.renewAt).toZonedDateTime(deps.now().timeZoneId).epochMilliseconds;
+    if (!poolOf(deps).setMeta(c.req.param("number"), { ...(parsed.data.note !== undefined && { note: parsed.data.note }), ...(renewAt !== undefined && { renewAt }) })) return c.json({ error: "Numara havuzda yok" }, 404);
+    return c.json({ ok: true });
   });
 
   return app;

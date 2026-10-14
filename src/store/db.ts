@@ -68,6 +68,22 @@ CREATE TABLE IF NOT EXISTS webhook_events (
   received_at INTEGER NOT NULL
 );
 
+-- Hat havuzu: Netgsm'den toplu alınan 0850 numaralarının envanteri. Çağrı eşlemesinin kaynağı yine tenant.phoneNumbers'tır;
+-- bu tablo hangi numaranın boş, atanmış ya da karantinada olduğunu ve yıllık yenileme tarihini tutar.
+CREATE TABLE IF NOT EXISTS phone_pool (
+  number           TEXT PRIMARY KEY,                 -- E.164
+  status           TEXT NOT NULL DEFAULT 'available', -- available | assigned | quarantine | retired
+  tenant_id        TEXT,
+  note             TEXT,
+  added_at         INTEGER NOT NULL,
+  assigned_at      INTEGER,
+  released_at      INTEGER,
+  quarantine_until INTEGER,
+  renew_at         INTEGER
+);
+CREATE INDEX IF NOT EXISTS phone_pool_status ON phone_pool (status, added_at);
+CREATE INDEX IF NOT EXISTS phone_pool_tenant ON phone_pool (tenant_id);
+
 -- Müşteriye gönderilen tekrarsız bildirimler (kota uyarısı gibi): aynı uyarı aynı dönemde bir kez gider
 CREATE TABLE IF NOT EXISTS notice_log (
   tenant_id  TEXT NOT NULL,

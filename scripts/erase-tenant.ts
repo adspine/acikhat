@@ -17,7 +17,7 @@ const store = new Store(process.env.DB_PATH ?? "data/app.db");
 try {
   const r = eraseTenantData(store.db, tenantId, confirm);
   console.info(`Silindi (${tenantId}):`, r);
-  console.info("Hatırlatma: ElevenLabs asistanı, 0850 numarası, Google Takvim erişimi ve Polar aboneliği elle kapatılmalı; sonra: fly machine restart");
+  console.info(`Hatırlatma: ElevenLabs asistanı, Google Takvim erişimi ve Polar aboneliği elle kapatılmalı; sonra: fly machine restart${r.poolNumbers.length ? `\nKarantinaya alınan hat numaraları (ElevenLabs panelinden de kaldırın): ${r.poolNumbers.join(", ")}` : ""}`);
 } catch (err) {
   console.error(`Reddedildi: ${(err as Error).message}`);
   process.exit(1);

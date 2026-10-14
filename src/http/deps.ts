@@ -6,7 +6,7 @@ import type { Calendars } from "../calendar/calendars.ts";
 import type { BookingService } from "../booking/service.ts";
 import type { Users } from "../auth/users.ts";
 import type { AgentPushResult } from "../agent/sync.ts";
-import type { PhoneConnectResult } from "../agent/phone.ts";
+import type { PhoneConnectResult, PhoneDisconnectResult } from "../agent/phone.ts";
 import type { DemoCalls } from "../store/demo-calls.ts";
 import type { DemoCallStart } from "../agent/demo-call.ts";
 import type { Tenant } from "../domain/tenant.ts";
@@ -37,6 +37,8 @@ export interface Deps {
   /** Demo firmanın hattından verilen numarayı arar (testlerde sahte verilir) */
   startDemoCall?: (tenant: Tenant, call: { phone: string; demoId: string }) => Promise<DemoCallStart>;
   connectPhone?: (tenant: Tenant) => Promise<PhoneConnectResult>;
+  /** Bırakılan hattı ElevenLabs'ten kaldırır (karantinadaki numara eski firmanın asistanına çağrı düşürmesin) */
+  disconnectPhone?: (number: string) => Promise<PhoneDisconnectResult>;
   /** Araç çağrılarındaki Bearer token */
   toolSecret: string;
   slotKey: string;

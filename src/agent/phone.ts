@@ -68,3 +68,27 @@ export async function connectPhoneNumbers(tenant: Tenant, env: PhoneEnv, fetchFn
     return { ok: false, error: `Numara asistana bağlanamadı: ${(err as Error).message}` };
   }
 }
+
+export type PhoneDisconnectResult = { ok: true; removed: boolean } | { ok: false; error: string };
+
+/**
+ * Numarayı ElevenLabs'ten siler (bırakılan hat artık eski firmanın asistanına çağrı düşürmesin).
+ * Numara orada yoksa hata sayılmaz (removed: false). Tekrar bağlanırsa connectPhoneNumbers yeniden oluşturur.
+ */
+export async function disconnectPhoneNumber(number: string, env: { apiKey: string }, fetchFn: typeof fetch = fetch): Promise<PhoneDisconnectResult> {
+  const call = async (method: string, path: string): Promise<unknown> => {
+    const res = await fetchFn(`${API}${path}`, { method, headers: { "xi-api-key": env.apiKey }, signal: AbortSignal.timeout(20_000) });
+    const text = await res.text();
+    if (!res.ok) throw new Error(`${method} ${path} → ${res.status}: ${text.slice(0, 200)}`);
+    return text ? JSON.parse(text) : null;
+  };
+  try {
+    const existing = (await call("GET", "/phone-numbers")) as { phone_number: string; phone_number_id: string }[];
+    const found = existing.find((p) => p.phone_number === number);
+    if (!found) return { ok: true, removed: false };
+    await call("DELETE", `/phone-numbers/${found.phone_number_id}`);
+    return { ok: true, removed: true };
+  } catch (err) {
+    return { ok: false, error: `Numara ElevenLabs'ten kaldırılamadı: ${(err as Error).message}` };
+  }
+}
