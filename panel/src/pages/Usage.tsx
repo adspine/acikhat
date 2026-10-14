@@ -229,7 +229,7 @@ export function UsagePage() {
           )}
 
           <p className="muted small usage-foot">
-            Dakikalar her ayın başında yenilenir. Kota bitince her ek dakika {usd(u.overagePerMinuteUsd)} (KDV dahil) olarak hesaplanır. Sorularınız için <a href="mailto:support@adspine.app">support@adspine.app</a>.
+            Dakikalar her ayın başında yenilenir. Kota bitince her ek dakika {usd(u.overagePerMinuteUsd)} (KDV dahil) olarak hesaplanır. Sorularınız için <a href="mailto:support@acikhat.si">support@acikhat.si</a>.
           </p>
         </>
       )}

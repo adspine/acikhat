@@ -84,7 +84,7 @@ const deps: Deps = {
   adminEmails: (process.env.ADMIN_EMAILS ?? "").split(",").map((e) => e.trim().toLowerCase()).filter(Boolean),
   polar: polarFromEnv(process.env),
   paymentTestMode: (process.env.PAYMENT_TEST_MODE ?? (process.env.NODE_ENV === "production" ? "0" : "1")) === "1",
-  mailer: createMailer({ apiKey: process.env.RESEND_API_KEY, from: process.env.MAIL_FROM ?? "Açık Hat <bildirim@acikhat.si>", replyTo: "support@adspine.app" }),
+  mailer: createMailer({ apiKey: process.env.RESEND_API_KEY, from: process.env.MAIL_FROM ?? "Açık Hat <bildirim@acikhat.si>", replyTo: "support@acikhat.si" }),
   baseUrl: (process.env.PUBLIC_BASE_URL ?? `http://localhost:${process.env.PORT ?? 8787}`).replace(/\/$/, ""),
   secureCookies: process.env.NODE_ENV === "production",
   now,

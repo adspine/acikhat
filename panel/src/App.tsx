@@ -357,7 +357,7 @@ function Shell() {
       <main className="main" id="icerik">
         {me.tenant.suspended && (
           <p className="suspended-banner" role="alert">
-            Hizmetiniz şu an askıda; asistan gelen aramaları karşılamıyor. Açılması için <a href="mailto:support@adspine.app">support@adspine.app</a> adresine yazın.
+            Hizmetiniz şu an askıda; asistan gelen aramaları karşılamıyor. Açılması için <a href="mailto:support@acikhat.si">support@acikhat.si</a> adresine yazın.
           </p>
         )}
         <ErrorBoundary key={loc.path}>{page}</ErrorBoundary>

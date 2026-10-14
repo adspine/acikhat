@@ -34,7 +34,7 @@ function renderPlans(root, account) {
   if (chosen) {
     const p = PLANS[chosen];
     $("[data-checkout-name]", root).textContent = p.name;
-    $("[data-checkout-detail]", root).textContent = `$${p.price} / ay · ${fmtMinutes(p.minutes)} dakika (liste fiyatı $${p.list})`;
+    $("[data-checkout-detail]", root).textContent = `$${p.price} / ay · ${fmtMinutes(p.minutes)} dk yapay zekâ kullanımı (liste fiyatı $${p.list})`;
     $("[data-pay-test]", root).hidden = !account.paymentTestMode;
   }
 }
@@ -138,6 +138,6 @@ export function showHesap(account, ctx) {
   if (which === "3") {
     $("[data-onb-ref]", root).textContent = account.onboarding.reference ?? "—";
     const plan = PLANS[account.onboarding.plan];
-    $("[data-onb-plan]", root).textContent = plan ? `${plan.name}: ${fmtMinutes(plan.minutes)} dakika, aylık $${plan.price}` : "";
+    $("[data-onb-plan]", root).textContent = plan ? `${plan.name}: ${fmtMinutes(plan.minutes)} dk yapay zekâ kullanımı, aylık $${plan.price}` : "";
   }
 }

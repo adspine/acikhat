@@ -21,7 +21,7 @@ interface Body {
 }
 
 function render(b: Body): { text: string; html: string } {
-  const text = [b.title, "", ...b.lines, ...(b.facts ?? []).map(([k, v]) => `${k}: ${v}`), ...(b.cta ? ["", `${b.cta.label}: ${b.cta.url}`] : []), "", "Açık Hat · support@adspine.app"].join("\n");
+  const text = [b.title, "", ...b.lines, ...(b.facts ?? []).map(([k, v]) => `${k}: ${v}`), ...(b.cta ? ["", `${b.cta.label}: ${b.cta.url}`] : []), "", "Açık Hat · support@acikhat.si"].join("\n");
   const html = `<!doctype html><html lang="tr"><body style="margin:0;background:#f1f4f3;font-family:-apple-system,Segoe UI,Roboto,Arial,sans-serif;color:#1c2b27">
 <div style="max-width:560px;margin:0 auto;padding:28px 16px">
 <p style="margin:0 0 14px;font-weight:700;font-size:15px;color:#14463f">● Açık Hat</p>
@@ -31,7 +31,7 @@ ${b.lines.map((l) => `<p style="margin:0 0 12px;font-size:15px;line-height:1.55"
 ${b.facts?.length ? `<table role="presentation" style="width:100%;border-collapse:collapse;margin:6px 0 14px;font-size:14px">${b.facts.map(([k, v]) => `<tr><td style="padding:7px 0;border-top:1px solid #edf1ef;color:#5d6f69;width:42%">${esc(k)}</td><td style="padding:7px 0;border-top:1px solid #edf1ef">${esc(v)}</td></tr>`).join("")}</table>` : ""}
 ${b.cta ? `<p style="margin:18px 0 4px"><a href="${esc(b.cta.url)}" style="display:inline-block;background:#1e5f6b;color:#fff;text-decoration:none;padding:11px 20px;border-radius:10px;font-weight:600;font-size:14px">${esc(b.cta.label)}</a></p>` : ""}
 </div>
-<p style="margin:14px 4px 0;font-size:12px;color:#7a8b85">Bu e-posta Açık Hat hesabınızla ilgili bir bildirimdir. Sorularınız için support@adspine.app adresine yazabilirsiniz.</p>
+<p style="margin:14px 4px 0;font-size:12px;color:#7a8b85">Bu e-posta Açık Hat hesabınızla ilgili bir bildirimdir. Sorularınız için support@acikhat.si adresine yazabilirsiniz.</p>
 </div></body></html>`;
   return { text, html };
 }
@@ -63,7 +63,7 @@ export function mailMembershipPaid(deps: Deps, user: { name: string; email: stri
   send(deps, [user.email], `${testTag(deps)}Ödemeniz alındı: ${p.name} paketi`, {
     title: "Ödemeniz alındı, teşekkürler",
     lines: [`${user.name ? user.name + ", " : ""}${p.name} paketiniz için ödemeniz alındı. Sıradaki adım kurulum formu: işletmenizi anlatın, asistanınızı sizin için hazırlayalım.`, ...(isFreeTest(deps) ? ["Not: Sistem şu an test modunda; bu işlemde ücret alınmadı."] : [])],
-    facts: [["Paket", p.name], ["Tutar", `${usd(p.priceUsd)} / ay (KDV dahil)`], ["Dahil dakika", `${p.minutes} dk`]],
+    facts: [["Paket", p.name], ["Tutar", `${usd(p.priceUsd)} / ay (KDV dahil)`], ["Dahil yapay zekâ kullanımı", `${p.minutes} dk`]],
     cta: { label: "Kurulumu sürdür", url: `${deps.baseUrl ?? ""}/#/hesap` },
   });
   send(deps, admins(deps), `${testTag(deps)}Yeni üyelik ödemesi: ${p.name} (${user.email})`, {
