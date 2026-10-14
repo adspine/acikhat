@@ -115,7 +115,8 @@ export function billingRoutes(deps: Deps) {
   /** Ek dakika paketi satın al */
   app.post("/addons", requirePermission("settings.edit"), async (c) => {
     const tenant = c.get("tenant");
-    const pack = findAddon(((await c.req.json().catch(() => ({}))) as { pack?: unknown }).pack);
+    const body = (await c.req.json().catch(() => ({}))) as { pack?: unknown; locale?: unknown };
+    const pack = findAddon(body.pack);
     if (!pack) return c.json({ error: "Geçersiz paket" }, 400);
     if (tenant.suspended) return c.json({ error: "Hizmetiniz askıda; satın alma yapılamıyor" }, 409);
     if (!chargeAvailable(deps)) return c.json({ error: "Ödeme altyapısı henüz etkin değil" }, 503);
@@ -129,6 +130,7 @@ export function billingRoutes(deps: Deps) {
           email: c.get("user").email,
           metadata: { kind: "addon", order_id: id, tenant_id: tenant.id },
           successUrl: `${deps.baseUrl ?? ""}/panel/paketim?odeme=ok`,
+          locale: body.locale === "en" ? "en" : "tr",
         });
         db.prepare("UPDATE orders SET provider_ref = ? WHERE id = ?").run(checkout.id, id);
         return c.json({ ok: true, checkoutUrl: checkout.url });

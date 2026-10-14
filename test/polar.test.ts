@@ -105,7 +105,7 @@ describe("Polar istemcisi", () => {
       fetch: (async (url: string, init: any) => (seen.push([url, init.method, JSON.parse(init.body), init.headers.authorization]), new Response(JSON.stringify({ id: "c", url: "https://x/c" }), { status: 201 }))) as any,
     });
     expect(await polar.createCheckout({ item: "pro", externalCustomerId: "u1", email: "a@b.c", metadata: { k: "v" }, successUrl: "https://s" })).toEqual({ id: "c", url: "https://x/c" });
-    expect(seen[0]).toEqual(["https://sandbox-api.polar.sh/v1/checkouts/", "POST", { products: ["p-p"], external_customer_id: "u1", customer_email: "a@b.c", metadata: { k: "v" }, success_url: "https://s" }, "Bearer tok"]);
+    expect(seen[0]).toEqual(["https://sandbox-api.polar.sh/v1/checkouts/", "POST", { products: ["p-p"], external_customer_id: "u1", customer_email: "a@b.c", metadata: { k: "v" }, success_url: "https://s", locale: "tr" }, "Bearer tok"]);
     await polar.changePlan("sub", "standart", "next_period");
     expect(seen[1]).toEqual(["https://sandbox-api.polar.sh/v1/subscriptions/sub", "PATCH", { product_id: "p-s", proration_behavior: "next_period" }, "Bearer tok"]);
     await expect(polar.createCheckout({ item: "yok", externalCustomerId: "u", email: "a@b.c", metadata: {}, successUrl: "https://s" })).rejects.toThrow(/tanımlı değil/);

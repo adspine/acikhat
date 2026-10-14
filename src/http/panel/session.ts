@@ -210,6 +210,7 @@ export function authRoutes(deps: Deps) {
     const user = userFromCookie(c, deps);
     if (!user) return c.json({ error: "Oturum açmanız gerekiyor" }, 401);
     const o = deps.users.onboardingOf(user.id);
+    const locale = ((await c.req.json().catch(() => ({}))) as { locale?: unknown }).locale === "en" ? "en" : "tr";
     if (deps.polar) {
       if (!o.plan) return c.json({ error: "Önce bir paket seçin" }, 400);
       if (o.paidAt) return c.json(accountOf(user));
@@ -220,6 +221,7 @@ export function authRoutes(deps: Deps) {
           email: user.email,
           metadata: { kind: "membership", user_id: user.id, plan: o.plan },
           successUrl: `${deps.baseUrl ?? ""}/?odeme=ok#/hesap`,
+          locale,
         });
         return c.json({ checkoutUrl: checkout.url });
       } catch (err) {

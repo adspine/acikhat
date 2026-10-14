@@ -7,7 +7,7 @@ import { createHmac, timingSafeEqual } from "node:crypto";
  */
 export interface Polar {
   /** Paket veya ek dakika ürünü için ödeme sayfası açar */
-  createCheckout(o: { item: string; externalCustomerId: string; email: string; metadata: Record<string, string>; successUrl: string }): Promise<{ id: string; url: string }>;
+  createCheckout(o: { item: string; externalCustomerId: string; email: string; metadata: Record<string, string>; successUrl: string; locale?: "tr" | "en" }): Promise<{ id: string; url: string }>;
   /** Mevcut aboneliğin paketini değiştirir: yükseltme farkı hemen faturalanır, düşürme sonraki dönemde başlar */
   changePlan(subscriptionId: string, item: string, when: "now" | "next_period"): Promise<void>;
   /** Webhook gövdesini imzaya göre doğrular */
@@ -71,6 +71,7 @@ export function createPolar(cfg: PolarConfig): Polar {
         customer_email: o.email,
         metadata: o.metadata,
         success_url: o.successUrl,
+        locale: o.locale ?? "tr",
       });
       if (typeof r.url !== "string" || typeof r.id !== "string") throw new Error("Polar ödeme sayfası adresi dönmedi");
       return { id: r.id, url: r.url };
