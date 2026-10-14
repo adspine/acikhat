@@ -15,8 +15,8 @@ async function api(method: string, path: string, body?: unknown) {
 }
 
 const wanted = [
-  ...PLAN_IDS.map((id) => ({ item: id, name: `Açık Hat ${PLANS[id].name} (${PLANS[id].minutes} dk/ay)`, usd: PLANS[id].priceUsd, monthly: true })),
-  ...ADDON_PACKS.map((p) => ({ item: p.id, name: `Açık Hat ${p.name}`, usd: p.priceUsd, monthly: false })),
+  ...PLAN_IDS.map((id) => ({ item: id, name: `Açık Hat ${PLANS[id].name}: AI asistan aboneliği`, usd: PLANS[id].priceUsd, monthly: true })),
+  ...ADDON_PACKS.map((p) => ({ item: p.id, name: `Açık Hat ek AI kullanım paketi (${p.minutes})`, usd: p.priceUsd, monthly: false })),
 ];
 
 const existing = (await api("GET", "/v1/products/?limit=100&is_archived=false")).items as { id: string; metadata?: { item?: string } }[];
