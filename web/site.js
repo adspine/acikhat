@@ -131,7 +131,7 @@ document.addEventListener("click", async (e) => {
 const sections = ["nasil", "ozellikler", "fiyatlandirma", "sss", "iletisim"];
 const routes = { "": "home", kurulum: "kurulum", rehber: "rehber", tamam: "tamam", yasal: "yasal", giris: "giris", "uye-ol": "uye-ol", hesap: "hesap", ...Object.fromEntries(sections.map((k) => [k, "home"])) };
 const titles = {
-  home: `${BRAND} — telefonunuzu yapay zekâ ile cevaplayın`,
+  home: "Yapay Zeka Telefon Asistanı, Sesli Resepsiyonist | Açık Hat",
   kurulum: `Kurulum formu — ${BRAND}`,
   rehber: `Kurulum rehberi — ${BRAND}`,
   tamam: `Bilgileriniz alındı — ${BRAND}`,

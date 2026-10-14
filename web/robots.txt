@@ -1,0 +1,10 @@
+# Açık Hat: herkese açık sayfalar taranabilir; panel, API ve sunucu uçları taranmaz
+User-agent: *
+Allow: /
+Disallow: /panel/
+Disallow: /api/
+Disallow: /tools/
+Disallow: /webhooks/
+Disallow: /test/
+
+Sitemap: https://acikhat.si/sitemap.xml
