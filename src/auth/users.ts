@@ -155,6 +155,17 @@ export class Users {
     return ((this.db.prepare("SELECT polar_subscription_id AS s FROM users WHERE tenant_id = ? AND role = 'owner' AND polar_subscription_id IS NOT NULL LIMIT 1").get(tenantId) as { s: string } | undefined)?.s) ?? null;
   }
 
+  /** Bu aboneliğin sahibi üye (webhook olaylarını firmaya bağlamak için) */
+  byPolarSubscription(subscriptionId: string): User | null {
+    const r = this.db.prepare("SELECT * FROM users WHERE polar_subscription_id = ?").get(subscriptionId) as Row | undefined;
+    return r ? toUser(r) : null;
+  }
+
+  /** Firmanın aboneliğini ödeyen üye (Polar müşterisi bu üyenin kimliğiyle açılmıştır) */
+  polarPayerOfTenant(tenantId: string): string | null {
+    return ((this.db.prepare("SELECT id FROM users WHERE tenant_id = ? AND role = 'owner' AND polar_subscription_id IS NOT NULL LIMIT 1").get(tenantId) as { id: string } | undefined)?.id) ?? null;
+  }
+
   setOnboardingRef(userId: string, reference: string) {
     this.db.prepare("UPDATE users SET onboarding_ref = ? WHERE id = ?").run(reference, userId);
   }

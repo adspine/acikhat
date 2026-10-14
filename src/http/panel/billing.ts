@@ -203,6 +203,19 @@ export function billingRoutes(deps: Deps) {
     return c.json({ ok: true, kind, chargedUsd: amountUsd });
   });
 
+  /** Aboneliği yönet: Polar müşteri portalına tek kullanımlık giriş adresi (kart değiştirme, iptal, makbuzlar). Askıdayken de açılır. */
+  app.post("/portal", requirePermission("settings.edit"), async (c) => {
+    const tenant = c.get("tenant");
+    const payer = deps.polar ? deps.users.polarPayerOfTenant(tenant.id) : null;
+    if (!deps.polar || !payer) return c.json({ error: "Aboneliğiniz ödeme sistemine bağlı değil. Lütfen bizimle iletişime geçin." }, 409);
+    try {
+      return c.json({ url: await deps.polar.portalUrl(payer) });
+    } catch (err) {
+      console.error(`[ödeme] Polar portal adresi alınamadı (${tenant.id}): ${(err as Error).message}`);
+      return c.json({ error: "Abonelik sayfası şu an açılamadı. Biraz sonra tekrar deneyin." }, 502);
+    }
+  });
+
   /** Satın alma geçmişi */
   app.get("/orders", (c) => {
     const rows = db.prepare("SELECT * FROM orders WHERE tenant_id = ? AND status = 'paid' ORDER BY created_at DESC LIMIT 20").all(c.get("tenant").id) as unknown as OrderRow[];

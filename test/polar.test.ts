@@ -29,6 +29,7 @@ function fakePolar() {
   const polar: Polar = {
     createCheckout: async (o) => (calls.push(["checkout", o]), { id: "co_1", url: "https://polar.test/checkout/co_1" }),
     changePlan: async (...a) => void calls.push(["change", ...a]),
+    portalUrl: async (id) => (calls.push(["portal", id]), "https://polar.test/portal/abc"),
     verifyWebhook: (h) => h.signature === "ok",
     itemOf: () => undefined,
   };
@@ -94,6 +95,74 @@ describe("Polar ile ödeme akışı", () => {
     expect(calls.at(-1)).toEqual(["change", "sub_9", "pro", "now"]);
     expect(await as("POST", "/api/panel/plan-change", { plan: "baslangic" })).toMatchObject({ status: 200, body: { kind: "downgrade" } });
     expect(calls.at(-1)).toEqual(["change", "sub_9", "baslangic", "next_period"]);
+  });
+});
+
+describe("abonelik yaşam döngüsü", () => {
+  const sub = (type: string, data: object = {}) => ({ type, data: { id: "sub_7", ...data } });
+  async function paid() {
+    const t = await setup();
+    t.deps.users.setPolarSubscription(t.owner.id, "sub_7");
+    t.mailbox.length = 0;
+    return t;
+  }
+  const suspended = (deps: any) => deps.tenants.get(demoTenant.id).suspended;
+
+  it("Aboneliği yönet: portal adresi ödeyen üyenin kimliğiyle istenir; abonelik bağlı değilse 409", async () => {
+    const t = await setup();
+    expect((await t.as("POST", "/api/panel/portal")).status).toBe(409);
+    expect((await t.as("GET", "/api/panel/usage")).body.canManageSubscription).toBe(false);
+    t.deps.users.setPolarSubscription(t.owner.id, "sub_7");
+    expect((await t.as("GET", "/api/panel/usage")).body.canManageSubscription).toBe(true);
+    expect(await t.as("POST", "/api/panel/portal")).toMatchObject({ status: 200, body: { url: "https://polar.test/portal/abc" } });
+    expect(t.calls.at(-1)).toEqual(["portal", t.owner.id]);
+  });
+
+  it("ödeme alınamadı: müşteriye uyarı e-postası gider, hizmet hemen kapanmaz", async () => {
+    const t = await paid();
+    await t.hook(sub("subscription.past_due", { status: "past_due" }));
+    expect(t.mailbox.some((m) => m.to.includes("sahip@lavanta.com") && m.subject.includes("Ödemeniz alınamadı"))).toBe(true);
+    expect(suspended(t.deps)).toBe(false);
+  });
+
+  it("abonelik sona erince (revoked) firma askıya alınır; ödeme gelince kendiliğinden açılır", async () => {
+    const t = await paid();
+    await t.hook(sub("subscription.revoked", { status: "canceled" }));
+    expect(suspended(t.deps)).toBe(true);
+    expect(t.mailbox.some((m) => m.to.includes("sahip@lavanta.com") && m.subject.includes("askıya alındı"))).toBe(true);
+    await t.hook(sub("subscription.revoked", { status: "canceled" })); // tekrar gelirse e-posta çoğalmaz
+    expect(t.mailbox.filter((m) => m.subject.includes("askıya alındı"))).toHaveLength(1);
+
+    await t.hook({ type: "order.paid", data: { id: "o9", subscription_id: "sub_7", billing_reason: "subscription_cycle", total_amount: 29900 } });
+    expect(suspended(t.deps)).toBe(false);
+    expect(t.mailbox.some((m) => m.subject.includes("yeniden açıldı"))).toBe(true);
+  });
+
+  it("yenileme ödemesi: müşteriye 'ödemeniz alındı' e-postası gider", async () => {
+    const t = await paid();
+    await t.hook({ type: "order.paid", data: { id: "o10", subscription_id: "sub_7", billing_reason: "subscription_cycle", total_amount: 29900 } });
+    const m = t.mailbox.find((x) => x.subject.startsWith("Aylık ödemeniz alındı"))!;
+    expect(m.to).toContain("sahip@lavanta.com");
+    expect(m.text).toContain("299");
+  });
+
+  it("yöneticinin elle askıya aldığı firma ödeme gelince kendiliğinden açılmaz", async () => {
+    const t = await paid();
+    const raw = structuredClone(t.deps.tenantStore.getLiveRaw(demoTenant.id) as any);
+    raw.suspended = true;
+    const { TenantSchema } = await import("../src/domain/tenant.ts");
+    const next = TenantSchema.parse(raw);
+    t.deps.tenantStore.publish(next);
+    t.deps.tenants.set(next);
+    await t.hook(sub("subscription.active"));
+    expect(suspended(t.deps)).toBe(true);
+  });
+
+  it("dönem sonunda iptal: müşteriye bitiş tarihiyle e-posta gider, hizmet açık kalır", async () => {
+    const t = await paid();
+    await t.hook(sub("subscription.canceled", { cancel_at_period_end: true, ends_at: "2026-11-14T18:08:44Z" }));
+    expect(t.mailbox.some((m) => m.subject === "Aboneliğiniz iptal edildi" && m.text.includes("14"))).toBe(true);
+    expect(suspended(t.deps)).toBe(false);
   });
 });
 

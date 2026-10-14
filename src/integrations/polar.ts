@@ -10,6 +10,8 @@ export interface Polar {
   createCheckout(o: { item: string; externalCustomerId: string; email: string; metadata: Record<string, string>; successUrl: string; locale?: "tr" | "en" }): Promise<{ id: string; url: string }>;
   /** Mevcut aboneliğin paketini değiştirir: yükseltme farkı hemen faturalanır, düşürme sonraki dönemde başlar */
   changePlan(subscriptionId: string, item: string, when: "now" | "next_period"): Promise<void>;
+  /** Müşterinin kendi aboneliğini yönettiği (kart değiştirme, iptal, makbuzlar) Polar portalı için tek kullanımlık adres */
+  portalUrl(externalCustomerId: string): Promise<string>;
   /** Webhook gövdesini imzaya göre doğrular */
   verifyWebhook(headers: { id?: string; timestamp?: string; signature?: string }, rawBody: string): boolean;
   /** Polar ürün kimliğinden bizim paket/ek paket kimliği (ters arama) */
@@ -78,6 +80,11 @@ export function createPolar(cfg: PolarConfig): Polar {
     },
     async changePlan(subscriptionId, item, when) {
       await call("PATCH", `/v1/subscriptions/${encodeURIComponent(subscriptionId)}`, { product_id: productFor(item), proration_behavior: when === "now" ? "invoice" : "next_period" });
+    },
+    async portalUrl(externalCustomerId) {
+      const r = await call("POST", "/v1/customer-sessions/", { external_customer_id: externalCustomerId });
+      if (typeof r.customer_portal_url !== "string") throw new Error("Polar portal adresi dönmedi");
+      return r.customer_portal_url;
     },
     verifyWebhook: (headers, rawBody) => verifyStandardWebhook(cfg.webhookSecret, headers, rawBody, cfg.nowSec?.()),
     itemOf: (productId) => Object.entries(cfg.products).find(([, id]) => id === productId)?.[0],

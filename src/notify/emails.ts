@@ -45,7 +45,9 @@ function send(deps: Deps, to: string[], subject: string, body: Body) {
 }
 
 const panelUrl = (deps: Deps, path = "") => `${deps.baseUrl ?? ""}/panel/${path}`;
-const testTag = (deps: Deps) => (deps.paymentTestMode ? "[TEST] " : "");
+/** Test modu: yalnızca gerçek ödeme sağlayıcısı (Polar) yokken ücretsiz test. Polar sandbox'ta da kart çekilmez ama o ayrı bir ortamdır */
+const isFreeTest = (deps: Deps) => !deps.polar && !!deps.paymentTestMode;
+const testTag = (deps: Deps) => (isFreeTest(deps) ? "[TEST] " : "");
 
 /** Firmanın sahip hesaplarının e-postaları */
 export function ownerEmails(deps: Deps, tenantId: string, opts: { onlyOptedIn?: boolean } = {}): string[] {
@@ -60,7 +62,7 @@ export function mailMembershipPaid(deps: Deps, user: { name: string; email: stri
   const p = PLANS[plan];
   send(deps, [user.email], `${testTag(deps)}Ödemeniz alındı: ${p.name} paketi`, {
     title: "Ödemeniz alındı, teşekkürler",
-    lines: [`${user.name ? user.name + ", " : ""}${p.name} paketiniz için ödemeniz alındı. Sıradaki adım kurulum formu: işletmenizi anlatın, asistanınızı sizin için hazırlayalım.`, ...(deps.paymentTestMode ? ["Not: Sistem şu an test modunda; bu işlemde ücret alınmadı."] : [])],
+    lines: [`${user.name ? user.name + ", " : ""}${p.name} paketiniz için ödemeniz alındı. Sıradaki adım kurulum formu: işletmenizi anlatın, asistanınızı sizin için hazırlayalım.`, ...(isFreeTest(deps) ? ["Not: Sistem şu an test modunda; bu işlemde ücret alınmadı."] : [])],
     facts: [["Paket", p.name], ["Tutar", `${usd(p.priceUsd)} / ay (KDV dahil)`], ["Dahil dakika", `${p.minutes} dk`]],
     cta: { label: "Kurulumu sürdür", url: `${deps.baseUrl ?? ""}/#/hesap` },
   });
@@ -98,7 +100,7 @@ export function mailTenantReady(deps: Deps, tenant: Tenant) {
 export function mailPurchase(deps: Deps, tenant: Tenant, o: { label: string; amountUsd: number; kind: "plan" | "addon"; minutes: number }) {
   send(deps, ownerEmails(deps, tenant.id), `${testTag(deps)}Satın alma onayı: ${o.label}`, {
     title: "Satın alımınız tamamlandı",
-    lines: [o.kind === "addon" ? `${o.minutes} dakikalık ek paket kotanıza eklendi ve hemen kullanılabilir. Yalnızca bu dönem geçerlidir.` : "Paketiniz hemen güncellendi.", ...(deps.paymentTestMode ? ["Not: Sistem şu an test modunda; bu işlemde ücret alınmadı."] : [])],
+    lines: [o.kind === "addon" ? `${o.minutes} dakikalık ek paket kotanıza eklendi ve hemen kullanılabilir. Yalnızca bu dönem geçerlidir.` : "Paketiniz hemen güncellendi.", ...(isFreeTest(deps) ? ["Not: Sistem şu an test modunda; bu işlemde ücret alınmadı."] : [])],
     facts: [["Ürün", o.label], ["Tutar", `${usd(o.amountUsd)} (KDV dahil)`]],
     cta: { label: "Paketim", url: panelUrl(deps, "paketim") },
   });
@@ -152,5 +154,42 @@ export function mailSubscriptionIssue(deps: Deps, o: { event: string; who: strin
     title: "Abonelikte dikkat gerektiren durum",
     lines: ["Polar'dan bir abonelik olayı geldi. Hizmet kendiliğinden askıya alınmadı; gerekirse yönetim panelinden askıya alabilirsiniz."],
     facts: [["Olay", o.event], ["Müşteri", o.who], ["Ayrıntı", o.detail]],
+  });
+}
+
+/* ---------------- abonelik yaşam döngüsü ---------------- */
+
+export function mailRenewal(deps: Deps, tenant: Tenant, o: { amountUsd: number; planName: string }) {
+  send(deps, ownerEmails(deps, tenant.id), `Aylık ödemeniz alındı: ${o.planName}`, {
+    title: "Aylık ödemeniz alındı, teşekkürler",
+    lines: [`${tenant.name} için ${o.planName} paketinizin bu ayki ödemesi alındı. Asistanınız kesintisiz çalışmaya devam ediyor.`],
+    facts: [["Paket", o.planName], ["Tutar", `${usd(o.amountUsd)} (KDV dahil)`]],
+    cta: { label: "Paketim", url: panelUrl(deps, "paketim") },
+  });
+}
+
+export function mailPaymentFailed(deps: Deps, tenant: Tenant) {
+  send(deps, ownerEmails(deps, tenant.id), "Ödemeniz alınamadı: kartınızı kontrol edin", {
+    title: "Aylık ödemeniz alınamadı",
+    lines: [`${tenant.name} için paket ödemesi kartınızdan çekilemedi. Ödeme sistemi birkaç gün içinde yeniden deneyecek. Kartınızı güncellemezseniz hizmetiniz askıya alınır ve asistan aramaları karşılamaz.`, "Paketim sayfasındaki \"Aboneliği yönet\" düğmesinden kart bilgilerinizi güncelleyebilirsiniz."],
+    cta: { label: "Aboneliği yönet", url: panelUrl(deps, "paketim") },
+  });
+}
+
+export function mailSubscriptionCanceled(deps: Deps, tenant: Tenant, endText: string | null) {
+  send(deps, ownerEmails(deps, tenant.id), "Aboneliğiniz iptal edildi", {
+    title: "Aboneliğiniz iptal edildi",
+    lines: [endText ? `${tenant.name} aboneliğiniz ${endText} tarihinde sona erecek. O zamana kadar asistanınız çalışmaya devam eder, sonrasında hizmet askıya alınır.` : `${tenant.name} aboneliğiniz iptal edildi.`, "Vazgeçerseniz Paketim sayfasındaki \"Aboneliği yönet\" düğmesinden aboneliğinizi yeniden başlatabilirsiniz."],
+    cta: { label: "Paketim", url: panelUrl(deps, "paketim") },
+  });
+}
+
+export function mailBillingSuspension(deps: Deps, tenant: Tenant, suspended: boolean) {
+  send(deps, ownerEmails(deps, tenant.id), suspended ? "Hizmetiniz ödeme alınamadığı için askıya alındı" : "Ödemeniz alındı, hizmetiniz yeniden açıldı", {
+    title: suspended ? "Hizmetiniz askıya alındı" : "Hizmetiniz yeniden açıldı",
+    lines: [suspended
+      ? `${tenant.name} aboneliği sona erdiği veya ödeme alınamadığı için asistan hizmeti askıya alındı; gelen aramalar şu an karşılanmıyor. Aboneliği yeniden başlatıp ödeme yaptığınızda hizmet kendiliğinden açılır.`
+      : `${tenant.name} için ödemeniz alındı; asistan gelen aramaları yeniden karşılıyor.`],
+    cta: { label: "Paketim", url: panelUrl(deps, "paketim") },
   });
 }

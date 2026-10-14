@@ -59,6 +59,18 @@ export function UsagePage() {
     }
   };
 
+  const [portalBusy, setPortalBusy] = useState(false);
+  const openPortal = async () => {
+    setPortalBusy(true);
+    try {
+      const r = await api<{ url: string }>("/portal", { method: "POST" });
+      window.location.href = r.url;
+    } catch (e) {
+      toast(e instanceof ApiError ? e.message : "Abonelik sayfası açılamadı", "error");
+      setPortalBusy(false);
+    }
+  };
+
   const closeModal = () => !busy && setOpen(false);
   const askPlan = (p: Usage["plans"][number]) => {
     if (!u) return;
@@ -82,13 +94,14 @@ export function UsagePage() {
       {u && (
         <>
           {u.suspended && <p className="suspended-banner" role="alert">Hizmetiniz askıda; asistan aramaları karşılamıyor. Bu süre içinde satın alma yapılamaz.</p>}
-          {u.testMode && <p className="usage-request" role="status">Test modu: satın almalarda ücret alınmaz. Gerçek ödeme altyapısı bağlandığında bu uyarı kalkar.</p>}
+          {u.testMode && <p className="usage-request" role="status">Test modu: satın almalarda ücret alınmaz.</p>}
 
           <section className="card usage-hero">
             <div className="usage-plan">
               <p className="muted small">Mevcut paketiniz</p>
               <p className="usage-plan-name">{u.plan ? u.plan.name : "Tanımlı değil"}</p>
               {u.plan && <p className="muted">{usd(u.plan.priceUsd)} / ay · KDV dahil</p>}
+              {u.canManageSubscription && <Button size="sm" variant="quiet" disabled={portalBusy} onClick={() => void openPortal()}>{portalBusy ? "Açılıyor…" : "Aboneliği yönet"}</Button>}
               {u.pending && <p className="usage-pending">{u.renewsText} tarihinde <strong>{u.pending.name}</strong> paketine geçecek.</p>}
             </div>
             <div className="usage-meter">

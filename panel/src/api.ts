@@ -194,6 +194,7 @@ export interface Usage {
   planMinutes: number | null;
   addonMinutes: number;
   testMode: boolean;
+  canManageSubscription: boolean;
   renewsText: string;
   pending: { plan: string; name: string; effectiveText: string } | null;
   packs: { id: string; name: string; minutes: number; priceUsd: number }[];
