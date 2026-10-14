@@ -19,6 +19,7 @@ import { agentEnvFrom } from "./agent/build.ts";
 import { pushAgent } from "./agent/sync.ts";
 import { connectPhoneNumbers } from "./agent/phone.ts";
 import { startDemoCall } from "./agent/demo-call.ts";
+import { purgeExpired } from "./store/retention.ts";
 import { polarFromEnv } from "./integrations/polar.ts";
 import { DemoCalls } from "./store/demo-calls.ts";
 import { analyzeCall, type PostCallData } from "./domain/call-outcome.ts";
@@ -135,5 +136,14 @@ setInterval(() => {
 
 // Süresi dolan oturumları günde bir temizle
 setInterval(() => new Users(store.db).purgeExpiredSessions(), 86_400_000).unref();
-// Eski webhook olay kayıtlarını temizle (tekrar koruması için 30 gün yeter)
-setInterval(() => store.db.prepare("DELETE FROM webhook_events WHERE received_at < ?").run(Date.now() - 30 * 86_400_000), 86_400_000).unref();
+// Saklama süresi dolan kişisel verileri sil veya anonimleştir (süreler: src/domain/retention.ts, açılışta ve günde bir)
+const runRetention = () => {
+  try {
+    const r = purgeExpired(store.db, Date.now());
+    if (Object.values(r).some((n) => n > 0)) console.info("[saklama] süresi dolan veriler işlendi", r);
+  } catch (err) {
+    console.error(`[saklama] temizlik başarısız: ${(err as Error).message}`);
+  }
+};
+runRetention();
+setInterval(runRetention, 86_400_000).unref();

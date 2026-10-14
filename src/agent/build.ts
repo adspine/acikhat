@@ -2,6 +2,7 @@
  * Firma ayarından ElevenLabs ajan yapılandırması üretir. Sunucu (panelde Yayınla) ve
  * terminal script'leri (scripts/build-agent.ts, push-agent.ts) aynı kodu kullanır.
  */
+import { RETENTION } from "../domain/retention.ts";
 import type { Tenant } from "../domain/tenant.ts";
 import { fill, loadVertical } from "../domain/vertical.ts";
 import { renderPrompt } from "../domain/prompt.ts";
@@ -197,6 +198,8 @@ export function buildAgent(t: Tenant, env: AgentEnv) {
       },
     },
     platform_settings: {
+      // Ses kaydı ve döküm kopyası ElevenLabs'te bu süre sonunda silinir (varsayılan 2 yıl). Süre: src/domain/retention.ts
+      privacy: { retention_days: RETENTION.elevenLabsDays },
       // Telefon (SIP) aramalarında arama başında bizim init webhook'umuz çağrılır:
       // tarih tablosu ve arayan numarası buradan gelir. Tarayıcı testinde sayfa bunu kendisi verir.
       // Yönetici "Asistanı dene" sayfası başka sesleri asistanı değiştirmeden denemek için ses geçersiz kılar
