@@ -184,7 +184,7 @@ export function authRoutes(deps: Deps) {
     user: { name: user.name, email: user.email, role: user.role, notifyEmail: user.notifyEmail },
     hasTenant: user.role === "agency" || !!user.tenantId,
     onboarding: deps.users.onboardingOf(user.id),
-    paymentTestMode: !!deps.paymentTestMode,
+    paymentTestMode: !deps.polar && !!deps.paymentTestMode,
   });
   app.get("/session", (c) => {
     const user = userFromCookie(c, deps);
@@ -203,14 +203,31 @@ export function authRoutes(deps: Deps) {
   });
 
   /**
-   * Ödeme. Gerçek ödeme sağlayıcısı bağlanana kadar yalnızca test modunda ("ödenmiş say") çalışır;
-   * canlıda PAYMENT_TEST_MODE=1 verilmedikçe kapalıdır.
+   * Ödeme. Polar bağlıysa ödeme sayfasının adresi döner (tarayıcı oraya gider; paketi ödenmiş yapan Polar webhook'udur).
+   * Polar yokken yalnızca test modunda ("ödenmiş say") çalışır; canlıda PAYMENT_TEST_MODE=1 verilmedikçe kapalıdır.
    */
-  app.post("/pay", (c) => {
+  app.post("/pay", async (c) => {
     const user = userFromCookie(c, deps);
     if (!user) return c.json({ error: "Oturum açmanız gerekiyor" }, 401);
-    if (!deps.paymentTestMode) return c.json({ error: "Online ödeme çok yakında. Şimdilik bizimle iletişime geçin." }, 501);
     const o = deps.users.onboardingOf(user.id);
+    if (deps.polar) {
+      if (!o.plan) return c.json({ error: "Önce bir paket seçin" }, 400);
+      if (o.paidAt) return c.json(accountOf(user));
+      try {
+        const checkout = await deps.polar.createCheckout({
+          item: o.plan,
+          externalCustomerId: user.id,
+          email: user.email,
+          metadata: { kind: "membership", user_id: user.id, plan: o.plan },
+          successUrl: `${deps.baseUrl ?? ""}/?odeme=ok#/hesap`,
+        });
+        return c.json({ checkoutUrl: checkout.url });
+      } catch (err) {
+        console.error(`[ödeme] Polar ödeme sayfası açılamadı (${user.email}): ${(err as Error).message}`);
+        return c.json({ error: "Ödeme sayfası şu an açılamadı. Biraz sonra tekrar deneyin." }, 502);
+      }
+    }
+    if (!deps.paymentTestMode) return c.json({ error: "Online ödeme çok yakında. Şimdilik bizimle iletişime geçin." }, 501);
     if (!o.plan) return c.json({ error: "Önce bir paket seçin" }, 400);
     if (!o.paidAt && deps.users.markPaid(user.id)) mailMembershipPaid(deps, user, o.plan);
     console.info(`[ödeme:test] ${user.email} → ${PLANS[o.plan].name} (test, ücret alınmadı)`);

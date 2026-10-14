@@ -60,12 +60,11 @@ export function addonMinutes(deps: Deps, tenantId: string, period: string): numb
 }
 
 /**
- * Siparişi tahsil eder. Gerçek ödeme sağlayıcısı (PayTR) bağlanınca yalnızca burası değişir:
- * ödeme sayfası açılır, sağlayıcının bildirim adresi `fulfillOrder` çağırır.
- * Şimdilik yalnızca test modunda (ücret alınmadan) başarılı olur.
+ * Ödeme alınabilir mi: Polar bağlıysa evet (ödeme sayfası açılır, Polar webhook'u `fulfillOrder` çağırır);
+ * Polar yokken yalnızca test modunda (ücret alınmadan) başarılı olur.
  */
 export function chargeAvailable(deps: Deps): boolean {
-  return !!deps.paymentTestMode;
+  return !!deps.polar || !!deps.paymentTestMode;
 }
 
 /** Ödemesi alınan siparişin etkisini uygular (tekrar çağrılırsa bir şey yapmaz) */
@@ -122,6 +121,23 @@ export function billingRoutes(deps: Deps) {
     if (!chargeAvailable(deps)) return c.json({ error: "Ödeme altyapısı henüz etkin değil" }, 503);
     const period = periodKey(deps.now().withTimeZone(tenant.timezone));
     const id = createOrder(tenant, c.get("user").id, { kind: "addon", item: pack.id, label: pack.name, minutes: pack.minutes, amountUsd: pack.priceUsd, period });
+    if (deps.polar) {
+      try {
+        const checkout = await deps.polar.createCheckout({
+          item: pack.id,
+          externalCustomerId: c.get("user").id,
+          email: c.get("user").email,
+          metadata: { kind: "addon", order_id: id, tenant_id: tenant.id },
+          successUrl: `${deps.baseUrl ?? ""}/panel/paketim?odeme=ok`,
+        });
+        db.prepare("UPDATE orders SET provider_ref = ? WHERE id = ?").run(checkout.id, id);
+        return c.json({ ok: true, checkoutUrl: checkout.url });
+      } catch (err) {
+        db.prepare("UPDATE orders SET status = 'failed' WHERE id = ?").run(id);
+        console.error(`[ödeme] Polar ödeme sayfası açılamadı (${tenant.id}): ${(err as Error).message}`);
+        return c.json({ error: "Ödeme sayfası şu an açılamadı. Biraz sonra tekrar deneyin." }, 502);
+      }
+    }
     fulfillOrder(deps, tenant, id);
     deps.store.audit({ tenantId: tenant.id, userId: c.get("user").id, action: "billing.addon", target: pack.id, detail: { amountUsd: pack.priceUsd } });
     return c.json({ ok: true, minutes: pack.minutes, chargedUsd: pack.priceUsd });
@@ -141,14 +157,31 @@ export function billingRoutes(deps: Deps) {
     const current = tenant.plan.id;
     const kind = planChange(current, target);
 
+    const subscriptionId = deps.polar ? deps.users.polarSubscriptionOfTenant(tenant.id) : null;
+    if (deps.polar && !subscriptionId) return c.json({ error: "Aboneliğiniz ödeme sistemine bağlı değil. Lütfen bizimle iletişime geçin." }, 409);
+    const polarChange = async (item: PlanId, when: "now" | "next_period") => {
+      if (!deps.polar || !subscriptionId) return null;
+      try {
+        await deps.polar.changePlan(subscriptionId, item, when);
+        return null;
+      } catch (err) {
+        console.error(`[ödeme] Polar paket değişikliği başarısız (${tenant.id}): ${(err as Error).message}`);
+        return c.json({ error: "Paket değişikliği ödeme sisteminde tamamlanamadı. Biraz sonra tekrar deneyin." }, 502);
+      }
+    };
+
     if (kind === "same") {
       if (!tenant.plan.pending) return c.json({ error: "Zaten bu paketi kullanıyorsunuz" }, 409);
+      const failed = await polarChange(current!, "next_period");
+      if (failed) return failed;
       writeTenantPlan(deps, tenant, { id: current!, includedMinutes: tenant.plan.includedMinutes ?? PLANS[current!].minutes });
       deps.store.audit({ tenantId: tenant.id, userId: user.id, action: "billing.plan-cancel", target });
       return c.json({ ok: true, kind: "cancelled" });
     }
 
     if (kind === "downgrade") {
+      const failed = await polarChange(target, "next_period");
+      if (failed) return failed;
       const effectiveAt = nextPeriodStartMs(deps, tenant);
       writeTenantPlan(deps, tenant, { id: current!, includedMinutes: tenant.plan.includedMinutes ?? PLANS[current!].minutes, pending: { id: target, effectiveAt } });
       deps.store.audit({ tenantId: tenant.id, userId: user.id, action: "billing.plan-downgrade", target, detail: { effectiveAt } });
@@ -158,6 +191,8 @@ export function billingRoutes(deps: Deps) {
     }
 
     if (!chargeAvailable(deps)) return c.json({ error: "Ödeme altyapısı henüz etkin değil" }, 503);
+    const failedUpgrade = await polarChange(target, "now");
+    if (failedUpgrade) return failedUpgrade;
     const today = deps.now().withTimeZone(tenant.timezone);
     const amountUsd = upgradeCharge(current, target, { day: today.day, daysInMonth: today.daysInMonth });
     const id = createOrder(tenant, user.id, { kind: "plan", item: target, label: `${PLANS[target].name} paketine geçiş`, minutes: 0, amountUsd, period: periodKey(today) });

@@ -12,6 +12,7 @@ import type { DemoCallStart } from "../agent/demo-call.ts";
 import type { Tenant } from "../domain/tenant.ts";
 import type { FirebaseVerifier } from "../auth/firebase.ts";
 import type { VoiceCatalog } from "../integrations/voices.ts";
+import type { Polar } from "../integrations/polar.ts";
 import type { Mailer } from "../integrations/mail.ts";
 
 export interface Deps {
@@ -49,7 +50,9 @@ export interface Deps {
   voices?: VoiceCatalog | null;
   /** Bu e-postalarla (Firebase'de doğrulanmış) giren hesap yönetici (agency) olur. Küçük harfle. */
   adminEmails?: string[];
-  /** Gerçek ödeme bağlanana kadar: paketi ödenmiş saymak için test düğmesi açık mı */
+  /** Polar.sh ödeme altyapısı; yoksa yalnızca test modu (ücretsiz) çalışır */
+  polar?: Polar | null;
+  /** Polar yokken: paketi ödenmiş saymak için test düğmesi açık mı */
   paymentTestMode?: boolean;
   /** Sistem e-postaları (yönetici ve müşteri bildirimleri); yoksa e-posta gönderilmez */
   mailer?: Mailer | null;

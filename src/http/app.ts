@@ -5,6 +5,7 @@ import { HTTPException } from "hono/http-exception";
 import type { Deps } from "./deps.ts";
 import { toolRoutes } from "./tools.ts";
 import { webhookRoutes } from "./webhooks.ts";
+import { polarWebhookRoutes } from "./polar-webhook.ts";
 import { testUiRoutes } from "./test-ui.ts";
 import { onboardingRoutes } from "./onboarding.ts";
 import { demoRoutes } from "./demo.ts";
@@ -28,6 +29,7 @@ export function createApp(deps: Deps) {
   app.use("/tools/*", bearerAuth({ token: deps.toolSecret }));
   app.route("/tools", toolRoutes(deps));
   app.route("/webhooks", webhookRoutes(deps));
+  app.route("/webhooks", polarWebhookRoutes(deps));
   if (process.env.TEST_UI === "1") {
     // Test sayfası görüşmeyi bizim ElevenLabs anahtarımızla başlatır: internete açık sunucuda şifresiz bırakılmaz
     const password = process.env.TEST_UI_PASSWORD;

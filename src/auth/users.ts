@@ -141,6 +141,20 @@ export class Users {
     return this.db.prepare("UPDATE users SET plan_paid_at = ? WHERE id = ? AND plan IS NOT NULL AND plan_paid_at IS NULL").run(Date.now(), userId).changes > 0;
   }
 
+  /** Polar abonelik kimliği (üyenin aylık paketi); ödeme webhook'u yazar */
+  setPolarSubscription(userId: string, subscriptionId: string) {
+    this.db.prepare("UPDATE users SET polar_subscription_id = ? WHERE id = ?").run(subscriptionId, userId);
+  }
+
+  polarSubscriptionOf(userId: string): string | null {
+    return ((this.db.prepare("SELECT polar_subscription_id AS s FROM users WHERE id = ?").get(userId) as { s: string | null } | undefined)?.s) ?? null;
+  }
+
+  /** Firmanın sahibinin Polar aboneliği (paket yükseltme/düşürme bunun üzerinden yapılır) */
+  polarSubscriptionOfTenant(tenantId: string): string | null {
+    return ((this.db.prepare("SELECT polar_subscription_id AS s FROM users WHERE tenant_id = ? AND role = 'owner' AND polar_subscription_id IS NOT NULL LIMIT 1").get(tenantId) as { s: string } | undefined)?.s) ?? null;
+  }
+
   setOnboardingRef(userId: string, reference: string) {
     this.db.prepare("UPDATE users SET onboarding_ref = ? WHERE id = ?").run(reference, userId);
   }

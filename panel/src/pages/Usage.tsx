@@ -40,8 +40,12 @@ export function UsagePage() {
     setBusy(true);
     try {
       if (draft.kind === "addon") {
-        const r = await api<{ minutes: number }>("/addons", { method: "POST", body: { pack: draft.id } });
-        setDone(`${dk(r.minutes)} ek dakika kotanıza eklendi ve hemen kullanılabilir.`);
+        const r = await api<{ minutes?: number; checkoutUrl?: string }>("/addons", { method: "POST", body: { pack: draft.id } });
+        if (r.checkoutUrl) {
+          window.location.href = r.checkoutUrl; // güvenli ödeme sayfası (Polar); dönüşte dakikalar kotaya eklenmiş olur
+          return;
+        }
+        setDone(`${dk(r.minutes ?? 0)} ek dakika kotanıza eklendi ve hemen kullanılabilir.`);
       } else {
         const r = await api<{ kind: string; effectiveText?: string }>("/plan-change", { method: "POST", body: { plan: draft.id } });
         setDone(r.kind === "downgrade" ? `Paketiniz ${r.effectiveText} tarihinde değişecek. O zamana kadar mevcut kotanızı kullanmaya devam edersiniz.` : r.kind === "cancelled" ? "Planlanan geçiş iptal edildi; mevcut paketinizle devam ediyorsunuz." : "Paketiniz yükseltildi ve yeni kotanız hemen kullanılabilir.");
@@ -212,7 +216,7 @@ export function UsagePage() {
           )}
 
           <p className="muted small usage-foot">
-            Dakikalar her ayın başında yenilenir. Kota bitince her ek dakika {usd(u.overagePerMinuteUsd)} (KDV dahil) olarak hesaplanır. Sorularınız için <a href="mailto:destek@acikhat.ai">destek@acikhat.ai</a>.
+            Dakikalar her ayın başında yenilenir. Kota bitince her ek dakika {usd(u.overagePerMinuteUsd)} (KDV dahil) olarak hesaplanır. Sorularınız için <a href="mailto:support@adspine.app">support@adspine.app</a>.
           </p>
         </>
       )}

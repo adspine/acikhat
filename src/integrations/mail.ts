@@ -1,7 +1,7 @@
 /**
  * E-posta gönderimi. Resend (https://resend.com) HTTP API'si kullanılır; ek paket gerekmez.
  * RESEND_API_KEY yoksa e-postalar gönderilmez, konsola yazılır (yerel geliştirme).
- * Gönderen alan adı (acikhat.ai) Resend'de doğrulanmış olmalı.
+ * Gönderen alan adı (acikhat.si) Resend'de doğrulanmış olmalı.
  */
 export interface Mail {
   to: string[];

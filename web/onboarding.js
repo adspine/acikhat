@@ -66,6 +66,10 @@ function bindPlans(root, account, ctx) {
       try {
         const { res, data } = await post("/api/auth/pay");
         if (!res.ok) return say(data.error ?? "Ödeme tamamlanamadı.");
+        if (data.checkoutUrl) {
+          location.href = data.checkoutUrl; // güvenli ödeme sayfası (Polar)
+          return;
+        }
         Object.assign(account, data);
         await ctx.refresh();
         location.hash = "#/kurulum"; // paket ödendi: 2. adım
@@ -90,6 +94,29 @@ async function applyRememberedPlan(root, account) {
   renderPlans(root, account);
 }
 
+/** Ödeme sayfasından dönüşte (?odeme=ok) Polar'ın bildirimi gelene kadar bekler, sonra kurulum adımına geçer */
+async function awaitPayment(root, account, ctx) {
+  const url = new URL(location.href);
+  if (url.searchParams.get("odeme") !== "ok") return;
+  url.searchParams.delete("odeme");
+  history.replaceState(null, "", url.pathname + url.search + url.hash);
+  const box = $("[data-pay-error]", root);
+  box.hidden = false;
+  box.textContent = "Ödemeniz doğrulanıyor, lütfen bekleyin…";
+  for (let i = 0; i < 20; i++) {
+    const r = await fetch("/api/auth/session", { credentials: "same-origin", headers: { "x-panel": "1" } });
+    const data = await r.json().catch(() => ({}));
+    if (data.onboarding?.paidAt) {
+      Object.assign(account, data);
+      await ctx.refresh();
+      location.hash = "#/kurulum";
+      return;
+    }
+    await new Promise((ok) => setTimeout(ok, 1500));
+  }
+  box.textContent = "Ödemeniz alındıysa birkaç dakika içinde hesabınıza yansır. Sayfayı yenileyin; sorun sürerse bize yazın.";
+}
+
 /** hesap görünümü: giriş ve yönlendirme kontrolleri site.js'te yapılır, burası yalnızca içeriği doldurur */
 export function showHesap(account, ctx) {
   const root = $('[data-view="hesap"]');
@@ -106,6 +133,7 @@ export function showHesap(account, ctx) {
     bindPlans(root, account, ctx);
     renderPlans(root, account);
     applyRememberedPlan(root, account);
+    awaitPayment(root, account, ctx);
   }
   if (which === "3") {
     $("[data-onb-ref]", root).textContent = account.onboarding.reference ?? "—";

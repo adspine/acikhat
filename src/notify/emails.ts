@@ -21,7 +21,7 @@ interface Body {
 }
 
 function render(b: Body): { text: string; html: string } {
-  const text = [b.title, "", ...b.lines, ...(b.facts ?? []).map(([k, v]) => `${k}: ${v}`), ...(b.cta ? ["", `${b.cta.label}: ${b.cta.url}`] : []), "", "Açık Hat · destek@acikhat.ai"].join("\n");
+  const text = [b.title, "", ...b.lines, ...(b.facts ?? []).map(([k, v]) => `${k}: ${v}`), ...(b.cta ? ["", `${b.cta.label}: ${b.cta.url}`] : []), "", "Açık Hat · support@adspine.app"].join("\n");
   const html = `<!doctype html><html lang="tr"><body style="margin:0;background:#f1f4f3;font-family:-apple-system,Segoe UI,Roboto,Arial,sans-serif;color:#1c2b27">
 <div style="max-width:560px;margin:0 auto;padding:28px 16px">
 <p style="margin:0 0 14px;font-weight:700;font-size:15px;color:#14463f">● Açık Hat</p>
@@ -31,7 +31,7 @@ ${b.lines.map((l) => `<p style="margin:0 0 12px;font-size:15px;line-height:1.55"
 ${b.facts?.length ? `<table role="presentation" style="width:100%;border-collapse:collapse;margin:6px 0 14px;font-size:14px">${b.facts.map(([k, v]) => `<tr><td style="padding:7px 0;border-top:1px solid #edf1ef;color:#5d6f69;width:42%">${esc(k)}</td><td style="padding:7px 0;border-top:1px solid #edf1ef">${esc(v)}</td></tr>`).join("")}</table>` : ""}
 ${b.cta ? `<p style="margin:18px 0 4px"><a href="${esc(b.cta.url)}" style="display:inline-block;background:#1e5f6b;color:#fff;text-decoration:none;padding:11px 20px;border-radius:10px;font-weight:600;font-size:14px">${esc(b.cta.label)}</a></p>` : ""}
 </div>
-<p style="margin:14px 4px 0;font-size:12px;color:#7a8b85">Bu e-posta Açık Hat hesabınızla ilgili bir bildirimdir. Sorularınız için destek@acikhat.ai adresine yazabilirsiniz.</p>
+<p style="margin:14px 4px 0;font-size:12px;color:#7a8b85">Bu e-posta Açık Hat hesabınızla ilgili bir bildirimdir. Sorularınız için support@adspine.app adresine yazabilirsiniz.</p>
 </div></body></html>`;
   return { text, html };
 }
@@ -143,5 +143,14 @@ export function mailSuspension(deps: Deps, tenant: Tenant, suspended: boolean) {
     lines: [suspended
       ? `${tenant.name} için asistan hizmeti askıya alındı; gelen aramalar şu an karşılanmıyor. Ayrıntı ve çözüm için bizimle iletişime geçin.`
       : `${tenant.name} için asistan hizmeti yeniden açıldı; gelen aramalar karşılanıyor.`],
+  });
+}
+
+/** Abonelik sorunu (iptal, ödeme alınamadı): yöneticiye haber verir; hizmeti kendiliğinden kapatmayız, karar yöneticinindir */
+export function mailSubscriptionIssue(deps: Deps, o: { event: string; who: string; detail: string }) {
+  send(deps, admins(deps), `Abonelik uyarısı: ${o.event} (${o.who})`, {
+    title: "Abonelikte dikkat gerektiren durum",
+    lines: ["Polar'dan bir abonelik olayı geldi. Hizmet kendiliğinden askıya alınmadı; gerekirse yönetim panelinden askıya alabilirsiniz."],
+    facts: [["Olay", o.event], ["Müşteri", o.who], ["Ayrıntı", o.detail]],
   });
 }

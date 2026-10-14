@@ -230,7 +230,7 @@ export class Store {
       appointment_id: "TEXT",
       after_hours: "INTEGER",
     });
-    this.addColumns("users", { firebase_uid: "TEXT", plan: "TEXT", plan_paid_at: "INTEGER", onboarding_ref: "TEXT", notify_email: "INTEGER NOT NULL DEFAULT 1" });
+    this.addColumns("users", { firebase_uid: "TEXT", plan: "TEXT", plan_paid_at: "INTEGER", onboarding_ref: "TEXT", notify_email: "INTEGER NOT NULL DEFAULT 1", polar_subscription_id: "TEXT" });
     this.addColumns("onboarding_submissions", { user_id: "TEXT", plan: "TEXT", tenant_id: "TEXT", admin_note: "TEXT" });
     this.db.exec("CREATE UNIQUE INDEX IF NOT EXISTS users_firebase_uid ON users (firebase_uid) WHERE firebase_uid IS NOT NULL");
     this.db.exec("CREATE INDEX IF NOT EXISTS calls_tenant_time ON calls (tenant_id, started_at)");
