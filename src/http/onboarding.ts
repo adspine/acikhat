@@ -114,6 +114,12 @@ export function onboardingRoutes(deps: Deps) {
     // Bot tuzağı: görünmeyen alan doluysa sessizce kabul edip kaydetme
     if (typeof body.company_fax === "string" && body.company_fax) return c.json({ ok: true, reference: "OK" });
 
+    // Form yalnızca giriş yapmış ve paketini ödemiş üyeye açıktır (yönetici hesabı istisna)
+    const user = userFromCookie(c, deps);
+    if (!user) return c.json({ ok: false, error: "Kurulum formu için önce giriş yapın" }, 401);
+    const journey = deps.users.onboardingOf(user.id);
+    if (!journey.paidAt && user.role !== "agency") return c.json({ ok: false, error: "Kurulum formu için önce paketinizi seçip ödemeyi tamamlayın" }, 402);
+
     const parsed = OnboardingSchema.safeParse(body);
     if (!parsed.success) {
       return c.json(
@@ -121,15 +127,13 @@ export function onboardingRoutes(deps: Deps) {
         422,
       );
     }
-    // Giriş yapmış ve paketi ödenmiş üyenin başvurusu hesabına bağlanır (kurulum yolculuğunun 3. adımı)
-    const user = userFromCookie(c, deps);
-    const journey = user ? deps.users.onboardingOf(user.id) : null;
-    const owner = user && journey?.paidAt ? user : null;
+    // Paketi ödenmiş üyenin başvurusu hesabına bağlanır (kurulum yolculuğunun 3. adımı)
+    const owner = journey.paidAt ? user : null;
     const reference = deps.store.saveOnboarding({
       businessName: parsed.data.business.name,
       contactPhone: normalizeTrPhone(parsed.data.contact.phone)!,
       payload: parsed.data,
-      ...(owner && { userId: owner.id, plan: journey!.plan ?? undefined }),
+      ...(owner && { userId: owner.id, plan: journey.plan ?? undefined }),
     });
     if (owner) deps.users.setOnboardingRef(owner.id, reference);
     console.info(`[onboarding] yeni başvuru ${reference}: ${parsed.data.business.name}`);
@@ -141,7 +145,7 @@ export function onboardingRoutes(deps: Deps) {
       sector: parsed.data.business.sector,
       memberEmail: owner?.email ?? null,
       contactEmail: parsed.data.contact.email || undefined,
-      plan: owner ? (journey!.plan ?? null) : null,
+      plan: owner ? (journey.plan ?? null) : null,
     });
     return c.json({ ok: true, reference });
   });

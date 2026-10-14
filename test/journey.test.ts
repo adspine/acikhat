@@ -65,13 +65,14 @@ describe("kurulum yolculuğu: paket → ödeme → form → hazırlık", () => {
     expect(store.db.prepare("SELECT user_id, plan FROM onboarding_submissions WHERE reference = ?").get(reference)).toMatchObject({ plan: "standart" });
   });
 
-  it("ödememeden gönderilen veya oturumsuz form kaydedilir ama hesaba bağlanmaz", async () => {
-    const { api, app, cookie } = await setup(true);
+  it("ödemeden gönderilen form 402, oturumsuz form 401 alır; kaydedilmez", async () => {
+    const { api, app, cookie, store } = await setup(true);
     const unpaid = await app.request("/api/onboarding", { method: "POST", headers: { cookie, "content-type": "application/json" }, body: JSON.stringify(form()) });
-    expect(unpaid.status).toBe(200);
+    expect(unpaid.status).toBe(402);
     expect((await api("GET", "/api/auth/session")).body.onboarding.step).toBe(1);
     const anon = await app.request("/api/onboarding", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(form("Anonim Spa")) });
-    expect(anon.status).toBe(200);
+    expect(anon.status).toBe(401);
+    expect(store.db.prepare("SELECT COUNT(*) n FROM onboarding_submissions").get()).toMatchObject({ n: 0 });
   });
 
   it("oturumsuz çağrı 401 alır", async () => {

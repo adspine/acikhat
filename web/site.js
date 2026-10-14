@@ -78,7 +78,7 @@ function renderChrome() {
 function guard(view) {
   const u = account.user;
   const step = account.onboarding?.step;
-  if (view === "hesap" && !u) return goTo("#/giris");
+  if ((view === "hesap" || view === "kurulum") && !u) return goTo("#/giris");
   if ((view === "giris" || view === "uye-ol") && u) return goTo("#/hesap");
   if (u && !account.hasTenant) {
     if (view === "kurulum" && step !== 2) return goTo("#/hesap");

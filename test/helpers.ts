@@ -85,3 +85,13 @@ export function makeApp(
   };
   return { app, store, sms, call, raw, deps, published, mailbox, resets };
 }
+
+/** Paketini ödemiş, giriş yapmış üye: kurulum formu gönderebilir. Çerez döner. */
+export async function paidMemberCookie(ctx: ReturnType<typeof makeApp>, email = "uye@ornek.com") {
+  const { app, deps } = ctx;
+  const m = await deps.users.create({ tenantId: null, email, name: "Yeni Üye", role: "owner", password: "sifre-12345", mustChangePassword: false });
+  deps.users.selectPlan(m.id, "standart");
+  deps.users.markPaid(m.id);
+  const login = await app.request("/api/auth/login", { method: "POST", headers: { "content-type": "application/json", "x-panel": "1" }, body: JSON.stringify({ email, password: "sifre-12345" }) });
+  return login.headers.get("set-cookie")!.split(";")[0]!;
+}

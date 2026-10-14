@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { createHmac } from "node:crypto";
-import { makeApp } from "./helpers.ts";
+import { makeApp, paidMemberCookie } from "./helpers.ts";
 import { normalizeTrPhone } from "../src/domain/phone.ts";
 import { verifyElevenLabsSignature } from "../src/http/webhooks.ts";
 
@@ -228,7 +228,7 @@ describe("çağrı kaydı ve kaçan çağrılar", () => {
 });
 
 describe("kurulum formu", () => {
-  const send = (call: any, body: unknown) => call("/api/onboarding", body, { authorization: "" });
+  const send = (call: any, body: unknown, cookie?: string) => call("/api/onboarding", body, { authorization: "", ...(cookie && { cookie }) });
   const valid = {
     business: { name: "Kardelen Spa" },
     contact: { person: "Ayla Kılıç", phone: "0532 111 22 33", email: "" },
@@ -238,8 +238,9 @@ describe("kurulum formu", () => {
   };
 
   it("geçerli başvuruyu kaydeder ve okunabilir bir referans döner", async () => {
-    const { call, store } = makeApp();
-    const res = await send(call, valid);
+    const ctx = makeApp();
+    const { call, store } = ctx;
+    const res = await send(call, valid, await paidMemberCookie(ctx));
     expect(res.body.ok).toBe(true);
     expect(res.body.reference).toMatch(/^KA-[A-Z2-9]{4}$/);
     const row = store.db.prepare("SELECT business_name, contact_phone, status FROM onboarding_submissions").get();
@@ -247,11 +248,22 @@ describe("kurulum formu", () => {
   });
 
   it("eksik zorunlu alanları ve KVKK onayını Türkçe olarak bildirir", async () => {
-    const { call } = makeApp();
-    const res = await send(call, { ...valid, contact: { person: "O", phone: "123" }, consent: { kvkk: false } });
+    const ctx = makeApp();
+    const { call } = ctx;
+    const res = await send(call, { ...valid, contact: { person: "O", phone: "123" }, consent: { kvkk: false } }, await paidMemberCookie(ctx));
     expect(res.status).toBe(422);
     const paths = res.body.fields.map((f: any) => f.path);
     expect(paths).toEqual(expect.arrayContaining(["contact.person", "contact.phone", "consent.kvkk"]));
+  });
+
+  it("oturumsuz 401, ödememiş üye 402 alır ve hiçbir şey kaydedilmez", async () => {
+    const ctx = makeApp();
+    const { call, store, deps } = ctx;
+    expect((await send(call, valid)).status).toBe(401);
+    const m = await deps.users.create({ tenantId: null, email: "odemesiz@ornek.com", name: "O", role: "owner", password: "sifre-12345", mustChangePassword: false });
+    const login = await ctx.app.request("/api/auth/login", { method: "POST", headers: { "content-type": "application/json", "x-panel": "1" }, body: JSON.stringify({ email: m.email, password: "sifre-12345" }) });
+    expect((await send(call, valid, login.headers.get("set-cookie")!.split(";")[0]!)).status).toBe(402);
+    expect(store.db.prepare("SELECT COUNT(*) n FROM onboarding_submissions").get()).toMatchObject({ n: 0 });
   });
 
   it("bot tuzağı dolu gelirse kaydetmez", async () => {
