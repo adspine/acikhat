@@ -74,6 +74,14 @@ describe("Polar ile ödeme akışı", () => {
     expect(deps.users.polarSubscriptionOf(owner.id)).toBe("sub_1");
   });
 
+  it("sıfır tutarlı sipariş (%100 indirimli üyelik) da ödenmiş sayılır, tutar alanları webhook'u bozmaz", async () => {
+    const { hook, deps, owner } = await setup();
+    const event = { type: "order.paid", data: { id: "o0", subscription_id: "sub_free", billing_reason: "subscription_create", subtotal_amount: 14900, discount_amount: 14900, net_amount: 0, tax_amount: 0, total_amount: 0, metadata: { kind: "membership", user_id: owner.id, plan: "standart" } } };
+    expect(await hook(event)).toBe(200);
+    expect(deps.users.onboardingOf(owner.id).paidAt).not.toBeNull();
+    expect(deps.users.polarSubscriptionOf(owner.id)).toBe("sub_free");
+  });
+
   it("ek dakika: sipariş bekler, ödeme webhook'u gelince kotaya eklenir (bir kez)", async () => {
     const { as, hook, deps } = await setup();
     const r = await as("POST", "/api/panel/addons", { pack: "ek-100" });
