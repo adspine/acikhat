@@ -3,6 +3,7 @@ import { Hono, type Context, type MiddlewareHandler } from "hono";
 import { getCookie, setCookie, deleteCookie } from "hono/cookie";
 import { z } from "zod";
 import type { Deps } from "../deps.ts";
+import { ensureTenantForMember } from "../tenant-create.ts";
 import type { User } from "../../auth/users.ts";
 import { MIN_PASSWORD } from "../../auth/users.ts";
 import { FirebaseAuthError, type FirebaseIdentity } from "../../auth/firebase.ts";
@@ -185,9 +186,16 @@ export function authRoutes(deps: Deps) {
   });
 
   /** Tanıtım sitesi için: giriş yapılmış mı, firması var mı, kurulum yolculuğunda hangi adımda */
-  const accountOf = (user: User) => ({
+  const accountOf = (user: User): ReturnType<typeof buildAccount> => {
+    // Formu gönderip firması açılmamış üye (eski akış ya da başarısız oluşturma) oturumda yakalanır ve firması açılır
+    if (ensureTenantForMember(deps, user)) user = deps.users.get(user.id) ?? user;
+    return buildAccount(user);
+  };
+  const buildAccount = (user: User) => ({
     user: { name: user.name, email: user.email, role: user.role, notifyEmail: user.notifyEmail },
     hasTenant: user.role === "agency" || !!user.tenantId,
+    // Firması var ama asistan numarası yok: giriş sonrası doğrudan panelde numara rehberine gidilir
+    needsLine: user.role !== "agency" && !!user.tenantId && !(deps.tenants.get(user.tenantId)?.phoneNumbers.length),
     onboarding: deps.users.onboardingOf(user.id),
     paymentTestMode: !deps.polar && !!deps.paymentTestMode,
   });

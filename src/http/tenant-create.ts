@@ -1,6 +1,7 @@
 import type { Deps } from "./deps.ts";
-import type { OnboardingSchema } from "./onboarding.ts";
 import type { z } from "zod";
+import type { User } from "../auth/users.ts";
+import { OnboardingSchema } from "../domain/onboarding-schema.ts";
 import { buildTenantDraft } from "../domain/onboarding-tenant.ts";
 import { PLANS } from "../domain/plans.ts";
 import { mailTenantReady } from "../notify/emails.ts";
@@ -34,4 +35,22 @@ export function createTenantFromSubmission(deps: Deps, s: { reference: string; u
   deps.store.db.prepare(`UPDATE onboarding_submissions SET ${s.approve ? "status = 'approved', " : ""}tenant_id = ? WHERE reference = ?`).run(id, s.reference);
   mailTenantReady(deps, tenant);
   return { ok: true, tenantId: id, checklist: todo, linkedMember: !!s.userId };
+}
+
+/**
+ * Formunu göndermiş, paketini ödemiş ama firması henüz açılmamış üyenin firmasını açar (idempotent).
+ * Otomatik oluşturmadan önce form gönderen üyeler ve otomatik oluşturma başarısız olanlar, oturum açınca burada yakalanır;
+ * böylece kimse "numara bekleniyor" ekranında takılı kalmaz. Oluştuysa true.
+ */
+export function ensureTenantForMember(deps: Deps, user: User): boolean {
+  if (user.tenantId || user.role === "agency") return false;
+  const journey = deps.users.onboardingOf(user.id);
+  if (!journey.paidAt || !journey.reference) return false;
+  const row = deps.store.db.prepare("SELECT payload_json, tenant_id FROM onboarding_submissions WHERE reference = ?").get(journey.reference) as { payload_json: string; tenant_id: string | null } | undefined;
+  if (!row || row.tenant_id) return false;
+  const form = OnboardingSchema.safeParse(JSON.parse(row.payload_json));
+  if (!form.success) return false;
+  const made = createTenantFromSubmission(deps, { reference: journey.reference, userId: user.id, form: form.data });
+  if (!made.ok) console.error(`[onboarding] firma otomatik oluşturulamadı (${journey.reference}): ${made.error}`);
+  return made.ok;
 }

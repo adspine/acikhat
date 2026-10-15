@@ -164,22 +164,36 @@ describe("form gönderilince panel açılır; numara panelde bildirilir, yöneti
   });
 });
 
-describe("yedek yol: firma kendiliğinden oluşamazsa üye 3. ve 4. adımda bekler", () => {
-  it("numara bildirilmeyince 3. adım, bildirince 4. adım; ödemeden önce reddedilir", async () => {
+describe("eski başvurular ve yedek yol", () => {
+  it("formu otomatik açılıştan önce gönderen üye oturum açınca firmasını bulur (panel açılır, numara rehberine gider)", async () => {
     const t = await setup();
     const m = await t.member("g@ornek.com");
+    await t.paid(m);
+    // eski akış: başvuru kaydedilmiş ve üyeye bağlanmış, firma yok
+    const user = t.deps.users.findByEmail("g@ornek.com")!;
+    const ref = t.deps.store.saveOnboarding({ businessName: "Eski Firma", contactPhone: "+905321112233", payload: form("Eski Firma"), userId: user.id });
+    t.deps.users.setOnboardingRef(user.id, ref);
+    expect(t.deps.tenants.get("eski-firma")).toBeUndefined();
+    const s1 = (await m("GET", "/api/auth/session")).body;
+    expect(s1).toMatchObject({ hasTenant: true, needsLine: true });
+    expect(t.deps.tenants.get("eski-firma")).toBeTruthy();
+    expect((await m("GET", "/api/auth/session")).body.hasTenant).toBe(true); // ikinci çağrı ikinci firma açmaz
+    expect(t.deps.tenants.all().filter((x) => x.name === "Eski Firma")).toHaveLength(1);
+    expect((await m("GET", "/api/panel/line")).body).toMatchObject({ numbers: [], canSubmit: true });
+  });
+
+  it("form verisi okunamıyorsa firma açılamaz: üye 3. adımda numara bildirir, 4. adımda bekler; yönetici elle oluşturur", async () => {
+    const t = await setup();
+    const m = await t.member("k@ornek.com");
     expect((await m("POST", "/api/onboarding/line", lineBody())).status).toBe(409); // ödeme ve form yok
     await t.paid(m);
-    // firmasız başvuru (otomatik oluşturma başarısız olmuş gibi): başvuru doğrudan kaydedilir ve üyeye bağlanır
-    const user = t.deps.users.findByEmail("g@ornek.com")!;
-    const ref = t.deps.store.saveOnboarding({ businessName: "Bekleyen Firma", contactPhone: "+905321112233", payload: form("Bekleyen Firma"), userId: user.id });
+    const user = t.deps.users.findByEmail("k@ornek.com")!;
+    const ref = t.deps.store.saveOnboarding({ businessName: "Bozuk Firma", contactPhone: "+905321112233", payload: { business: { name: "X" } }, userId: user.id });
     t.deps.users.setOnboardingRef(user.id, ref);
-    expect((await m("GET", "/api/auth/session")).body.onboarding).toMatchObject({ step: 3, lineNumber: null });
+    expect((await m("GET", "/api/auth/session")).body).toMatchObject({ hasTenant: false, onboarding: { step: 3, lineNumber: null } });
     expect((await m("POST", "/api/onboarding/line", lineBody({ number: "0532 111 22 33" }))).status).toBe(422);
     expect((await m("POST", "/api/onboarding/line", lineBody()))).toMatchObject({ status: 200, body: { number: "+908503000001" } });
     expect((await m("GET", "/api/auth/session")).body.onboarding).toMatchObject({ step: 4, lineNumber: "+908503000001" });
-    // yönetici firmayı elle oluşturur; bildirilen numara onayla yazılır
-    expect((await t.admin("POST", `/api/admin/submissions/${ref}/create-tenant`)).body.line).toMatchObject({ number: "+908503000001" });
   });
 });
 

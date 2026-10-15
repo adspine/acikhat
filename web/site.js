@@ -10,7 +10,7 @@ for (const el of $$("[data-brand]")) el.textContent = BRAND;
 /* ======================= Hesap durumu ======================= */
 // Oturum açık mı, firması var mı, kurulum yolculuğunda hangi adımda: sunucudan okunur.
 // Üst çubuk ve onboarding ekranı buna göre değişir.
-const account = { user: null, hasTenant: false, onboarding: null, paymentTestMode: false, ready: Promise.resolve() };
+const account = { user: null, hasTenant: false, needsLine: false, onboarding: null, paymentTestMode: false, ready: Promise.resolve() };
 const defaultAuthHtml = $(".top-auth").innerHTML;
 // Sayfa içi geçiş: adres temiz yol olur (/hesap), sayfa yeniden yüklenmez. Yönlendirmelerde (replace) geri tuşu tuzağa düşmez.
 function goTo(path, { replace = false } = {}) {
@@ -83,6 +83,11 @@ function renderChrome() {
 // Sayfa, oturum durumuna göre doğru yere yönlendirilir
 function guard(view) {
   const u = account.user;
+  // Firması olan üye için "hesabım" paneldir: numara yoksa doğrudan numara rehberi açılır. Açılış lambası sayfa değişene kadar kalır.
+  if (view === "hesap" && u && account.hasTenant) {
+    location.replace(account.needsLine ? "/panel/numara" : "/panel/");
+    return "leaving";
+  }
   const step = account.onboarding?.step;
   if ((view === "hesap" || view === "kurulum") && !u) return goTo("/giris", { replace: true });
   if ((view === "giris" || view === "uye-ol") && u) return goTo("/hesap", { replace: true });
@@ -187,7 +192,7 @@ function route() {
   if (!fresh) document.documentElement.classList.remove("booting");
   (fresh ? loadAccount() : account.ready).then(() => {
     if (currentView !== view) return;
-    guard(view);
+    if (guard(view) === "leaving") return;
     // guard başka sayfaya yönlendirdiyse lambayı o sayfanın kendi yüklemesi kaldırır
     if (currentView === view) document.documentElement.classList.remove("booting");
   });
