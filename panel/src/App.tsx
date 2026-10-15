@@ -15,6 +15,7 @@ import { SettingsPage } from "./pages/Settings.tsx";
 import { UsersPage } from "./pages/Users.tsx";
 import { UsagePage } from "./pages/Usage.tsx";
 import { LinePage } from "./pages/Line.tsx";
+import { LinePrompt } from "./components/LinePrompt.tsx";
 import { AdminCustomersPage, AdminDemoCallsPage, AdminOverviewPage, AdminSubmissionsPage } from "./pages/Admin.tsx";
 // Ses kütüphanesi büyük: yalnızca "Asistanı dene" açılınca yüklenir
 const TestCallPage = lazy(() => import("./pages/TestCall.tsx").then((m) => ({ default: m.TestCallPage })));
@@ -357,6 +358,7 @@ function Shell() {
         <span className="topbar-name">{me.tenant.name}</span>
       </header>
 
+      <LinePrompt />
       <main className="main" id="icerik">
         {me.tenant.suspended && (
           <p className="suspended-banner" role="alert">
