@@ -592,6 +592,7 @@
       <fieldset class="step" data-step="telefon" data-title="Telefon" hidden>
         <legend>Telefon</legend>
         <p class="step-help">Asistanın hangi numaraya gelen çağrıları cevaplayacağını belirleyelim.</p>
+        <p class="step-help" data-line-note><strong>Başvurunuzdan sonra 0850'li bir numara hesabınıza tanımlanacaktır.</strong> Bu numara yalnızca yönlendirme hedefidir: aşağıya yazdığınız numara değişmez, müşterileriniz onu aramaya devam eder. Numaranızı ve hazır yönlendirme kodlarınızı panelinizde Ayarlar bölümünde görürsünüz.</p>
         <div class="field">
           <label for="f-public">Müşterilerin aradığı numara</label>
           <input id="f-public" name="phone.publicNumber" inputmode="tel" placeholder="0532 … veya 0374 …">
@@ -745,6 +746,7 @@
       <fieldset class="step" data-step="gonder" data-title="Gözden geçir ve gönder" hidden>
         <legend>Gözden geçir ve gönder</legend>
         <div class="review" data-review></div>
+        <p class="step-help" data-line-note>Gönderdikten sonra bilgileriniz kontrol edilir ve hesabınıza size ayrılmış bir 0850'li numara tanımlanır. Mevcut numaranız değişmez.</p>
         <div class="field">
           <label class="check">
             <input type="checkbox" name="consent.kvkk" value="true" required>
@@ -773,7 +775,7 @@
   <span class="lamp lamp-on lamp-big" aria-hidden="true"></span>
   <h1>Bilgileriniz bize ulaştı.</h1>
   <p class="lead">Başvuru kodunuz <strong class="ref" data-ref>—</strong>. Bizi ararken bu kodu söyleyebilirsiniz.</p>
-  <p>Bilgilerinizi 1 iş günü içinde kontrol edip eksik kalan yerler için sizi arayacağız. Asistanınız hazır olduğunda yönlendirme kodunuzu göndereceğiz.</p>
+  <p>Bilgilerinizi 1 iş günü içinde kontrol edip eksik kalan yerler için sizi arayacağız. Başvurunuzdan sonra <strong>0850'li numaranız hesabınıza tanımlanacaktır</strong>; numaranızı ve hazır yönlendirme kodlarınızı panelinizde Ayarlar bölümünde görürsünüz.</p>
   <p>Bu arada yönlendirmenin nasıl yapıldığına göz atabilirsiniz.</p>
   <a class="btn" href="#/rehber">Kurulum rehberini aç</a>
 </section>
@@ -797,7 +799,7 @@
 
     <li>
       <h2>Mevcut numaranızı yönlendirin</h2>
-      <p>Aşağıdaki kodları, müşterilerin aradığı telefondan tuşlayıp arama tuşuna basın. Kodlardaki <code>0850XXXXXXX</code> yerine size gönderdiğimiz numarayı yazın.</p>
+      <p>Aşağıdaki kodları, müşterilerin aradığı telefondan tuşlayıp arama tuşuna basın. Kodlardaki <code>0850XXXXXXX</code> yerine size tanımlanan numarayı yazın. Numaranız yazılı hazır kodları panelinizde Ayarlar bölümünde de bulabilirsiniz.</p>
 
       <div class="tabs" data-tabs>
         <div class="tab-list" role="tablist" aria-label="Hat türü">
@@ -1306,7 +1308,7 @@
       <ol class="account-steps">
         <li class="is-done"><strong>Paketiniz hazır</strong><span data-onb-plan></span></li>
         <li class="is-done"><strong>Kurulum formu alındı</strong><span>1 iş günü içinde bilgileri kontrol edip eksikler için sizi arayacağız.</span></li>
-        <li><strong>Asistanınızı hazırlıyoruz</strong><span>Özel hattınızı açıp asistanı onlarca test görüşmesinden geçireceğiz; hazır olunca yönlendirme kodunuzu göndereceğiz.</span></li>
+        <li><strong>Asistanınızı hazırlıyoruz</strong><span>Başvurunuzdan sonra 0850'li numaranız hesabınıza tanımlanacaktır. Asistanı test görüşmelerinden geçirip hazırlarız; numaranızı ve hazır yönlendirme kodlarınızı panelinizde Ayarlar bölümünde görürsünüz.</span></li>
       </ol>
       <div class="auth-actions">
         <a class="btn" href="#/rehber">Numara yönlendirme rehberi</a>

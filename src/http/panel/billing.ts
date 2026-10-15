@@ -5,7 +5,8 @@ import { TenantSchema, type Tenant } from "../../domain/tenant.ts";
 import { PLANS, isPlanId, type PlanId } from "../../domain/plans.ts";
 import { findAddon, periodKey, planChange, upgradeCharge } from "../../domain/billing.ts";
 import { spokenDate } from "../../domain/time.ts";
-import { mailPlanApplied, mailPlanScheduled, mailPurchase, mailQuota } from "../../notify/emails.ts";
+import { normalizePoolNumber, isTestNumber } from "../../store/phone-pool.ts";
+import { mailOwnNumberRequest, mailPlanApplied, mailPlanScheduled, mailPurchase, mailQuota } from "../../notify/emails.ts";
 
 export interface OrderRow {
   id: string;
@@ -214,6 +215,23 @@ export function billingRoutes(deps: Deps) {
       console.error(`[ödeme] Polar portal adresi alınamadı (${tenant.id}): ${(err as Error).message}`);
       return c.json({ error: "Abonelik sayfası şu an açılamadı. Biraz sonra tekrar deneyin." }, 502);
     }
+  });
+
+  /** Müşteri kendi 0850 numarasını kullanmak istediğini bildirir. Numara kendiliğinden değişmez; yöneticiye e-posta gider ve kayda geçer. */
+  app.post("/phone-request", requirePermission("settings.edit"), async (c) => {
+    const tenant = c.get("tenant");
+    const user = c.get("user");
+    const body = (await c.req.json().catch(() => null)) as { number?: unknown; note?: unknown } | null;
+    const number = typeof body?.number === "string" ? normalizePoolNumber(body.number) : null;
+    if (!number || isTestNumber(number)) return c.json({ error: "Geçerli bir numara yazın (örneğin 0850 000 00 00)" }, 422);
+    const note = typeof body?.note === "string" ? body.note.replace(/\s+/g, " ").trim().slice(0, 300) : "";
+    // günde en fazla bir talep: yöneticiye e-posta yağdırılamasın
+    const today = deps.now().toPlainDate().toString();
+    const fresh = Number(db.prepare("INSERT OR IGNORE INTO notice_log (tenant_id, kind, period, sent_at) VALUES (?, 'own-number-request', ?, ?)").run(tenant.id, today, Date.now()).changes) > 0;
+    if (!fresh) return c.json({ error: "Bugün zaten bir talep ilettiniz. Ekibimiz en kısa sürede dönecek." }, 429);
+    deps.store.audit({ tenantId: tenant.id, userId: user.id, action: "phone.own-number-request", target: number });
+    mailOwnNumberRequest(deps, tenant, user.email, number, note);
+    return c.json({ ok: true });
   });
 
   /** Satın alma geçmişi */

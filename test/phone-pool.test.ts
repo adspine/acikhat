@@ -309,6 +309,26 @@ describe("firma oluştururken elle numara girişi", () => {
   });
 });
 
+describe("müşterinin kendi numara talebi", () => {
+  it("talep yöneticiye e-postayla gider, numara değişmez, günde bir kez, geçersiz numara reddedilir", async () => {
+    const t = await setup();
+    const ref = await t.member("talep@ornek.com", "Talep Firma", true);
+    await t.admin("POST", `/api/admin/submissions/${ref}/create-tenant`);
+    const login = await t.app.request("/api/auth/login", { method: "POST", headers: { "content-type": "application/json", "x-panel": "1" }, body: JSON.stringify({ email: "talep@ornek.com", password: "sifre-12345" }) });
+    const owner = t.call(login.headers.get("set-cookie")!.split(";")[0]!);
+    t.mailbox.length = 0;
+    expect((await owner("POST", "/api/panel/phone-request", { number: "abc" })).status).toBe(422);
+    expect((await owner("POST", "/api/panel/phone-request", { number: "0850 999 00 01" })).status).toBe(422); // deneme aralığı
+    const ok = await owner("POST", "/api/panel/phone-request", { number: "0850 777 00 11", note: "Netgsm'den kendim aldım" });
+    expect(ok.status).toBe(200);
+    const mail = t.mailbox.find((m) => m.subject.startsWith("Kendi numarasını kullanmak istiyor"));
+    expect(mail?.to).toContain("admin@ornek.com");
+    expect(mail?.text).toContain("Netgsm'den kendim aldım");
+    expect((await owner("POST", "/api/panel/phone-request", { number: "0850 777 00 12" })).status).toBe(429);
+    expect(t.deps.tenants.get("talep-firma")!.phoneNumbers).not.toContain("+908507770011"); // kendiliğinden değişmez
+  });
+});
+
 describe("deneme numaraları (gerçek numara almadan akışı denemek için)", () => {
   it("sıralı sanal numara verir, firmaya tekrar çağrılınca aynısını döner, serbest bırakınca silinir, stokta sayılmaz", () => {
     const pool = new PhonePool(new Store(":memory:").db);

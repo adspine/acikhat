@@ -455,6 +455,41 @@ const showPhone = (e164: string) => {
   return d.length === 10 ? `0${d.slice(0, 3)} ${d.slice(3, 6)} ${d.slice(6, 8)} ${d.slice(8)}` : e164;
 };
 
+/** Müşteri kendi 0850 numarasını kullanmak isterse yöneticiye talep iletir; numara kendiliğinden değişmez */
+function OwnNumberRequest() {
+  const toast = useToast();
+  const [open, setOpen] = useState(false);
+  const [number, setNumber] = useState("");
+  const [note, setNote] = useState("");
+  const [busy, setBusy] = useState(false);
+  const send = async () => {
+    setBusy(true);
+    try {
+      await api("/api/panel/phone-request", { method: "POST", body: { number, note } });
+      toast("Talebiniz iletildi. Numarayı doğrulayıp size döneceğiz.");
+      setOpen(false);
+      setNumber("");
+      setNote("");
+    } catch (e) {
+      toast(e instanceof ApiError ? e.message : "Talep iletilemedi", "error");
+    } finally {
+      setBusy(false);
+    }
+  };
+  if (!open) return <div className="row-actions"><Button variant="quiet" onClick={() => setOpen(true)}>Kendi 0850 numaramı kullanmak istiyorum</Button></div>;
+  return (
+    <div className="phone-block">
+      <p className="muted small">Kendi aboneliğinizde bir 0850 numaranız varsa bildirin. Ekibimiz numarayı doğrular ve tanımlar; numara kendiliğinden değişmez.</p>
+      <Field label="Numaranız">{(id) => <Input id={id} type="tel" placeholder="0850 000 00 00" value={number} onChange={(e) => setNumber(e.target.value)} />}</Field>
+      <Field label="Not (isteğe bağlı)">{(id) => <Input id={id} maxLength={300} value={note} onChange={(e) => setNote(e.target.value)} />}</Field>
+      <div className="row-actions">
+        <Button onClick={() => void send()} busy={busy} disabled={!number.trim()}>Talebi ilet</Button>
+        <Button variant="quiet" onClick={() => setOpen(false)}>Vazgeç</Button>
+      </div>
+    </div>
+  );
+}
+
 /**
  * Müşterinin kendi hattında kuracağı yönlendirme kodları, numarası yazılmış olarak. Önerilen: koşullu (meşgul, cevapsız, kapalı).
  * Kod biçimleri Turkcell ve Türk Telekom sayfalarındandır; numara biçimi operatörlere göre değişebilir (operatör testi sürüyor).
@@ -536,6 +571,7 @@ function AssistantNumber({ tenantId, numbers, canEdit, onSaved }: { tenantId: st
         <>
           <p className="phone-number">{numbers.map(showPhone).join(" · ")}</p>
           <ForwardingCodes number={numbers[0]!} />
+          <OwnNumberRequest />
         </>
       ) : (
         <p className="muted">Henüz bağlanmadı. Hat açıldığında numara burada görünür.</p>

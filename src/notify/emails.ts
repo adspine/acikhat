@@ -236,6 +236,19 @@ export function mailPoolEmpty(deps: Deps, tenant: Tenant) {
   });
 }
 
+/** Müşteri kendi 0850 numarasını kullanmak istediğini bildirdi: yönetici doğrulayıp elle tanımlar */
+export function mailOwnNumberRequest(deps: Deps, tenant: Tenant, requester: string, number: string, note: string) {
+  send(deps, admins(deps), `Kendi numarasını kullanmak istiyor: ${tenant.name}`, {
+    title: "Müşteri kendi numarasını bildirdi",
+    lines: [
+      "Numara müşterinin kendi aboneliğinde olmalı (numara kontrol listesi). Doğruladıktan sonra Müşteriler > Yönet ekranından numarayı firmaya yazın; müşteri kendi başına değiştiremez.",
+      ...(note ? [`Müşterinin notu: ${note}`] : []),
+    ],
+    facts: [["Firma", tenant.name], ["Bildiren", requester], ["Numara", lineText(number)], ["Şu anki numara", tenant.phoneNumbers.map(lineText).join(", ") || "yok"]],
+    cta: { label: "Müşteriler", url: panelUrl(deps, "musteriler") },
+  });
+}
+
 export function mailPoolRenewal(deps: Deps, rows: { number: string; renewAt: number | null; tenantName: string | null }[]) {
   const fmt = (ms: number | null) => (ms ? new Date(ms).toLocaleDateString("tr-TR") : "?");
   send(deps, admins(deps), `Numara yenilemesi yaklaşıyor (${rows.length})`, {
