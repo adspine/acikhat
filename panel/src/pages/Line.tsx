@@ -59,7 +59,7 @@ function Guide() {
 
       <div className="row-actions">
         <a className="btn btn-primary btn-md" href={NETGSM_SIGNUP} target="_blank" rel="noopener noreferrer">Netgsm başvuru sayfasını aç</a>
-        <a className="btn btn-quiet btn-md" href="/#/numara-al" target="_blank" rel="noopener noreferrer">Ayrıntılı rehber</a>
+        <a className="btn btn-quiet btn-md" href="/numara-al" target="_blank" rel="noopener noreferrer">Ayrıntılı rehber</a>
       </div>
 
       <ol className="line-steps">

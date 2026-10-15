@@ -1,3 +1,5 @@
+// Sayfa içi geçiş (nav.js) gerektiğinde yüklenir: bu dosya testlerde Node ile de içe aktarılıyor
+const go = (path) => import("/nav.js").then((m) => m.go(path));
 // Açık Hat: giriş, üye ol ve hesap sayfaları.
 // Firebase yalnızca "bu kişi kim" sorusunu cevaplar; sonuç kimlik belgesini sunucuya veririz,
 // sunucu doğrulayıp kendi oturum çerezini açar. Firebase tarayıcıda kalıcı kayıt tutmaz (bellek içi oturum).
@@ -93,7 +95,8 @@ async function legacyLogin(email, password, auth, au) {
     await auth.signOut(au).catch(() => {});
   }
   forgetTenantChoice();
-  location.assign(data.hasTenant ? "/panel/" : "#/hesap");
+  if (data.hasTenant) location.assign("/panel/");
+  else go("/hesap");
   return true;
 }
 
@@ -137,7 +140,8 @@ function bind(root) {
     }
     if (!res.ok) throw new Error(data.error ?? "Giriş yapılamadı.");
     forgetTenantChoice();
-    location.assign(data.hasTenant ? "/panel/" : "#/hesap");
+    if (data.hasTenant) location.assign("/panel/");
+  else go("/hesap");
   }
 
   const run = async (fn) => {

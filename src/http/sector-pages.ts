@@ -83,7 +83,7 @@ export function renderSectorPage(page: SectorPage, origin: string): string {
   <p class="kicker">${esc(page.nav)} için</p>
   <h1>${esc(page.h1)}</h1>
   <p class="lead">${esc(page.lead)}</p>
-  <div class="cta-row"><a class="btn" href="/#/uye-ol">Hemen başla</a><a class="btn alt" href="/#/fiyatlandirma">Fiyatları gör</a></div>
+  <div class="cta-row"><a class="btn" href="/uye-ol">Hemen başla</a><a class="btn alt" href="/fiyatlandirma">Fiyatları gör</a></div>
   <p class="hint">Numaranız değişmez. Kurulum bedeli yok.</p>
 </section>
 
@@ -99,11 +99,11 @@ ${page.note ? `\n<section class="note"><h2>${esc(page.note.heading)}</h2>${page.
 
 <section><h2>Fiyat</h2>
 <table class="plans"><thead><tr><th>Paket</th><th>Aylık ücret</th><th>Dahil yapay zekâ kullanımı</th></tr></thead><tbody>${planRows}</tbody></table>
-<p class="small">Fiyatlar USD cinsindendir ve KDV dahildir. Kullanım hakkı bitince her ek dakika $${String(OVERAGE_USD_PER_MINUTE).replace(".", ",")}. Kurulum bedeli yoktur. Telefon hattı ve operatör ücretleri pakete dahil değildir. <a href="/#/fiyatlandirma">Ayrıntılı fiyatlandırma</a></p></section>
+<p class="small">Fiyatlar USD cinsindendir ve KDV dahildir. Kullanım hakkı bitince her ek dakika $${String(OVERAGE_USD_PER_MINUTE).replace(".", ",")}. Kurulum bedeli yoktur. Telefon hattı ve operatör ücretleri pakete dahil değildir. <a href="/fiyatlandirma">Ayrıntılı fiyatlandırma</a></p></section>
 
 <section><h2>Sık sorulanlar</h2>${page.faq.map((f) => `<details><summary>${esc(f.q)}</summary><p>${esc(f.a)}</p></details>`).join("")}</section>
 
-<section class="s-cta"><h2>${esc(page.nav)} telefonunuz bu akşam da açık kalsın</h2><p>Bilgi formunu doldurmak yaklaşık 15 dakika sürer. Asistanı birlikte hazırlar, yayına almadan önce denersiniz.</p><a class="btn" href="/#/uye-ol">Hemen başla</a>
+<section class="s-cta"><h2>${esc(page.nav)} telefonunuz bu akşam da açık kalsın</h2><p>Bilgi formunu doldurmak yaklaşık 15 dakika sürer. Asistanı birlikte hazırlar, yayına almadan önce denersiniz.</p><a class="btn" href="/uye-ol">Hemen başla</a>
 <p class="related">Diğer sektörler: ${others.map((o) => `<a href="/${o.slug}">${esc(o.nav)}</a>`).join("")}<a href="/">Ana sayfa</a></p></section>
 </main>${footer}</body></html>`;
   return (

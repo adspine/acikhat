@@ -81,6 +81,21 @@ export function createApp(deps: Deps) {
   app.route("/", legalRoutes(deps.baseUrl));
   // Sektör iniş sayfaları (/spa, /klinik, /otel)
   app.route("/", sectorRoutes(deps.baseUrl));
+  // Tanıtım sitesinin sayfa içi adresleri (/hesap, /rehber ...) index.html'e düşer; sayfayı tarayıcıdaki yönlendirici açar.
+  // Giriş ve hesap adresleri arama motoruna kapalıdır.
+  for (const path of ["/hesap", "/kurulum", "/giris", "/uye-ol", "/tamam"]) {
+    app.get(path, async (c, next) => {
+      c.header("x-robots-tag", "noindex, nofollow");
+      c.header("cache-control", "no-cache");
+      return serveStatic({ path: "./web/index.html" })(c, next);
+    });
+  }
+  for (const path of ["/rehber", "/numara-al", "/nasil", "/ozellikler", "/fiyatlandirma", "/sss", "/iletisim"]) {
+    app.get(path, async (c, next) => {
+      c.header("cache-control", "no-cache");
+      return serveStatic({ path: "./web/index.html" })(c, next);
+    });
+  }
   app.use("/*", serveStatic({ root: "./web" }));
   // Firma paneli (panel/ derlemesi web/panel/ altında): kendi yönlendiricisi olduğu için bilinmeyen alt yollar panele düşer
   app.get("/panel", (c) => c.redirect("/panel/"));

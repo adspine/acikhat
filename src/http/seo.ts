@@ -47,7 +47,7 @@ function readLegalPages(path = "./web/index.html"): LegalPage[] {
     const description = plain.length > 155 ? `${plain.slice(0, 152).trimEnd()}…` : plain;
     const body = inner
       .replace(/href="#\/yasal\/([a-z0-9-]+)"/g, 'href="/yasal/$1"')
-      .replace(/href="#\/([a-z0-9-]+)"/g, 'href="/#/$1"');
+      .replace(/href="#\/([a-z0-9-]+)"/g, 'href="/$1"');
     pages.push({ slug, title, description, body });
   }
   return pages;
@@ -100,7 +100,7 @@ ${opts.canonical ? `<link rel="canonical" href="${esc(opts.canonical)}">\n` : ""
 <style>${STYLE}${opts.extraStyle ?? ""}</style>
 ${opts.jsonLd ? `<script type="application/ld+json">\n${opts.jsonLd}\n</script>\n` : ""}</head>`;
 
-export const header = `<header class="top"><a class="brand" href="/"><i aria-hidden="true"></i>${BRAND}</a><a class="cta" href="/#/uye-ol">Hemen başla</a></header>`;
+export const header = `<header class="top"><a class="brand" href="/"><i aria-hidden="true"></i>${BRAND}</a><a class="cta" href="/uye-ol">Hemen başla</a></header>`;
 export const footer = `<footer>© 2026 ${BRAND} · <a href="mailto:support@acikhat.si">support@acikhat.si</a> · <a href="/">Ana sayfa</a></footer>`;
 
 export function notFoundHtml(): string {

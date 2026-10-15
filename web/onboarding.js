@@ -1,3 +1,4 @@
+import { go } from "/nav.js";
 // Açık Hat: üye onboarding ekranı (hesap görünümü): 1 paket + ödeme → 2 kurulum formu → 3 numara alma (Netgsm) → 4 onay bekleniyor.
 // Adım sunucuda tutulur: çıkış yapıp dönen üye kaldığı adımdan devam eder.
 // Fiyat ve dakika sunucuda src/domain/plans.ts'te tutulur; buradakiler yalnızca gösterim içindir.
@@ -73,7 +74,7 @@ function bindPlans(root, account, ctx) {
         }
         Object.assign(account, data);
         await ctx.refresh();
-        location.hash = "#/kurulum"; // paket ödendi: 2. adım
+        go("/kurulum"); // paket ödendi: 2. adım
       } finally {
         btn.disabled = false;
       }
@@ -110,7 +111,7 @@ async function awaitPayment(root, account, ctx) {
     if (data.onboarding?.paidAt) {
       Object.assign(account, data);
       await ctx.refresh();
-      location.hash = "#/kurulum";
+      go("/kurulum");
       return;
     }
     await new Promise((ok) => setTimeout(ok, 1500));

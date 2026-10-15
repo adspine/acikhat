@@ -25,7 +25,7 @@ Son commit: `43fe4b8`. GitHub Actions bu commit ile canlıya dağıtım yapar.
 ## 3. Tanıtım sitesi
 
 **SEO ve paylaşım (en büyük açık)**
-- Site hash yönlendirmeli tek sayfa (`#/yasal/...`, `#/giris`). Arama motorları bu adresleri ayrı sayfa olarak görmez; yasal metinler ve ileride sektör sayfaları indekslenemez. Gerçek yollar (`/yasal/gizlilik`) ve sunucuda önceden üretilmiş sayfalar gerekir.
+- Güncel (2026-10-15): site temiz yollarla çalışır (`/hesap`, `/rehber`, `/numara-al`); eski `/#/...` adresleri açılışta temiz adrese çevrilir. Yasal metinler `/yasal/<sayfa>` ve sektör sayfaları sunucuda ayrı, taranabilir sayfalardır.
 - `robots.txt`, `sitemap.xml`, `canonical`, Open Graph / Twitter kartı, yapılandırılmış veri (Organization, Product/Offer, FAQPage) ve **favicon yok**. Bağlantı paylaşıldığında önizleme boş çıkar.
 - İçerik: sektör bazlı iniş sayfaları (diş kliniği, emlak, güzellik...), blog, SSS şeması yok. Dönüşüm ölçümü (analitik) yok; çerez onay yüküne girmeden ölçüm için gizlilik odaklı bir araç seçilebilir.
 
@@ -42,7 +42,7 @@ Son commit: `43fe4b8`. GitHub Actions bu commit ile canlıya dağıtım yapar.
 
 ## 4. Kurulum ve üyelik akışı
 
-- Üyesiz doğrudan `#/kurulum` formu hâlâ herkese açık (eski akış). Kapatılacak mı, yoksa "formu doldur, sonra üye ol" gibi bir giriş olarak mı kalacak karar bekliyor.
+- Üyesiz doğrudan `/kurulum` formu hâlâ herkese açık (eski akış). Kapatılacak mı, yoksa "formu doldur, sonra üye ol" gibi bir giriş olarak mı kalacak karar bekliyor.
 - E-posta doğrulaması Firebase e-postası ile yapılıyor; gönderen adresi/şablonu Firebase varsayılanı (Türkçeleştirilmedi, markalanmadı).
 - Şifre sıfırlama Firebase üzerinden; ama panelin eski şifreli girişi ile ekip hesapları için "geçici şifre" akışı ayrı yaşıyor. Ekip üyelerinin tek bir giriş yoluna taşınması düşünülmeli.
 - Başvuru onaylandıktan sonra asistanın canlıya alınması (ElevenLabs ajanı, telefon hattı, Google Takvim) tamamen elle. Kontrol listesi var ama otomasyon yok.

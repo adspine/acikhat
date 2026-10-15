@@ -1,6 +1,6 @@
 # Asistan numaranızı Netgsm'den alın (kontrol listesi)
 
-*Bu belge, sitedeki `#/numara-al` rehberinin yazdırılabilir kontrol listesidir; ana kaynak site sayfasıdır. Netgsm ekranlarındaki alan adları, belge listesi, süre ve ücret Netgsm tarafından değiştirilebilir. Netgsm'in yayımlanmış sayfalarında belirtilmeyen yerler `[BELİRSİZ]` ile işaretlidir.*
+*Bu belge, sitedeki `/numara-al` rehberinin yazdırılabilir kontrol listesidir; ana kaynak site sayfasıdır. Netgsm ekranlarındaki alan adları, belge listesi, süre ve ücret Netgsm tarafından değiştirilebilir. Netgsm'in yayımlanmış sayfalarında belirtilmeyen yerler `[BELİRSİZ]` ile işaretlidir.*
 
 ## 1. Model
 - **Her müşteri asistan numarasını (0850 ya da şehir kodlu sabit hat) Netgsm'den kendi adına alır.** Açık Hat numara satmaz, kiralamaz, havuz tutmaz.

@@ -1,6 +1,7 @@
 <!doctype html>
 <html lang="tr">
 <head>
+<script src="/boot.js"></script>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="icon" href="/favicon.ico" sizes="48x48" />
@@ -177,22 +178,23 @@
 <link rel="stylesheet" href="/site.css?v=40">
 </head>
 <body>
+<div class="boot-splash" aria-hidden="true"><span class="lamp lamp-on boot-lamp"></span></div>
 <a class="skip" href="#icerik">İçeriğe geç</a>
 
 <header class="top" data-top>
   <div class="top-bar">
-    <a class="brand" href="#/" aria-label="Ana sayfa"><span class="brand-lamp" aria-hidden="true"></span><span data-brand>Açık Hat</span></a>
+    <a class="brand" href="/" aria-label="Ana sayfa"><span class="brand-lamp" aria-hidden="true"></span><span data-brand>Açık Hat</span></a>
     <nav class="top-nav" id="ana-menu" aria-label="Ana menü">
       <div class="top-links">
-        <a href="#/nasil" data-spy="nasil">Nasıl çalışır</a>
-        <a href="#/ozellikler" data-spy="ozellikler">Özellikler</a>
-        <a href="#/fiyatlandirma" data-spy="fiyatlandirma">Fiyatlandırma</a>
-        <a href="#/sss" data-spy="sss">SSS</a>
-        <a href="#/iletisim" data-spy="iletisim">İletişim</a>
+        <a href="/nasil" data-spy="nasil">Nasıl çalışır</a>
+        <a href="/ozellikler" data-spy="ozellikler">Özellikler</a>
+        <a href="/fiyatlandirma" data-spy="fiyatlandirma">Fiyatlandırma</a>
+        <a href="/sss" data-spy="sss">SSS</a>
+        <a href="/iletisim" data-spy="iletisim">İletişim</a>
       </div>
       <div class="top-auth">
-        <a class="btn btn-glass btn-small" href="#/giris" data-nav="giris">Giriş yap</a>
-        <a class="btn btn-small" href="#/uye-ol" data-nav="uye-ol">Üye ol</a>
+        <a class="btn btn-glass btn-small" href="/giris" data-nav="giris">Giriş yap</a>
+        <a class="btn btn-small" href="/uye-ol" data-nav="uye-ol">Üye ol</a>
       </div>
     </nav>
     <button class="menu-toggle" type="button" data-menu aria-expanded="false" aria-controls="ana-menu" aria-label="Menüyü aç">
@@ -202,7 +204,7 @@
 </header>
 
 <div class="onb-bar" data-onb-bar hidden>
-  <a class="onb-logo" href="#/hesap" aria-label="Açık Hat"><span class="brand-lamp" aria-hidden="true"></span><span data-brand>Açık Hat</span></a>
+  <a class="onb-logo" href="/hesap" aria-label="Açık Hat"><span class="brand-lamp" aria-hidden="true"></span><span data-brand>Açık Hat</span></a>
   <ol class="onb-steps" aria-label="Kurulum adımları">
     <li data-onb-step="1"><span>1</span>Paketinizi seçin</li>
     <li data-onb-step="2"><span>2</span>Kurulum formunu doldurun</li>
@@ -233,8 +235,8 @@
         <h1>Telefonunuz çaldığında, biri hep açar.</h1>
         <p class="lead"><span data-brand>Açık Hat</span>, işletmenizin telefonunu yapay zekâ ile cevaplar. Takviminizden boş saati bulur, randevuyu yazar ve onayı müşterinize gönderir. Gece yarısı da, resepsiyon doluyken de.</p>
         <div class="hero-actions">
-          <a class="btn btn-lg" href="#/uye-ol">Hemen başla</a>
-          <a class="btn btn-glass btn-lg" href="#/nasil">Nasıl çalışır?</a>
+          <a class="btn btn-lg" href="/uye-ol">Hemen başla</a>
+          <a class="btn btn-glass btn-lg" href="/nasil">Nasıl çalışır?</a>
         </div>
         <p class="hero-note">Numaranız değişmez. Müşterileriniz bildikleri numarayı aramaya devam eder.</p>
       </div>
@@ -278,7 +280,7 @@
       </div>
     </div>
 
-    <a class="scroll-cue" href="#/nasil" aria-label="Aşağı kaydır"><span></span></a>
+    <a class="scroll-cue" href="/nasil" aria-label="Aşağı kaydır"><span></span></a>
   </div>
 
   <!-- ===== Rakamlar ===== -->
@@ -298,7 +300,7 @@
         <h2 id="nasil-baslik">Kurulum dört adımda</h2>
         <p class="lead">Teknik bilgiye gerek yok. Siz işletmenizi anlatırsınız, gerisini biz hazırlarız.</p>
         <ol class="how-dots" aria-hidden="true"><li class="is-on"></li><li></li><li></li><li></li></ol>
-        <a class="btn" href="#/uye-ol">Hemen başla</a>
+        <a class="btn" href="/uye-ol">Hemen başla</a>
       </div>
       <ol class="how-list">
         <li class="how-card glass is-active">
@@ -424,7 +426,7 @@
             <li>Çağrı özeti ve geri arama listesi</li>
             <li>Firma paneli ve raporlar</li>
           </ul>
-          <a class="btn btn-glass" href="#/uye-ol" data-pick-plan="baslangic">Başlangıç ile başla</a>
+          <a class="btn btn-glass" href="/uye-ol" data-pick-plan="baslangic">Başlangıç ile başla</a>
         </article>
 
         <article class="plan plan-main" data-reveal>
@@ -440,7 +442,7 @@
             <li>Çağrı özeti ve geri arama listesi</li>
             <li>Firma paneli ve raporlar</li>
           </ul>
-          <a class="btn btn-lamp" href="#/uye-ol" data-pick-plan="standart">Standart ile başla</a>
+          <a class="btn btn-lamp" href="/uye-ol" data-pick-plan="standart">Standart ile başla</a>
         </article>
 
         <article class="plan glass" data-reveal>
@@ -455,7 +457,7 @@
             <li>Çağrı özeti ve geri arama listesi</li>
             <li>Firma paneli ve raporlar</li>
           </ul>
-          <a class="btn btn-glass" href="#/uye-ol" data-pick-plan="pro">Pro ile başla</a>
+          <a class="btn btn-glass" href="/uye-ol" data-pick-plan="pro">Pro ile başla</a>
         </article>
       </div>
 
@@ -525,8 +527,8 @@
       <h2 id="iletisim-baslik">Başlamak için bilgilerinizi gönderin.</h2>
       <p class="lead">Formu yarıda bırakabilirsiniz; doldurduklarınız bu cihazda saklanır. Gönderdikten sonra 1 iş günü içinde sizi arayıp eksikleri birlikte tamamlarız.</p>
       <div class="hero-actions">
-        <a class="btn btn-lg btn-lamp" href="#/uye-ol">Hemen başla</a>
-        <a class="btn btn-ghost btn-lg" href="#/giris">Zaten üyeyim, giriş yap</a>
+        <a class="btn btn-lg btn-lamp" href="/uye-ol">Hemen başla</a>
+        <a class="btn btn-ghost btn-lg" href="/giris">Zaten üyeyim, giriş yap</a>
       </div>
     </div>
   </section>
@@ -593,7 +595,7 @@
       <fieldset class="step" data-step="telefon" data-title="Telefon" hidden>
         <legend>Telefon</legend>
         <p class="step-help">Asistanın hangi numaraya gelen çağrıları cevaplayacağını belirleyelim.</p>
-        <p class="step-help">Asistanın numarası, <strong>Netgsm'den kendi adınıza aldığınız</strong> 0850 ya da sabit hat numarasıdır. Numaranız varsa aşağıya yazın. Yoksa boş bırakın: formu bitirince panelinizde "Numara rehberi" numaranızı adım adım almanız için sizi yönlendirir (<a href="#/numara-al" target="_blank" rel="noopener">rehbere göz atın</a>).</p>
+        <p class="step-help">Asistanın numarası, <strong>Netgsm'den kendi adınıza aldığınız</strong> 0850 ya da sabit hat numarasıdır. Numaranız varsa aşağıya yazın. Yoksa boş bırakın: formu bitirince panelinizde "Numara rehberi" numaranızı adım adım almanız için sizi yönlendirir (<a href="/numara-al" target="_blank" rel="noopener">rehbere göz atın</a>).</p>
         <div class="field">
           <label for="f-assistant">Asistan numaranız <span class="opt">(varsa)</span></label>
           <input id="f-assistant" name="phone.assistantNumber" inputmode="tel" placeholder="0850 … veya 0212 …">
@@ -782,7 +784,7 @@
   <p class="lead">Başvuru kodunuz <strong class="ref" data-ref>—</strong>. Bizi ararken bu kodu söyleyebilirsiniz.</p>
   <p>Bilgilerinizi 1 iş günü içinde kontrol edip eksik kalan yerler için sizi arayacağız. Asistanın numarasını Netgsm'den kendi adınıza almanız gerekecek; hesabınıza girince rehber sizi yönlendirir.</p>
   <p>Bu arada yönlendirmenin nasıl yapıldığına göz atabilirsiniz.</p>
-  <a class="btn" href="#/rehber">Kurulum rehberini aç</a>
+  <a class="btn" href="/rehber">Kurulum rehberini aç</a>
 </section>
 
 <!-- ===================== NUMARA ALMA REHBERİ ===================== -->
@@ -802,7 +804,7 @@
 
   <div class="auth-actions guide-cta">
     <a class="btn" href="https://www.netgsm.com.tr/uyelik" target="_blank" rel="noopener noreferrer">Netgsm başvuru sayfasını aç</a>
-    <a class="btn btn-glass" href="#/hesap">Numaramı aldım, bildireceğim</a>
+    <a class="btn btn-glass" href="/hesap">Numaramı aldım, bildireceğim</a>
   </div>
 
   <ol class="guide-steps">
@@ -842,11 +844,11 @@
     <li>
       <h2>Numaranızı bize bildirin</h2>
       <p>Açık Hat hesabınıza girin, kurulum ekranındaki 3. adımda numaranızı, abonelik türünüzü ve iki onay kutusunu doldurup gönderin. Bilgiler bize ulaşınca kontrol eder, numarayı asistana bağlar ve test ederiz.</p>
-      <a class="btn btn-quiet btn-small" href="#/hesap">Hesabıma git</a>
+      <a class="btn btn-quiet btn-small" href="/hesap">Hesabıma git</a>
     </li>
     <li>
       <h2>Onay ve kullanıma başlama</h2>
-      <p>Kontroller bitince size e-posta göndeririz; hesabınıza girdiğinizde panelinizi görürsünüz. İsterseniz yeni numarayı doğrudan web sitenizde ve Google profilinizde yayımlayın, isterseniz mevcut numaranızı <a href="#/rehber">yönlendirin</a>.</p>
+      <p>Kontroller bitince size e-posta göndeririz; hesabınıza girdiğinizde panelinizi görürsünüz. İsterseniz yeni numarayı doğrudan web sitenizde ve Google profilinizde yayımlayın, isterseniz mevcut numaranızı <a href="/rehber">yönlendirin</a>.</p>
     </li>
   </ol>
 
@@ -874,13 +876,13 @@
     <li>
       <h2>Bilgilerinizi gönderin</h2>
       <p>Kurulum formunu doldurun. Eksik kalan yerleri sizi arayıp birlikte tamamlarız.</p>
-      <a class="btn btn-quiet btn-small" href="#/kurulum">Formu aç</a>
+      <a class="btn btn-quiet btn-small" href="/kurulum">Formu aç</a>
     </li>
 
     <li>
       <h2>Asistan numaranızı alın</h2>
       <p>Asistanın numarasını (0850 ya da şehir kodlu sabit hat) Netgsm'den kendi adınıza alırsınız. Numara hazır olduğunda biz asistana bağlarız. Bu numarayı yalnızca yönlendirme hedefi olarak da kullanabilirsiniz: müşterileriniz bildikleri numarayı aramaya devam eder.</p>
-      <a class="btn btn-quiet btn-small" href="#/numara-al">Numara alma rehberi</a>
+      <a class="btn btn-quiet btn-small" href="/numara-al">Numara alma rehberi</a>
     </li>
 
     <li>
@@ -955,12 +957,12 @@
 <!-- ===================== YASAL ===================== -->
 <section class="view legal" data-view="yasal" hidden>
   <nav class="legal-nav" aria-label="Yasal sayfalar">
-    <a href="#/yasal/satici-bilgileri" data-legal-link="satici-bilgileri">Satıcı ve iletişim bilgileri</a>
-    <a href="#/yasal/gizlilik-politikasi" data-legal-link="gizlilik-politikasi">Gizlilik politikası</a>
-    <a href="#/yasal/kvkk-aydinlatma-metni" data-legal-link="kvkk-aydinlatma-metni">KVKK aydınlatma metni</a>
-    <a href="#/yasal/kullanim-kosullari" data-legal-link="kullanim-kosullari">Kullanım koşulları</a>
-    <a href="#/yasal/iptal-iade" data-legal-link="iptal-iade">İptal ve iade koşulları</a>
-    <a href="#/yasal/cerez-politikasi" data-legal-link="cerez-politikasi">Çerez ve yerel depolama</a>
+    <a href="/yasal/satici-bilgileri" data-legal-link="satici-bilgileri">Satıcı ve iletişim bilgileri</a>
+    <a href="/yasal/gizlilik-politikasi" data-legal-link="gizlilik-politikasi">Gizlilik politikası</a>
+    <a href="/yasal/kvkk-aydinlatma-metni" data-legal-link="kvkk-aydinlatma-metni">KVKK aydınlatma metni</a>
+    <a href="/yasal/kullanim-kosullari" data-legal-link="kullanim-kosullari">Kullanım koşulları</a>
+    <a href="/yasal/iptal-iade" data-legal-link="iptal-iade">İptal ve iade koşulları</a>
+    <a href="/yasal/cerez-politikasi" data-legal-link="cerez-politikasi">Çerez ve yerel depolama</a>
   </nav>
 
   <div class="legal-body">
@@ -980,7 +982,7 @@
     <article data-legal="gizlilik-politikasi" data-title="Gizlilik politikası" hidden>
       <h1>Gizlilik politikası</h1>
       <p class="legal-date">Son güncelleme: 14 Ekim 2026</p>
-      <p>Bu politika, <span data-brand>Açık Hat</span> web sitesini, firma panelini ve sesli asistan hizmetini kullanırken hangi verilerin neden işlendiğini anlatır. Hizmeti Emrecan Yerlikaya (şahıs işletmesi, Bolu) sunar. Ayrıntılı hukuki bilgi için <a href="#/yasal/kvkk-aydinlatma-metni">KVKK aydınlatma metnine</a> bakın.</p>
+      <p>Bu politika, <span data-brand>Açık Hat</span> web sitesini, firma panelini ve sesli asistan hizmetini kullanırken hangi verilerin neden işlendiğini anlatır. Hizmeti Emrecan Yerlikaya (şahıs işletmesi, Bolu) sunar. Ayrıntılı hukuki bilgi için <a href="/yasal/kvkk-aydinlatma-metni">KVKK aydınlatma metnine</a> bakın.</p>
 
       <h2>İki ayrı rolümüz var</h2>
       <ul>
@@ -1018,13 +1020,13 @@
       <p>Yasal zorunluluk halinde yetkili kamu kurumlarıyla da paylaşılabilir. Bu sağlayıcıların bir kısmı yurt dışında (özellikle ABD'de) bulunur; aktarımlar KVKK'nın yurt dışına aktarım kurallarına ve sözleşmelerimize uygun yapılır.</p>
 
       <h2>Saklama</h2>
-      <p>Veriler, amaçları için gerekli olduğu kadar saklanır ve süre dolunca otomatik olarak silinir veya kimliksiz hâle getirilir; örneğin çağrı ses kaydı en çok 90 gün, çağrı dökümü 12 ay tutulur. Tüm süreler <a href="#/yasal/kvkk-aydinlatma-metni">KVKK aydınlatma metninin 6. bölümünde</a> listelidir. Fatura ve muhasebe kayıtları yasal süre olan 10 yıl saklanır.</p>
+      <p>Veriler, amaçları için gerekli olduğu kadar saklanır ve süre dolunca otomatik olarak silinir veya kimliksiz hâle getirilir; örneğin çağrı ses kaydı en çok 90 gün, çağrı dökümü 12 ay tutulur. Tüm süreler <a href="/yasal/kvkk-aydinlatma-metni">KVKK aydınlatma metninin 6. bölümünde</a> listelidir. Fatura ve muhasebe kayıtları yasal süre olan 10 yıl saklanır.</p>
 
       <h2>Güvenlik</h2>
       <p>Verileri yetkisiz erişime, kayba ve değiştirilmeye karşı teknik ve idari önlemlerle korumaya çalışırız. Panel girişi oturum çerezi ile yapılır ve yetkisiz kişilerin erişimine kapalıdır.</p>
 
       <h2>Haklarınız ve iletişim</h2>
-      <p>Verilerinize erişme, düzeltme ve silme taleplerinizi <a href="mailto:support@acikhat.si">support@acikhat.si</a> adresine iletebilirsiniz. Bir işletmeyi aradıysanız talebinizi doğrudan o işletmeye de yapabilirsiniz. Tüm haklarınız <a href="#/yasal/kvkk-aydinlatma-metni">KVKK aydınlatma metninde</a> listelenmiştir.</p>
+      <p>Verilerinize erişme, düzeltme ve silme taleplerinizi <a href="mailto:support@acikhat.si">support@acikhat.si</a> adresine iletebilirsiniz. Bir işletmeyi aradıysanız talebinizi doğrudan o işletmeye de yapabilirsiniz. Tüm haklarınız <a href="/yasal/kvkk-aydinlatma-metni">KVKK aydınlatma metninde</a> listelenmiştir.</p>
     </article>
 
     <article data-legal="kvkk-aydinlatma-metni" data-title="KVKK aydınlatma metni" hidden>
@@ -1109,10 +1111,10 @@
 
       <h2>6. Ücretler, abonelik ve ödeme</h2>
       <ul>
-        <li>Paketler ve fiyatlar <a href="#/fiyatlandirma">Fiyatlandırma</a> bölümünde yer alır. Fiyatlar ABD doları cinsindendir ve KDV dahildir.</li>
+        <li>Paketler ve fiyatlar <a href="/fiyatlandirma">Fiyatlandırma</a> bölümünde yer alır. Fiyatlar ABD doları cinsindendir ve KDV dahildir.</li>
         <li>Paketler <strong>aylık abonelik</strong> olarak sunulur ve her ay aynı gün kayıtlı karttan otomatik yenilenir. Paket kullanım hakkı bittiğinde ek kullanım dakika başına ücretlendirilir; ayrıca tek seferlik ek kullanım paketleri satın alınabilir.</li>
         <li>Ödemeler, ödeme altyapımız ve satış aracımız (Merchant of Record) <strong>Polar Software Inc. (Polar.sh)</strong> üzerinden alınır; kart bilgileriniz bize ulaşmaz, Polar'da saklanır. Faturayı ve ilgili vergiyi Polar düzenler.</li>
-        <li>Aboneliğinizi istediğiniz zaman firma panelindeki "Aboneliği yönet" bölümünden iptal edebilir, kartınızı güncelleyebilirsiniz. İptal ve iade ayrıntıları için <a href="#/yasal/iptal-iade">İptal ve iade koşullarına</a> bakın.</li>
+        <li>Aboneliğinizi istediğiniz zaman firma panelindeki "Aboneliği yönet" bölümünden iptal edebilir, kartınızı güncelleyebilirsiniz. İptal ve iade ayrıntıları için <a href="/yasal/iptal-iade">İptal ve iade koşullarına</a> bakın.</li>
         <li>Ödeme alınamazsa Polar kartı yeniden dener; sonuç alınamazsa abonelik sona erer ve hizmet askıya alınır. Ödeme gelince hizmet yeniden açılır.</li>
       </ul>
 
@@ -1125,9 +1127,9 @@
       <h2>9. Veri işleme, saklama ve silme</h2>
       <ul>
         <li>İşletmenin müşterilerine ait kişisel veriler (arayan numarası, ad, randevu bilgisi, görüşme kaydı) bakımından işletme <strong>veri sorumlusu</strong>, <span data-brand>Açık Hat</span> <strong>veri işleyen</strong>dir. Bu verileri yalnızca hizmeti sunmak için ve işletmenin talimatlarıyla işleriz.</li>
-        <li>Saklama süreleri <a href="#/yasal/kvkk-aydinlatma-metni">KVKK aydınlatma metninin 6. bölümünde</a> yayımlanmıştır ve her gün otomatik uygulanır. İşletme, kendi hukuki yükümlülüğü nedeniyle daha uzun saklaması gereken kayıtları, süre dolmadan <a href="mailto:support@acikhat.si">support@acikhat.si</a> adresinden dışa aktarım isteyerek alır.</li>
+        <li>Saklama süreleri <a href="/yasal/kvkk-aydinlatma-metni">KVKK aydınlatma metninin 6. bölümünde</a> yayımlanmıştır ve her gün otomatik uygulanır. İşletme, kendi hukuki yükümlülüğü nedeniyle daha uzun saklaması gereken kayıtları, süre dolmadan <a href="mailto:support@acikhat.si">support@acikhat.si</a> adresinden dışa aktarım isteyerek alır.</li>
         <li>Hizmet sona erdiğinde (iptal, dönem sonu ya da ödeme alınamaması) işletmenin verileri 30 gün içinde silinir; talep edilirse silmeden önce dışa aktarım sağlanır. Yasal saklama zorunluluğu olan fatura kayıtları bunun dışındadır.</li>
-        <li>Verilerin işlenmesine yardım eden alt işleyenler (ses altyapısı, yapay zekâ modeli, barındırma, ödeme) <a href="#/yasal/gizlilik-politikasi">Gizlilik politikasında</a> listelenmiştir; ses ve yapay zekâ sağlayıcıları yurt dışındadır (ABD).</li>
+        <li>Verilerin işlenmesine yardım eden alt işleyenler (ses altyapısı, yapay zekâ modeli, barındırma, ödeme) <a href="/yasal/gizlilik-politikasi">Gizlilik politikasında</a> listelenmiştir; ses ve yapay zekâ sağlayıcıları yurt dışındadır (ABD).</li>
         <li>İşletme, arayanları kendi aydınlatma metniyle bilgilendirmekten sorumludur; asistan her görüşmenin başında yapay zekâ olduğunu ve görüşmenin kaydedildiğini söyler (4. madde).</li>
       </ul>
 
@@ -1164,10 +1166,10 @@
       <p>İadeler, ödemenin yapıldığı karta Polar üzerinden geri yapılır; bankanıza bağlı olarak hesabınıza yansıması birkaç iş günü sürebilir.</p>
 
       <h2>Hizmetin askıya alınması</h2>
-      <p>Ödeme alınamaz veya abonelik sona ererse hizmet askıya alınır; asistan gelen aramaları karşılamaz. Ödeme gelince hizmet kendiliğinden yeniden açılır. Abonelik sona erdikten sonra firma verileriniz 30 gün içinde silinir; isterseniz silmeden önce dışa aktarım isteyebilirsiniz. Çağrı verileriniz zaten <a href="#/yasal/kvkk-aydinlatma-metni">KVKK aydınlatma metnindeki</a> saklama sürelerine göre otomatik silinir.</p>
+      <p>Ödeme alınamaz veya abonelik sona ererse hizmet askıya alınır; asistan gelen aramaları karşılamaz. Ödeme gelince hizmet kendiliğinden yeniden açılır. Abonelik sona erdikten sonra firma verileriniz 30 gün içinde silinir; isterseniz silmeden önce dışa aktarım isteyebilirsiniz. Çağrı verileriniz zaten <a href="/yasal/kvkk-aydinlatma-metni">KVKK aydınlatma metnindeki</a> saklama sürelerine göre otomatik silinir.</p>
 
       <h2>İletişim</h2>
-      <p>Her türlü soru için <a href="mailto:support@acikhat.si">support@acikhat.si</a> adresine yazabilirsiniz. Satıcı bilgilerimiz için <a href="#/yasal/satici-bilgileri">Satıcı ve iletişim bilgileri</a> sayfasına bakın.</p>
+      <p>Her türlü soru için <a href="mailto:support@acikhat.si">support@acikhat.si</a> adresine yazabilirsiniz. Satıcı bilgilerimiz için <a href="/yasal/satici-bilgileri">Satıcı ve iletişim bilgileri</a> sayfasına bakın.</p>
     </article>
 
     <article data-legal="cerez-politikasi" data-title="Çerez ve yerel depolama" hidden>
@@ -1193,7 +1195,7 @@
 <section class="view auth-split" data-view="giris" hidden>
   <aside class="auth-art" aria-hidden="true">
     <span class="orb orb-lake"></span><span class="orb orb-lamp"></span>
-    <a class="auth-art-brand" href="#/"><span class="brand-lamp"></span><span data-brand>Açık Hat</span></a>
+    <a class="auth-art-brand" href="/"><span class="brand-lamp"></span><span data-brand>Açık Hat</span></a>
     <div class="auth-art-body">
       <h2>Hat şu an açık.<br>Siz yokken de.</h2>
       <p>Telefonunuz çaldığında asistanınız cevaplar, takviminizden boş saati bulur ve randevuyu yazar.</p>
@@ -1205,7 +1207,7 @@
   </aside>
 
   <div class="auth-pane">
-    <a class="auth-back" href="#/">← Ana sayfa</a>
+    <a class="auth-back" href="/">← Ana sayfa</a>
     <div class="auth-box">
       <p class="auth-brand"><span class="brand-lamp" aria-hidden="true"></span><span data-brand>Açık Hat</span></p>
       <h1>Tekrar hoş geldiniz</h1>
@@ -1240,7 +1242,7 @@
         <p class="auth-error" data-verify-error role="alert" hidden></p>
       </div>
 
-      <p class="auth-switch">Hesabınız yok mu? <a href="#/uye-ol">Üye olun</a></p>
+      <p class="auth-switch">Hesabınız yok mu? <a href="/uye-ol">Üye olun</a></p>
       <p class="auth-legacy">Size daha önce panel şifresi verildiyse <a href="/panel/">buradan girin</a>.</p>
     </div>
   </div>
@@ -1249,7 +1251,7 @@
 <section class="view auth-split" data-view="uye-ol" hidden>
   <aside class="auth-art" aria-hidden="true">
     <span class="orb orb-lake"></span><span class="orb orb-lamp"></span>
-    <a class="auth-art-brand" href="#/"><span class="brand-lamp"></span><span data-brand>Açık Hat</span></a>
+    <a class="auth-art-brand" href="/"><span class="brand-lamp"></span><span data-brand>Açık Hat</span></a>
     <div class="auth-art-body">
       <h2>Birkaç dakikada<br>hesabınızı açın.</h2>
       <p>Paketinizi seçin, işletmenizi anlatın; asistanınızı biz hazırlayalım. Numaranız değişmez.</p>
@@ -1262,7 +1264,7 @@
   </aside>
 
   <div class="auth-pane">
-    <a class="auth-back" href="#/">← Ana sayfa</a>
+    <a class="auth-back" href="/">← Ana sayfa</a>
     <div class="auth-box">
       <p class="auth-brand"><span class="brand-lamp" aria-hidden="true"></span><span data-brand>Açık Hat</span></p>
       <h1>Hesap oluşturun</h1>
@@ -1290,7 +1292,7 @@
         </div>
         <label class="check auth-consent">
           <input type="checkbox" name="consent" required>
-          <span><a href="#/yasal/kullanim-kosullari">Kullanım koşullarını</a> okudum, <a href="#/yasal/kvkk-aydinlatma-metni">KVKK aydınlatma metnini</a> anladım.</span>
+          <span><a href="/yasal/kullanim-kosullari">Kullanım koşullarını</a> okudum, <a href="/yasal/kvkk-aydinlatma-metni">KVKK aydınlatma metnini</a> anladım.</span>
         </label>
         <p class="auth-error" data-auth-error role="alert" hidden></p>
         <button class="btn btn-lg" type="submit" data-auth-submit>Üye ol</button>
@@ -1305,7 +1307,7 @@
         <p class="auth-error" data-verify-error role="alert" hidden></p>
       </div>
 
-      <p class="auth-switch">Zaten hesabınız var mı? <a href="#/giris">Giriş yapın</a></p>
+      <p class="auth-switch">Zaten hesabınız var mı? <a href="/giris">Giriş yapın</a></p>
     </div>
   </div>
 </section>
@@ -1398,7 +1400,7 @@
       </div>
       <p class="lead">Formunuz alındı (başvuru kodunuz <strong class="ref" data-onb-ref>—</strong>). Şimdi asistanın cevaplayacağı numarayı <strong>Netgsm'den kendi adınıza</strong> alın: 0850 işletme numarası ya da şehir kodlu sabit hat. Numarayı aldığınızda buraya yazıp gönderin; geri kalanını biz yaparız.</p>
       <div class="auth-actions">
-        <a class="btn" href="#/numara-al">Adım adım rehberi aç</a>
+        <a class="btn" href="/numara-al">Adım adım rehberi aç</a>
         <a class="btn btn-glass" href="https://www.netgsm.com.tr/uyelik" target="_blank" rel="noopener noreferrer">Netgsm başvuru sayfasını aç</a>
       </div>
       <p class="hint">Neden numarayı siz alıyorsunuz? Abonelik, kimlik ve vergi belgeleriyle sizin adınıza yapılır; belgeleriniz bize gelmez ve numara hizmeti bıraksanız da sizde kalır. Ayrıntı rehberde.</p>
@@ -1471,15 +1473,15 @@
       <ul class="foot-contact">
         <li><a href="mailto:support@acikhat.si">support@acikhat.si</a></li>
       </ul>
-      <a class="btn btn-lamp btn-small" href="#/uye-ol">Hemen başla</a>
+      <a class="btn btn-lamp btn-small" href="/uye-ol">Hemen başla</a>
     </div>
 
     <nav class="foot-col" aria-label="Ürün">
       <h2>Ürün</h2>
-      <a href="#/nasil">Nasıl çalışır</a>
-      <a href="#/ozellikler">Özellikler</a>
-      <a href="#/fiyatlandirma">Fiyatlandırma</a>
-      <a href="#/sss">Sık sorulanlar</a>
+      <a href="/nasil">Nasıl çalışır</a>
+      <a href="/ozellikler">Özellikler</a>
+      <a href="/fiyatlandirma">Fiyatlandırma</a>
+      <a href="/sss">Sık sorulanlar</a>
       <a href="/spa">Spa için</a>
       <a href="/klinik">Klinik için</a>
       <a href="/otel">Otel için</a>
@@ -1487,10 +1489,10 @@
 
     <nav class="foot-col" aria-label="Başlayın">
       <h2>Başlayın</h2>
-      <a href="#/uye-ol">Üye ol</a>
-      <a href="#/giris">Giriş yap</a>
-      <a href="#/rehber">Kurulum rehberi</a>
-      <a href="#/iletisim">İletişim</a>
+      <a href="/uye-ol">Üye ol</a>
+      <a href="/giris">Giriş yap</a>
+      <a href="/rehber">Kurulum rehberi</a>
+      <a href="/iletisim">İletişim</a>
     </nav>
 
     <nav class="foot-col" aria-label="Yasal">
@@ -1508,6 +1510,6 @@
   </div>
 </footer>
 
-<script src="/site.js?v=45" type="module"></script>
+<script src="/site.js?v=46" type="module"></script>
 </body>
 </html>

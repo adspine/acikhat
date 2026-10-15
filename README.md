@@ -37,7 +37,7 @@ Gereksinim: Node 26+ (Temporal ve `node:sqlite` yerleşik, TypeScript derlemeden
 | `scripts/connect-phone.ts` | Firmanın 0850 numarasını (SIP) ElevenLabs'e bağlar |
 
 ## Yeni firma eklemek (aynı sektör)
-1. Firma web sitesindeki kurulum formunu doldurur (`/#/kurulum`). Başvurular veritabanına düşer.
+1. Firma web sitesindeki kurulum formunu doldurur (`/kurulum`). Başvurular veritabanına düşer.
 2. `npm run onboarding` başvuruları listeler; `npm run onboarding -- <REF>` seçilen başvurudan `tenants/<id>.json` taslağı ve eksikler listesi üretir. Eksikleri firmayla telefonda tamamla.
 3. `npm run agent:push -- <id>` ajanı oluşturur. Çıkan `agent_id` değerini dosyadaki `agentIds` alanına ekle.
 4. `node --env-file=.env scripts/model-eval.ts <id>` ile sektör testlerini çalıştır. Hepsi geçmeden yayına alma.

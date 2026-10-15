@@ -1,4 +1,4 @@
-> **ARŞİV (terk edilen model).** Açık Hat artık numara havuzu tutmaz: her müşteri numarasını kendi Netgsm aboneliğinden alır (rehber sayfası `#/numara-al`, kontrol listesi `docs/musteri-numara-kontrol-listesi.md`). Bu belge, havuz modelinin hukuki ve sözleşmesel değerlendirmesini (Netgsm sözleşme maddeleri 4.3, 4.7, 4.10, 4.11) tarihçe için saklar. Havuz kodu kaldırıldı.
+> **ARŞİV (terk edilen model).** Açık Hat artık numara havuzu tutmaz: her müşteri numarasını kendi Netgsm aboneliğinden alır (rehber sayfası `/numara-al`, kontrol listesi `docs/musteri-numara-kontrol-listesi.md`). Bu belge, havuz modelinin hukuki ve sözleşmesel değerlendirmesini (Netgsm sözleşme maddeleri 4.3, 4.7, 4.10, 4.11) tarihçe için saklar. Havuz kodu kaldırıldı.
 
 # Hat havuzu: kurulum, işleyiş ve hukuki çerçeve
 

@@ -1,3 +1,4 @@
+import { go } from "/nav.js";
 // Kurulum formu: sektöre göre özelleşen, adım adım doldurulan başvuru.
 // Sektör tanımları sectors.js'te, bileşenler ui.js'te. Taslak yalnızca bu cihazda saklanır.
 import { SECTORS, SECTOR_ORDER, ICONS, LANGUAGES, HOLIDAYS, CALENDARS } from "/sectors.js?v=33";
@@ -706,8 +707,8 @@ form.addEventListener("submit", async (e) => {
       await api.refresh();
       // Firma kendiliğinden oluştuysa panel açık: numara adımı panelde rehberle tamamlanır
       if (json.tenantCreated) location.assign("/panel/numara");
-      else location.hash = "#/hesap";
-    } else location.hash = "#/tamam";
+      else go("/hesap");
+    } else go("/tamam");
   } catch {
     errorBox.textContent = "Bilgiler gönderilemedi. İnternet bağlantınızı kontrol edip tekrar deneyin; doldurduklarınız kaybolmadı.";
     errorBox.hidden = false;

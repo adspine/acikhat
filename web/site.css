@@ -896,3 +896,11 @@ select[hidden] { display: none !important; }
 .onb-line-form { display: grid; gap: 18px; padding-top: 20px; border-top: 1px solid var(--cizgi); }
 .onb-line-form h3 { font-size: 1.1rem; }
 .onb-need { padding: 16px 20px; border-radius: var(--r, 14px); background: color-mix(in srgb, var(--gol, #c9a24a) 14%, transparent); border: 1px solid color-mix(in srgb, var(--gol, #c9a24a) 45%, transparent); font-size: 0.98rem; line-height: 1.55; }
+
+/* Açılış: doğru görünüm hazır olana kadar içerik gizli, ortada sarı lamba */
+.boot-splash { display: none; }
+.booting .boot-splash { display: grid; place-items: center; position: fixed; inset: 0; z-index: 100; background: var(--sis); }
+.booting body > *:not(.boot-splash):not(script) { visibility: hidden; }
+.boot-lamp { width: 26px; height: 26px; animation: boot-ring 1.4s ease-out infinite; }
+@keyframes boot-ring { 0% { box-shadow: 0 0 0 0 rgb(228 161 27 / 0.55); } 100% { box-shadow: 0 0 0 26px rgb(228 161 27 / 0); } }
+@media (prefers-reduced-motion: reduce) { .boot-lamp { animation: none; } }

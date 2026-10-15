@@ -4,7 +4,7 @@ import { isCustomerLineNumber, normalizeLineNumber } from "../domain/phone.ts";
 import { mailLineReady } from "../notify/emails.ts";
 
 /**
- * Müşterinin asistan hattı. Numarayı müşteri kendi Netgsm aboneliğinden alır (rehber: #/numara-al); biz yalnızca
+ * Müşterinin asistan hattı. Numarayı müşteri kendi Netgsm aboneliğinden alır (rehber: /numara-al); biz yalnızca
  * tenant.phoneNumbers'a yazar ve ElevenLabs'te asistana bağlarız. Çağrı eşlemesinin tek kaynağı tenant.phoneNumbers'tır.
  */
 

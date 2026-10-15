@@ -95,7 +95,8 @@ describe("tarama ve adresler", () => {
     expect(page).toContain("<title>Gizlilik politikası | Açık Hat</title>");
     expect(page).toContain('<meta name="robots" content="index, follow">');
     expect(page).toMatch(/<h1>Gizlilik politikası<\/h1>/);
-    expect(page).not.toContain('href="#/yasal');
+    expect(page).not.toContain('href="#/');
+    expect(page).not.toContain('/#/');
     expect(page).toContain('href="/yasal/kvkk-aydinlatma-metni"');
     expect(page).not.toMatch(/ hidden>/);
     expect(page).not.toMatch(/kisaltici|26080379140|425 ?14 ?95/);
@@ -105,7 +106,7 @@ describe("tarama ve adresler", () => {
 
   it("bilinmeyen adres gerçek 404 döner (ana sayfayı 200 ile kopyalamaz), noindex ile", async () => {
     const { app } = makeApp(MONDAY_9AM);
-    for (const path of ["/olmayan-sayfa", "/fiyatlandirma", "/x/y/z.php"]) {
+    for (const path of ["/olmayan-sayfa", "/fiyat-yok", "/x/y/z.php"]) {
       const res = await app.request(path);
       expect(res.status, path).toBe(404);
       expect(await res.text(), path).toMatch(/noindex/);
@@ -144,5 +145,28 @@ describe("tarama ve adresler", () => {
     expect(res.headers.get("content-type")).toMatch(/image\/png/);
     const buf = Buffer.from(await res.arrayBuffer());
     expect([buf.readUInt32BE(16), buf.readUInt32BE(20)]).toEqual([1200, 630]);
+  });
+});
+
+describe("sayfa içi adresler (hash olmadan)", () => {
+  it("/hesap, /rehber, /numara-al gibi adresler siteyi açar; hesap adresleri indekslenmez, bilinmeyen adres 404", async () => {
+    const { app } = makeApp(MONDAY_9AM);
+    for (const path of ["/rehber", "/numara-al", "/fiyatlandirma", "/hesap", "/giris", "/uye-ol", "/kurulum", "/tamam"]) {
+      const res = await app.request(path);
+      expect(res.status, path).toBe(200);
+      expect(await res.text()).toContain('data-view="numara-al"');
+    }
+    for (const path of ["/hesap", "/giris", "/uye-ol", "/kurulum"]) expect((await app.request(path)).headers.get("x-robots-tag")).toMatch(/noindex/);
+    expect((await app.request("/rehber")).headers.get("x-robots-tag")).toBeNull();
+    expect((await app.request("/yok-boyle-bir-sayfa")).status).toBe(404);
+  });
+
+  it("ana sayfa ve betikler eski # adreslerini içermez; açılış betiği eski bağlantıları çevirir", async () => {
+    const { app } = makeApp(MONDAY_9AM);
+    const html = await (await app.request("/")).text();
+    expect(html).not.toMatch(/href="#\//);
+    expect(html).toContain('<script src="/boot.js"></script>');
+    const boot = await (await app.request("/boot.js")).text();
+    expect(boot).toContain('indexOf("#/")');
   });
 });

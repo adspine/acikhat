@@ -65,7 +65,7 @@ export function mailMembershipPaid(deps: Deps, user: { name: string; email: stri
     title: "Ödemeniz alındı, teşekkürler",
     lines: [`${user.name ? user.name + ", " : ""}${p.name} paketiniz için ödemeniz alındı. Sıradaki adım kurulum formu: işletmenizi anlatın, asistanınızı sizin için hazırlayalım.`, ...(isFreeTest(deps) ? ["Not: Sistem şu an test modunda; bu işlemde ücret alınmadı."] : [])],
     facts: [["Paket", p.name], ["Tutar", `${usd(p.priceUsd)} / ay (KDV dahil)`], ["Dahil yapay zekâ kullanımı", `${p.minutes} dk`]],
-    cta: { label: "Kurulumu sürdür", url: `${deps.baseUrl ?? ""}/#/hesap` },
+    cta: { label: "Kurulumu sürdür", url: `${deps.baseUrl ?? ""}/hesap` },
   });
   send(deps, admins(deps), `${testTag(deps)}Yeni üyelik ödemesi: ${p.name} (${user.email})`, {
     title: "Yeni üyelik ödemesi",
@@ -209,7 +209,7 @@ export function mailLineReady(deps: Deps, tenant: Tenant, number: string) {
       "Numarayı yalnızca yönlendirme hedefi olarak kullanıyorsanız: telefonunuzu açamadığınızda çağrıyı bu numaraya yönlendirin (koşullu yönlendirme önerilir). Yönlendirilen çağrıyı hattınızın operatörü ücretlendirebilir; güncel ücreti operatörünüzden öğrenin.",
     ],
     facts: [["Asistan numaranız", lineText(number)]],
-    cta: { label: "Rehberi aç", url: `${deps.baseUrl ?? ""}/#/numara-al` },
+    cta: { label: "Rehberi aç", url: `${deps.baseUrl ?? ""}/numara-al` },
   });
   send(deps, admins(deps), `Hat bağlandı: ${tenant.name}`, {
     title: "Numara asistana bağlandı",

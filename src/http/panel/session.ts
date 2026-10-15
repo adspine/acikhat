@@ -225,7 +225,7 @@ export function authRoutes(deps: Deps) {
           externalCustomerId: user.id,
           email: user.email,
           metadata: { kind: "membership", user_id: user.id, plan: o.plan },
-          successUrl: `${deps.baseUrl ?? ""}/?odeme=ok#/hesap`,
+          successUrl: `${deps.baseUrl ?? ""}/hesap?odeme=ok`,
           locale,
         });
         return c.json({ checkoutUrl: checkout.url });

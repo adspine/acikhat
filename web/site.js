@@ -12,7 +12,13 @@ for (const el of $$("[data-brand]")) el.textContent = BRAND;
 // Üst çubuk ve onboarding ekranı buna göre değişir.
 const account = { user: null, hasTenant: false, onboarding: null, paymentTestMode: false, ready: Promise.resolve() };
 const defaultAuthHtml = $(".top-auth").innerHTML;
-const goTo = (hash) => { location.hash = hash; };
+// Sayfa içi geçiş: adres temiz yol olur (/hesap), sayfa yeniden yüklenmez. Yönlendirmelerde (replace) geri tuşu tuzağa düşmez.
+function goTo(path, { replace = false } = {}) {
+  const url = path.startsWith("/") ? path : `/${path}`;
+  if (url !== location.pathname + location.search) history[replace ? "replaceState" : "pushState"](null, "", url);
+  route();
+}
+window.addEventListener("app:navigate", (e) => goTo(e.detail.path, { replace: !!e.detail.replace }));
 
 function loadAccount() {
   account.ready = (async () => {
@@ -63,7 +69,7 @@ function renderChrome() {
     </button>
     <div class="user-pop" role="menu">
       <p class="user-mail" data-u-mail></p>
-      <a role="menuitem" href="#/hesap">${account.hasTenant || step === 4 ? "Hesabım" : "Kuruluma devam et"}</a>
+      <a role="menuitem" href="/hesap">${account.hasTenant || step === 4 ? "Hesabım" : "Kuruluma devam et"}</a>
       ${account.hasTenant ? `<a role="menuitem" href="/panel/">${account.user.role === "agency" ? "Yönetim paneli" : "Panele git"}</a>` : ""}
       <button role="menuitem" type="button" data-logout>Çıkış yap</button>
     </div>
@@ -78,18 +84,18 @@ function renderChrome() {
 function guard(view) {
   const u = account.user;
   const step = account.onboarding?.step;
-  if ((view === "hesap" || view === "kurulum") && !u) return goTo("#/giris");
-  if ((view === "giris" || view === "uye-ol") && u) return goTo("#/hesap");
+  if ((view === "hesap" || view === "kurulum") && !u) return goTo("/giris", { replace: true });
+  if ((view === "giris" || view === "uye-ol") && u) return goTo("/hesap", { replace: true });
   if (u && !account.hasTenant) {
-    if (view === "kurulum" && step !== 2) return goTo("#/hesap");
-    if (view === "hesap" && step === 2) return goTo("#/kurulum");
+    if (view === "kurulum" && step !== 2) return goTo("/hesap", { replace: true });
+    if (view === "hesap" && step === 2) return goTo("/kurulum", { replace: true });
   }
   renderChrome();
   if (view === "hesap") {
     $('[data-view="hesap"]').hidden = false;
-    import("/onboarding.js?v=34").then((m) => m.showHesap(account, { refresh: loadAccount }));
+    import("/onboarding.js?v=35").then((m) => m.showHesap(account, { refresh: loadAccount }));
   }
-  if (view === "giris" || view === "uye-ol") import("/auth.js?v=34").then((m) => m.mountAuth(view));
+  if (view === "giris" || view === "uye-ol") import("/auth.js?v=35").then((m) => m.mountAuth(view));
   if (view === "kurulum" && u) {
     // Üyenin adı ve e-postası forma hazır gelsin (boşsa)
     for (const [name, value] of [["contact.person", u.name], ["contact.email", u.email]]) {
@@ -119,15 +125,15 @@ document.addEventListener("click", async (e) => {
   }
   if (e.target.closest("[data-logout]")) {
     await fetch("/api/auth/logout", { method: "POST", headers: { "x-panel": "1" }, credentials: "same-origin" }).catch(() => {});
-    import("/auth.js?v=34").then((m) => m.signOutFirebase()).catch(() => {});
+    import("/auth.js?v=35").then((m) => m.signOutFirebase()).catch(() => {});
     Object.assign(account, { user: null, hasTenant: false, onboarding: null });
     renderChrome();
-    goTo("#/");
+    goTo("/");
   }
 });
 
 /* ======================= Yönlendirme ======================= */
-// Ana sayfadaki bölümler de kendi adresiyle açılır (#/fiyatlandirma gibi) ve o bölüme kayar.
+// Ana sayfadaki bölümler de kendi adresiyle açılır (/fiyatlandirma gibi) ve o bölüme kayar.
 const sections = ["nasil", "ozellikler", "fiyatlandirma", "sss", "iletisim"];
 const routes = { "": "home", kurulum: "kurulum", rehber: "rehber", "numara-al": "numara-al", tamam: "tamam", yasal: "yasal", giris: "giris", "uye-ol": "uye-ol", hesap: "hesap", ...Object.fromEntries(sections.map((k) => [k, "home"])) };
 const titles = {
@@ -145,7 +151,7 @@ const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)");
 let currentView = null;
 
 function route() {
-  const parts = location.hash.replace(/^#\/?/, "").split("/");
+  const parts = location.pathname.replace(/^\/+|\/+$/g, "").split("/");
   const key = parts[0];
   const view = routes[key] ?? "home";
   const changed = view !== currentView;
@@ -157,7 +163,7 @@ function route() {
   }
   document.title = titles[view];
   if (view === "yasal") {
-    // #/yasal/<sayfa>: ilgili metin açılır, bilinmeyen ad ilk metne düşer
+    // /yasal/<sayfa>: ilgili metin açılır, bilinmeyen ad ilk metne düşer
     const arts = $$("[data-legal]");
     const art = arts.find((x) => x.dataset.legal === parts[1]) ?? arts[0];
     for (const x of arts) x.hidden = x !== art;
@@ -177,7 +183,14 @@ function route() {
   // Oturumla ilgili sayfalarda durum her seferinde sunucudan tazelenir
   const fresh = ["hesap", "kurulum", "giris", "uye-ol"].includes(view);
   if (view === "hesap") $('[data-view="hesap"]').hidden = true;
-  (fresh ? loadAccount() : account.ready).then(() => { if (currentView === view) guard(view); });
+  // Giriş gerektiren görünümlerde doğru ekran hazır olana kadar açılış lambası kalır; diğerlerinde hemen açılır
+  if (!fresh) document.documentElement.classList.remove("booting");
+  (fresh ? loadAccount() : account.ready).then(() => {
+    if (currentView !== view) return;
+    guard(view);
+    // guard başka sayfaya yönlendirdiyse lambayı o sayfanın kendi yüklemesi kaldırır
+    if (currentView === view) document.documentElement.classList.remove("booting");
+  });
   spy();
   effects.refresh();
 }
@@ -460,7 +473,7 @@ for (const tabs of $$("[data-tabs]")) {
     errorEl.textContent = msg;
     if (msg && withSignup) {
       const a = document.createElement("a");
-      a.href = "#/uye-ol";
+      a.href = "/uye-ol";
       a.textContent = "Hemen başlayın";
       errorEl.append(" ", a);
     }
@@ -580,6 +593,19 @@ for (const tabs of $$("[data-tabs]")) {
   });
 })();
 
-window.addEventListener("hashchange", route);
+window.addEventListener("popstate", route);
+// Site içi bağlantılar sayfayı yeniden yüklemeden açılır; yasal metinler, panel ve dış adresler normal gider
+document.addEventListener("click", (e) => {
+  if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+  const a = e.target.closest("a[href]");
+  if (!a || a.target === "_blank" || a.hasAttribute("download")) return;
+  const url = new URL(a.href, location.href);
+  if (url.origin !== location.origin) return;
+  const key = url.pathname.replace(/^\/+|\/+$/g, "").split("/")[0];
+  if (key === "yasal" || (key !== "" && !(key in routes))) return;
+  e.preventDefault();
+  goTo(url.pathname + url.search);
+  if (url.hash) document.getElementById(url.hash.slice(1))?.scrollIntoView();
+});
 loadAccount();
 route();

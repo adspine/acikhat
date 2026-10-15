@@ -181,7 +181,7 @@ function NoTenantPage() {
     <AuthLayout title="Hesabınız hazır">
       <div className="stack">
         <p className="muted">Hesabınıza henüz bir firma bağlanmadı. Paketinizi seçip kurulum formunu doldurduktan sonra asistanınız hazırlanır ve panel açılır.</p>
-        <a className="btn btn-primary btn-md" href="/#/hesap">Sonraki adımlar</a>
+        <a className="btn btn-primary btn-md" href="/hesap">Sonraki adımlar</a>
         <Button type="button" variant="quiet" onClick={out}>Çıkış yap</Button>
       </div>
     </AuthLayout>
@@ -210,7 +210,7 @@ function usePasswordLink() {
 /** Oturum yoksa kullanıcı sitenin giriş sayfasına yönlendirilir (tek giriş yeri) */
 function RedirectToLogin() {
   useEffect(() => {
-    location.replace("/#/giris");
+    location.replace("/giris");
   }, []);
   return <Loading label="Giriş sayfasına yönlendiriliyor" />;
 }
