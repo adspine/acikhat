@@ -21,6 +21,8 @@ interface SubmissionItem {
   reference: string; businessName: string; sector: string; contactPhone: string; status: Status; createdAt: number;
   tenantId: string | null; plan: PlanId | null; paid: boolean; member: { email: string; name: string | null } | null; note: string | null;
 }
+/** Firma oluşturulurken hat atamasının sonucu */
+interface LineResult { number?: string; connected?: boolean; note?: string; reason?: string; error?: string }
 interface SubmissionDetail extends SubmissionItem {
   payload: Record<string, any>;
   checklist: string[];
@@ -185,7 +187,8 @@ function SubmissionDrawer({ reference, onClose }: { reference: string; onClose: 
   const [note, setNote] = useState("");
   const [busy, setBusy] = useState(false);
   const [loadedRef, setLoadedRef] = useState("");
-  const [created, setCreated] = useState<{ tenantId: string; checklist: string[] } | null>(null);
+  const [created, setCreated] = useState<{ tenantId: string; checklist: string[]; line?: LineResult | undefined } | null>(null);
+  const [phoneNumber, setPhoneNumber] = useState("");
   const [editing, setEditing] = useState(false);
   const [json, setJson] = useState("");
   const [jsonErrors, setJsonErrors] = useState<string[]>([]);
@@ -201,6 +204,7 @@ function SubmissionDrawer({ reference, onClose }: { reference: string; onClose: 
     setStatus(d.status);
     setNote(d.note ?? "");
     setCreated(null);
+    setPhoneNumber("");
     setJson(JSON.stringify(d.payload, null, 2));
     setJsonErrors([]);
     setEditing(false);
@@ -246,8 +250,8 @@ function SubmissionDrawer({ reference, onClose }: { reference: string; onClose: 
   const createTenant = async () => {
     setBusy(true);
     try {
-      const r = await api<{ tenantId: string; linkedMember: boolean; checklist: string[] }>(`/api/admin/submissions/${reference}/create-tenant`, { method: "POST" });
-      setCreated({ tenantId: r.tenantId, checklist: r.checklist });
+      const r = await api<{ tenantId: string; linkedMember: boolean; checklist: string[]; line?: LineResult }>(`/api/admin/submissions/${reference}/create-tenant`, { method: "POST", body: phoneNumber.trim() ? { phoneNumber: phoneNumber.trim() } : {} });
+      setCreated({ tenantId: r.tenantId, checklist: r.checklist, line: r.line });
       toast(r.linkedMember ? "Firma oluşturuldu, üye firmaya bağlandı" : "Firma oluşturuldu (başvuru üyesiz; kullanıcıyı elle bağlayın)");
       refresh();
     } catch (e) {
@@ -279,6 +283,11 @@ function SubmissionDrawer({ reference, onClose }: { reference: string; onClose: 
               </div>
             </div>
             <Field label="Not (yalnızca yöneticiler görür)">{(id) => <Textarea id={id} rows={2} value={note} onChange={(e) => setNote(e.target.value)} />}</Field>
+            {!d.tenantId && (
+              <Field label="Telefon hattı (isteğe bağlı)" hint="Boş bırakırsanız ödemesi doğrulanmış üyeye Hat havuzundan numara otomatik atanır. Müşterinin kendi aldığı 0850 numarasını ya da havuz dışı bir numarayı yazmak için doldurun.">
+                {(id, dd) => <Input id={id} aria-describedby={dd} type="tel" placeholder="0850 000 00 00" value={phoneNumber} onChange={(e) => setPhoneNumber(e.target.value)} />}
+              </Field>
+            )}
             <div className="row-actions">
               <Button variant="quiet" onClick={save} busy={busy}>Durumu kaydet</Button>
               {d.tenantId ? (
@@ -290,6 +299,11 @@ function SubmissionDrawer({ reference, onClose }: { reference: string; onClose: 
             {created && (
               <div className="admin-created" role="status">
                 <p><strong>Firma oluşturuldu:</strong> {created.tenantId}. Üye artık kendi panosuna girebilir; ayarları kontrol edip yayınlayın.</p>
+                {created.line?.number ? (
+                  <p><strong>Telefon hattı:</strong> {showPhone(created.line.number)}{created.line.connected ? " atandı ve asistana bağlandı." : ` atandı. ${created.line.note ?? "Asistan kurulunca asistana bağlanır."}`}</p>
+                ) : created.line?.error ? (
+                  <p className="admin-over"><strong>Telefon hattı atanmadı:</strong> {created.line.error}{created.line.reason === "empty" ? " Hat havuzuna numara eklenince bu firmaya kendiliğinden atanır." : ""}</p>
+                ) : null}
               </div>
             )}
           </div>

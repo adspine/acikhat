@@ -1,7 +1,7 @@
 import type { Deps } from "./deps.ts";
 import { POOL } from "../domain/phone-pool.ts";
 import { TenantSchema, type Tenant } from "../domain/tenant.ts";
-import { PhonePool } from "../store/phone-pool.ts";
+import { PhonePool, isTestNumber, normalizePoolNumber } from "../store/phone-pool.ts";
 import { mailLineReady, mailPoolEmpty, mailPoolLow, mailPoolRenewal } from "../notify/emails.ts";
 
 /**
@@ -68,6 +68,29 @@ export async function connectTenantLine(deps: Deps, tenant: Tenant): Promise<{ c
   return { connected: true };
 }
 
+export type ManualNumberCheck = { ok: true; number: string } | { ok: false; status: 409 | 422; error: string };
+
+/**
+ * Yöneticinin elle yazdığı numaranın uygunluğu: geçerli mi, başka firmada mı, havuzda karantinada/emekli/başka firmaya atanmış mı.
+ * tenantId: numaranın yazılacağı firma (yeni firmada henüz yok).
+ */
+export function checkManualNumber(deps: Deps, raw: string, tenantId?: string): ManualNumberCheck {
+  const n = normalizePoolNumber(raw);
+  if (!n) return { ok: false, status: 422, error: `Geçersiz numara: ${raw}` };
+  // Deneme numarası yalnızca zaten o firmaya atanmışsa kalabilir (alanı değiştirmeden kaydetmek bozulmasın); gerçek numara olarak yazılamaz
+  if (isTestNumber(n)) {
+    const mine = poolOf(deps).get(n);
+    if (!(mine?.kind === "test" && mine.tenantId === tenantId)) return { ok: false, status: 422, error: `${n} deneme numarası aralığında; gerçek numara olarak yazılamaz` };
+    return { ok: true, number: n };
+  }
+  const other = deps.tenants.all().find((t) => t.id !== tenantId && t.phoneNumbers.includes(n));
+  if (other) return { ok: false, status: 409, error: `${n} numarası ${other.name} firmasına atanmış` };
+  const row = poolOf(deps).get(n);
+  if (row && (row.status === "quarantine" || row.status === "retired")) return { ok: false, status: 409, error: `${n} numarası havuzda ${row.status === "quarantine" ? "karantinada" : "emekli"}; atanamaz` };
+  if (row?.status === "assigned" && row.tenantId !== tenantId) return { ok: false, status: 409, error: `${n} numarası havuzda başka bir firmaya atanmış` };
+  return { ok: true, number: n };
+}
+
 export type AssignResult =
   | { ok: true; number: string; created: boolean; connected: boolean; note?: string }
   | { ok: false; reason: "unpaid" | "has_number" | "empty" | "no_tenant"; message: string };
@@ -99,6 +122,21 @@ export async function assignLine(deps: Deps, tenantIn: Tenant, opts: { requirePa
   const link = await connectTenantLine(deps, withNumber);
   if (!opts.test) checkPoolStock(deps);
   return { ok: true, number: picked.number, created: picked.created, connected: link.connected, ...(link.error && { note: link.error }) };
+}
+
+/**
+ * Firmaya yöneticinin yazdığı belirli bir numarayı verir (önce checkManualNumber ile denetlenmiş olmalı).
+ * Numara havuzda müsaitse "atanmış" olarak işaretlenir; havuzda yoksa elle girilmiş numara olarak kalır (müşterinin kendi numarası dahil).
+ */
+export async function assignManualLine(deps: Deps, tenantIn: Tenant, number: string, actorId: string | null): Promise<AssignResult> {
+  const tenant = deps.tenants.get(tenantIn.id);
+  if (!tenant) return { ok: false, reason: "no_tenant", message: "Firma bulunamadı" };
+  const withNumber = tenant.phoneNumbers.includes(number) ? tenant : writePhones(deps, tenant, [...tenant.phoneNumbers, number]);
+  poolOf(deps).markAssigned(number, tenant.id, nowMs(deps));
+  deps.store.audit({ tenantId: tenant.id, userId: actorId, action: "pool.assign", target: number, detail: { manual: true } });
+  const link = await connectTenantLine(deps, withNumber);
+  checkPoolStock(deps);
+  return { ok: true, number, created: true, connected: link.connected, ...(link.error && { note: link.error }) };
 }
 
 /** Hat bekleyen tüm firmalara, numara yettiği kadar atar (havuza numara eklenince ve günlük bakımda çalışır) */

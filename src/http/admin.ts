@@ -13,7 +13,7 @@ import { sampleUrl } from "./panel/settings.ts";
 import { loadVertical } from "../domain/vertical.ts";
 import { DemoCalls } from "../store/demo-calls.ts";
 import { POOL } from "../domain/phone-pool.ts";
-import { assignLine, assignWaiting, checkPoolStock, connectTenantLine, poolOf, releaseLine, syncPoolWithTenantNumbers, waitingTenants } from "./phone-line.ts";
+import { assignLine, assignManualLine, assignWaiting, checkManualNumber, checkPoolStock, connectTenantLine, poolOf, releaseLine, syncPoolWithTenantNumbers, waitingTenants } from "./phone-line.ts";
 
 /** Başlayıp bu kadar süre sonuç gelmeyen test görüşmesi "sonuç alınamadı" sayılır (en uzun görüşme 2 dk) */
 const STALE_DEMO_MS = 6 * 60_000;
@@ -158,6 +158,14 @@ export function adminRoutes(deps: Deps) {
     if (row.tenant_id) return c.json({ error: "Bu başvuru için firma zaten oluşturuldu" }, 409);
     const form = OnboardingSchema.safeParse(JSON.parse(row.payload_json));
     if (!form.success) return c.json({ error: "Başvuru verisi okunamadı" }, 422);
+    // İsteğe bağlı elle numara: dolu ise havuzdan otomatik atama yapılmaz. Firma oluşmadan önce denetlenir, hatalıysa hiçbir şey oluşmaz.
+    const body = z.object({ phoneNumber: z.string().trim().max(32).optional() }).safeParse(await c.req.json().catch(() => ({})));
+    let manual: { number: string } | null = null;
+    if (body.success && body.data.phoneNumber) {
+      const chk = checkManualNumber(deps, body.data.phoneNumber);
+      if (!chk.ok) return c.json({ error: chk.error }, chk.status);
+      manual = { number: chk.number };
+    }
     const { parsed, todo } = buildTenantDraft(form.data);
     if (!parsed) return c.json({ error: "Firma ayarı doğrulamadan geçmedi", checklist: todo }, 422);
 
@@ -174,7 +182,7 @@ export function adminRoutes(deps: Deps) {
     mailTenantReady(deps, tenant);
     db.prepare("UPDATE onboarding_submissions SET status = 'approved', tenant_id = ? WHERE reference = ?").run(id, ref);
     // Ödemesi doğrulanmış üyenin firmasına hat havuzundan numara atanır (asistan kurulunca ElevenLabs'e bağlanır)
-    const line = await assignLine(deps, tenant, { requirePaid: true, actorId: c.get("admin").id });
+    const line = manual ? await assignManualLine(deps, tenant, manual.number, c.get("admin").id) : await assignLine(deps, tenant, { requirePaid: true, actorId: c.get("admin").id });
     return c.json({
       ok: true, tenantId: id, linkedMember: !!row.user_id, checklist: todo,
       line: line.ok ? { number: line.number, connected: line.connected, ...(line.note && { note: line.note }) } : { reason: line.reason, error: line.message },
@@ -325,15 +333,9 @@ export function adminRoutes(deps: Deps) {
     if (p.phoneNumbers) {
       phones = [];
       for (const raw of p.phoneNumbers.map((x) => x.trim()).filter(Boolean)) {
-        const compact = raw.replace(/\s/g, "");
-        const n = /^\+\d{10,15}$/.test(compact) ? compact : normalizeTrPhone(raw);
-        if (!n) return c.json({ error: `Geçersiz numara: ${raw}` }, 422);
-        const other = deps.tenants.all().find((t) => t.id !== id && t.phoneNumbers.includes(n));
-        if (other) return c.json({ error: `${n} numarası ${other.name} firmasına atanmış` }, 409);
-        const inPool = poolOf(deps).get(n);
-        if (inPool && (inPool.status === "quarantine" || inPool.status === "retired")) return c.json({ error: `${n} numarası havuzda ${inPool.status === "quarantine" ? "karantinada" : "emekli"}; atanamaz` }, 409);
-        if (inPool?.status === "assigned" && inPool.tenantId !== id) return c.json({ error: `${n} numarası havuzda başka bir firmaya atanmış` }, 409);
-        if (!phones.includes(n)) phones.push(n);
+        const chk = checkManualNumber(deps, raw, id);
+        if (!chk.ok) return c.json({ error: chk.error }, chk.status);
+        if (!phones.includes(chk.number)) phones.push(chk.number);
       }
     }
 

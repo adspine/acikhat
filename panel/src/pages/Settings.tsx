@@ -456,6 +456,47 @@ const showPhone = (e164: string) => {
 };
 
 /**
+ * Müşterinin kendi hattında kuracağı yönlendirme kodları, numarası yazılmış olarak. Önerilen: koşullu (meşgul, cevapsız, kapalı).
+ * Kod biçimleri Turkcell ve Türk Telekom sayfalarındandır; numara biçimi operatörlere göre değişebilir (operatör testi sürüyor).
+ */
+function ForwardingCodes({ number }: { number: string }) {
+  const toast = useToast();
+  if (number.startsWith("+90850999")) return <p className="muted small">Bu bir deneme numarasıdır, gerçek aramaları karşılamaz.</p>;
+  const rows: [string, string][] = [
+    ["Meşgulken", `**67*${number}#`],
+    ["15 saniye cevap verilmezse", `**61*${number}**15#`],
+    ["Telefon kapalı ya da kapsama dışındayken", `**62*${number}#`],
+  ];
+  const copy = async (code: string) => {
+    try {
+      await navigator.clipboard.writeText(code);
+      toast("Kod kopyalandı. Telefonunuzun arama ekranına yapıştırıp arayın.");
+    } catch {
+      toast("Kopyalanamadı; kodu elle yazın", "error");
+    }
+  };
+  return (
+    <details className="phone-codes">
+      <summary>Yönlendirme kodlarım</summary>
+      <p className="muted small">Önerilen kurulum <strong>koşullu</strong> yönlendirmedir: telefonu siz açarsınız, yalnızca açamadığınız çağrıları asistan karşılar. Aşağıdaki kodlardan birini <strong>kendi işletme telefonunuzdan</strong> arama ekranına yazıp arayın. Önce asistanı deneyin.</p>
+      <table className="data-table">
+        <tbody>
+          {rows.map(([label, code]) => (
+            <tr key={label}>
+              <td>{label}</td>
+              <td><code>{code}</code></td>
+              <td className="cell-actions"><Button variant="quiet" size="sm" onClick={() => void copy(code)}>Kopyala</Button></td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      <p className="muted small">İptal etmek için <code>##002#</code> tuşlayıp arayın. Kod kabul edilmezse numarayı <code>{`0${number.replace("+90", "")}`}</code> biçiminde yazın.</p>
+      <p className="muted small">Yönlendirilen çağrıyı operatörünüz ücretlendirebilir (örneğin Turkcell yönlendirme servis ücreti alıyor). Güncel ücreti operatörünüzden öğrenin.</p>
+    </details>
+  );
+}
+
+/**
  * Asistanın 0850 numarası. Numara sunucuda korunan alandır: yalnızca yönetici değiştirebilir,
  * kaydedince ElevenLabs'te asistana da bağlanır. Firma sahibi yalnızca görür.
  */
@@ -492,7 +533,10 @@ function AssistantNumber({ tenantId, numbers, canEdit, onSaved }: { tenantId: st
           <div className="row-actions"><Button variant="quiet" onClick={() => void save()} busy={busy}>Numarayı kaydet ve bağla</Button></div>
         </>
       ) : numbers.length ? (
-        <p className="phone-number">{numbers.map(showPhone).join(" · ")}</p>
+        <>
+          <p className="phone-number">{numbers.map(showPhone).join(" · ")}</p>
+          <ForwardingCodes number={numbers[0]!} />
+        </>
       ) : (
         <p className="muted">Henüz bağlanmadı. Hat açıldığında numara burada görünür.</p>
       )}

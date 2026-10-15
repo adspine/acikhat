@@ -253,6 +253,62 @@ describe("hat havuzu: yönetici API'si ve otomatik atama", () => {
   });
 });
 
+describe("firma oluştururken elle numara girişi", () => {
+  it("havuzda müsait olan numara girilirse o numara atanır (otomatik atama yapılmaz), havuz dışı numara elle kalır", async () => {
+    const t = await setup();
+    await t.admin("POST", "/api/admin/phone-pool", { numbers: `${N(1)}\n${N(2)}` });
+    const ref = await t.member("m1@ornek.com", "Birinci Elle", true);
+    const r = await t.admin("POST", `/api/admin/submissions/${ref}/create-tenant`, { phoneNumber: "0850 300 00 02" });
+    expect(r).toMatchObject({ status: 200, body: { line: { number: N(2) } } });
+    expect(t.deps.tenants.get("birinci-elle")!.phoneNumbers).toEqual([N(2)]);
+    const pool = (await t.admin("GET", "/api/admin/phone-pool")).body;
+    expect(pool.numbers.find((x: any) => x.number === N(2))).toMatchObject({ status: "assigned", tenantId: "birinci-elle" });
+    expect(pool.numbers.find((x: any) => x.number === N(1))).toMatchObject({ status: "available" }); // sıradaki numaraya dokunulmadı
+
+    // havuz dışı (örneğin müşterinin kendi aldığı) numara: havuz stoğunu tüketmez
+    const ref2 = await t.member("m2@ornek.com", "Ikinci Elle", true);
+    const r2 = await t.admin("POST", `/api/admin/submissions/${ref2}/create-tenant`, { phoneNumber: "+908507770011" });
+    expect(r2.body.line.number).toBe("+908507770011");
+    expect((await t.admin("GET", "/api/admin/phone-pool")).body.stats.available).toBe(1);
+  });
+
+  it("geçersiz, başka firmada olan ya da karantinadaki numarada hiçbir şey oluşmaz", async () => {
+    const t = await setup();
+    await t.admin("POST", "/api/admin/phone-pool", { numbers: `${N(1)}\n${N(2)}` });
+    const ref1 = await t.member("n1@ornek.com", "Sahip Firma", true);
+    await t.admin("POST", `/api/admin/submissions/${ref1}/create-tenant`, { phoneNumber: N(1) });
+    await t.admin("POST", `/api/admin/phone-pool/${encodeURIComponent(N(1))}/release`);
+    await t.admin("PATCH", "/api/admin/tenants/sahip-firma", { phoneNumbers: ["+908507770022"] });
+
+    const ref = await t.member("n2@ornek.com", "Yeni Firma", true);
+    const bad = await t.admin("POST", `/api/admin/submissions/${ref}/create-tenant`, { phoneNumber: "abc" });
+    expect(bad.status).toBe(422);
+    const used = await t.admin("POST", `/api/admin/submissions/${ref}/create-tenant`, { phoneNumber: "+908507770022" });
+    expect(used).toMatchObject({ status: 409 });
+    expect(used.body.error).toMatch(/Sahip Firma/);
+    const quar = await t.admin("POST", `/api/admin/submissions/${ref}/create-tenant`, { phoneNumber: N(1) });
+    expect(quar.status).toBe(409);
+    expect(quar.body.error).toMatch(/karantinada/);
+    // üç denemenin hiçbirinde firma oluşmadı, başvuru hâlâ beklemede
+    expect(t.deps.tenants.get("yeni-firma")).toBeUndefined();
+    const ok = await t.admin("POST", `/api/admin/submissions/${ref}/create-tenant`); // numarasız: normal akış
+    expect(ok.status).toBe(200);
+  });
+
+  it("deneme numarası olan firmada numara alanını değiştirmeden kaydetmek çalışır, başkasına deneme numarası yazılamaz", async () => {
+    const t = await setup();
+    const ref = await t.member("o1@ornek.com", "Deneme Sahibi", true);
+    await t.admin("POST", `/api/admin/submissions/${ref}/create-tenant`);
+    const give = await t.admin("POST", "/api/admin/tenants/deneme-sahibi/assign-number", { test: true });
+    const number = give.body.number as string;
+    expect((await t.admin("PATCH", "/api/admin/tenants/deneme-sahibi", { phoneNumbers: [number] })).status).toBe(200);
+    const ref2 = await t.member("o2@ornek.com", "Baska Firma", true);
+    const other = await t.admin("POST", `/api/admin/submissions/${ref2}/create-tenant`, { phoneNumber: number });
+    expect(other.status).toBe(422);
+    expect((await t.admin("POST", `/api/admin/submissions/${ref2}/create-tenant`, { phoneNumber: "+908509990099" })).status).toBe(422);
+  });
+});
+
 describe("deneme numaraları (gerçek numara almadan akışı denemek için)", () => {
   it("sıralı sanal numara verir, firmaya tekrar çağrılınca aynısını döner, serbest bırakınca silinir, stokta sayılmaz", () => {
     const pool = new PhonePool(new Store(":memory:").db);

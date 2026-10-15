@@ -14,6 +14,7 @@ Netgsm'de numara siparişi için API uç noktası bulamadık; alım elle yapıl�
 - Firma oluşturulurken (Başvurular > Firma oluştur), üyenin ödemesi doğrulanmışsa havuzdan en eski müsait numara atanır.
 - Asistan kurulunca numara ElevenLabs'e bağlanır ve müşteriye "hattınız hazır" e-postası gider (numara başına bir kez).
 - Havuz boşsa firma "hat bekliyor" kalır, yöneticiye e-posta gider; numara eklenince bekleyen firmaya kendiliğinden atanır.
+- **Numarayı elle girmek için:** Başvurular > başvuruyu aç > **"Telefon hattı (isteğe bağlı)"** alanı. Doluysa havuzdan otomatik atama yapılmaz; havuzda müsaitse o numara atanır, havuz dışıysa (örneğin müşterinin kendi aldığı numara) elle kalır. Hatalı, başka firmada ya da karantinada olan numarada firma oluşmaz. Firma oluşunca sonuç (atandı, bağlandı, havuz boş) aynı ekranda görünür. Sonradan değiştirmek için Müşteriler > Yönet.
 - Ödemesi doğrulanmamış üyeye otomatik atama yapılmaz. Yönetici, Müşteriler > ⋮ > "Havuzdan hat ata" ile elle verebilir.
 - Müsait numara 2'ye düşünce yöneticiye (günde en çok bir) uyarı gider. Her zaman en az 3 yedek tutun.
 
