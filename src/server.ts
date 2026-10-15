@@ -20,7 +20,6 @@ import { pushAgent } from "./agent/sync.ts";
 import { connectPhoneNumbers, disconnectPhoneNumber } from "./agent/phone.ts";
 import { startDemoCall } from "./agent/demo-call.ts";
 import { purgeExpired } from "./store/retention.ts";
-import { poolMaintenance } from "./http/phone-line.ts";
 import { polarFromEnv } from "./integrations/polar.ts";
 import { DemoCalls } from "./store/demo-calls.ts";
 import { analyzeCall, type PostCallData } from "./domain/call-outcome.ts";
@@ -98,13 +97,6 @@ const deps: Deps = {
 };
 const app = createApp(deps);
 
-// Hat havuzu bakımı (açılışta ve 6 saatte bir): karantinası biten numaralar müsait olur, yenileme ve stok uyarıları, hat bekleyen firmalara atama
-const runPoolMaintenance = () =>
-  poolMaintenance(deps)
-    .then((r) => (r.promoted || r.renewalReminders || r.assigned) && console.info("[hat-havuzu] bakım", r))
-    .catch((err: Error) => console.error(`[hat-havuzu] bakım başarısız: ${err.message}`));
-void runPoolMaintenance();
-setInterval(() => void runPoolMaintenance(), 6 * 3_600_000).unref();
 
 const port = Number(process.env.PORT ?? 8787);
 serve({ fetch: app.fetch, port }, () => console.info(`Resepsiyonist backend http://localhost:${port}`));

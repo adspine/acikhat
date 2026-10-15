@@ -43,7 +43,7 @@ function renderChrome() {
       const n = Number(li.dataset.onbStep);
       li.classList.toggle("is-done", n < step);
       li.classList.toggle("is-current", n === step);
-      li.classList.toggle("is-working", n === 3 && step === 3);
+      li.classList.toggle("is-working", n === 4 && step === 4);
     }
   }
 
@@ -63,7 +63,7 @@ function renderChrome() {
     </button>
     <div class="user-pop" role="menu">
       <p class="user-mail" data-u-mail></p>
-      <a role="menuitem" href="#/hesap">${account.hasTenant || step === 3 ? "Hesabım" : "Kuruluma devam et"}</a>
+      <a role="menuitem" href="#/hesap">${account.hasTenant || step === 4 ? "Hesabım" : "Kuruluma devam et"}</a>
       ${account.hasTenant ? `<a role="menuitem" href="/panel/">${account.user.role === "agency" ? "Yönetim paneli" : "Panele git"}</a>` : ""}
       <button role="menuitem" type="button" data-logout>Çıkış yap</button>
     </div>
@@ -87,7 +87,7 @@ function guard(view) {
   renderChrome();
   if (view === "hesap") {
     $('[data-view="hesap"]').hidden = false;
-    import("/onboarding.js?v=33").then((m) => m.showHesap(account, { refresh: loadAccount }));
+    import("/onboarding.js?v=34").then((m) => m.showHesap(account, { refresh: loadAccount }));
   }
   if (view === "giris" || view === "uye-ol") import("/auth.js?v=34").then((m) => m.mountAuth(view));
   if (view === "kurulum" && u) {
@@ -129,11 +129,12 @@ document.addEventListener("click", async (e) => {
 /* ======================= Yönlendirme ======================= */
 // Ana sayfadaki bölümler de kendi adresiyle açılır (#/fiyatlandirma gibi) ve o bölüme kayar.
 const sections = ["nasil", "ozellikler", "fiyatlandirma", "sss", "iletisim"];
-const routes = { "": "home", kurulum: "kurulum", rehber: "rehber", tamam: "tamam", yasal: "yasal", giris: "giris", "uye-ol": "uye-ol", hesap: "hesap", ...Object.fromEntries(sections.map((k) => [k, "home"])) };
+const routes = { "": "home", kurulum: "kurulum", rehber: "rehber", "numara-al": "numara-al", tamam: "tamam", yasal: "yasal", giris: "giris", "uye-ol": "uye-ol", hesap: "hesap", ...Object.fromEntries(sections.map((k) => [k, "home"])) };
 const titles = {
   home: "Yapay Zeka Telefon Asistanı, Sesli Resepsiyonist | Açık Hat",
   kurulum: `Kurulum formu — ${BRAND}`,
   rehber: `Kurulum rehberi — ${BRAND}`,
+  "numara-al": `Netgsm'den numara alma rehberi — ${BRAND}`,
   tamam: `Bilgileriniz alındı — ${BRAND}`,
   yasal: `Yasal — ${BRAND}`,
   giris: `Giriş yap — ${BRAND}`,
@@ -406,7 +407,7 @@ for (const d of $$(".faq details")) {
 /* ======================= Kurulum formu ======================= */
 // Form büyük olduğu için yalnızca açılınca yüklenir (web/form.js)
 function openForm() {
-  import("/form.js?v=33").then((m) => {
+  import("/form.js?v=34").then((m) => {
     m.initForm({ isMember: () => !!account.user && !account.hasTenant, refresh: loadAccount });
     m.showForm();
   });

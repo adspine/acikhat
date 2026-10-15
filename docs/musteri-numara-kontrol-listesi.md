@@ -1,15 +1,12 @@
-# Kendi 0850 numaranızı alın ve Açık Hat asistanına bağlayın
+# Asistan numaranızı Netgsm'den alın (kontrol listesi)
 
-*Taslak. Netgsm ekranlarındaki alan adları ve belge listesi değişebilir; bu belgeyi müşteriye vermeden önce bir kez kendiniz (ya da deneme hesabıyla) adım adım deneyin. Doğrulanmamış yerler `[DOĞRULA]` ile işaretlidir.*
+*Bu belge, sitedeki `#/numara-al` rehberinin yazdırılabilir kontrol listesidir; ana kaynak site sayfasıdır. Netgsm ekranlarındaki alan adları, belge listesi, süre ve ücret Netgsm tarafından değiştirilebilir. Netgsm'in yayımlanmış sayfalarında belirtilmeyen yerler `[BELİRSİZ]` ile işaretlidir.*
 
-## 1. Bu yol kime uygun?
-- Asistanı **ana numara** yapmak isteyenler: web sitenizde, Google profilinizde ve kartvizitte yayınlayacağınız bir numara.
-- Çok çağrı alıp operatörün **yönlendirme ücretinden** (örneğin Turkcell'de çağrı başına ücret) kaçınmak isteyenler.
-- Numaranın **sahibi olmak** isteyenler.
-
-**Bu yolda numara sizindir:** Netgsm ile sözleşmeyi siz yaparsınız, yıllık ücreti (yaklaşık 249 TL) doğrudan Netgsm'e ödersiniz, Açık Hat size numara satmaz. Asistan hizmetini bırakırsanız numara sizde kalır.
-
-Bu yol sizin için ağır geliyorsa, Açık Hat'ın hazır numarasıyla çağrı yönlendirme (mevcut numaranız değişmeden) daha hızlıdır: kontrol listesine gerek yoktur.
+## 1. Model
+- **Her müşteri asistan numarasını (0850 ya da şehir kodlu sabit hat) Netgsm'den kendi adına alır.** Açık Hat numara satmaz, kiralamaz, havuz tutmaz.
+- Numara müşterinindir: Netgsm ile sözleşmeyi o yapar, yıllık ücreti (Netgsm'in 0850 sayfasında 249 TL, taahhüt yok; güncel ücreti Netgsm ekranından teyit edin) doğrudan Netgsm'e öder. Hizmeti bıraksa da numara onda kalır.
+- Müşteri numarayı iki şekilde kullanabilir: **ana numara** (web sitesi, Google profili, kartvizit) ya da **yönlendirme hedefi** (mevcut numarasını açamadığında bu numaraya yönlendirir; çağrı başına operatör ücreti çıkabilir).
+- Neden müşteri başvurur: kimlik/vergi/adres belgeleri ve e-Devlet ya da mobil onay yetkilinin kendisindedir (KVKK, belgeler bize gelmez); numara tahsis edildiği abonenin kendisi tarafından kullanılmalıdır; bizim adımıza alınan numara üçüncü kişiye kullandırma sorunu doğurur (arşivdeki `docs/arsiv/hat-havuzu.md` analizi).
 
 ## 2. Başlamadan önce hazırlayın (yaklaşık 15 dakika)
 - [ ] **Sözleşmeyi imzalayacak kişi** (şirket yetkilisi ya da şahıs işletmesi sahibi). Başvuruyu bu kişi yapar; onay SMS ve e-Devlet ya da mobil uygulama ile onun telefonunda yapılır.
@@ -31,20 +28,24 @@ Başvuru: **netgsm.com.tr** > yeni abonelik. Adımlar Netgsm bilgi bankasındaki
 8. [ ] **Aktivasyonu bekleyin.** Süre Netgsm sayfasında belirtilmemiştir `[DOĞRULA]`. Numara aktifleşince Netgsm size bilgi verir.
 
 ## 4. Numarayı bize bildirin
-Numara aktif olunca **support@acikhat.si** adresine şunu yazın: *firma adınız + yeni 0850 numaranız*.
+Açık Hat hesabınıza girin; kurulum ekranının **3. adımında** (formda numara yazmadıysanız bu adım otomatik açılır) şunları gönderin:
+- [ ] Numaranız (0850 ya da sabit hat; cep numarası olmaz)
+- [ ] Abonelik türü: ön ödemeli / faturalı
+- [ ] "SIP yönlendirme ayarını yaptım" onayı
+- [ ] "Numara benim adıma kayıtlı, şifremi paylaşmam gerekmiyor" onayı
 - [ ] **SIP kullanıcı adı ve şifrenizi bize göndermeyin.** Asistanın gelen çağrıları karşılaması için gerekmez.
-- [ ] Biz numarayı asistanınıza bağlayıp size **"bağlandı"** diye haber vereceğiz. **Bu haberi almadan 5. adıma geçmeyin.**
+
+Gönderince 4. adıma ("onay bekleniyor") geçersiniz; biz kontrol edip numarayı asistana bağlarız ve e-posta göndeririz.
 
 ## 5. Netgsm'de çağrıyı Açık Hat'a yönlendirin
-Netgsm **Web Portal** > **Ses Hizmeti** > **Ayarlar** > **SIP Bilgileri**:
-- [ ] **SIP Trunk** özelliğini etkinleştirin.
-- [ ] **IP / alan adı:** `sip.rtc.elevenlabs.io`
-- [ ] **Port:** `5060`
-- [ ] **Arayan prefix:** `0`
-- [ ] **Aranan prefix:** `+90`
-- [ ] **"SIP Trunk Ayarlarını Kaydet"** ve ardından **"Prefix Ayarlarını Kaydet"** düğmelerine basın.
+Kaynak: Netgsm bilgi bankası, "ElevenLabs ile Yapay Zekâ Çağrı Entegrasyonu". Netgsm **Online İşlemler** (portal.netgsm.com.tr) > **Ses Hizmeti** > **Ayarlar** > **SIP Bilgileri** > **Detay**:
+- [ ] **SIP Trunk Bilgileri** alanına `sip.rtc.elevenlabs.io` yazın.
+- [ ] Protokol olarak **TCP** seçin. (Port sayfada belirtilmemiş `[BELİRSİZ]`; arayüz istemezse yazmayın.)
+- [ ] **SIP Trunk Ayarlarını Kaydet** düğmesine basın, telefonunuza gelen doğrulama kodunu girin.
+- [ ] **Aranan Prefix** alanında **+90** seçin, **Prefix Ayarlarını Kaydet** düğmesine basın.
+- [ ] Netgsm'in ElevenLabs rehberindeki *SIP Trunk şifresi* adımı bizim kurulumumuzda **gerekmez**; şifreyi bize vermeyin.
 
-`[DOĞRULA]` Bu ayarlar hesap genelindedir; birden fazla numaranız varsa hepsi aynı yere gider.
+`[BELİRSİZ]` Bu ayarın hesaptaki diğer numaraları etkileyip etkilemediği Netgsm sayfalarında yazmıyor; başka işte kullanılan numarası olan müşteriye Netgsm'e sormasını ya da asistan için ayrı abonelik açmasını söyleyin.
 
 ## 6. Deneyin
 - [ ] Başka bir telefondan yeni numarayı arayın. Asistan "…, merhaba. Ben yapay zekâ asistanı…" diye karşılamalı.
@@ -83,9 +84,10 @@ Netgsm **Web Portal** > **Ses Hizmeti** > **Ayarlar** > **SIP Bilgileri**:
 ---
 
 ## Açık Hat tarafında yapılacaklar (iç not, müşteriye verilmez)
-1. **Numarayı firmaya elle tanımlayın:** Yönetim > Müşteriler > Yönet > "Asistanın karşıladığı numaralar" alanına yazın ve kaydedin. Numara ElevenLabs'e otomatik bağlanır (asistan kuruluysa). Müşteriye "bağlandı" e-postası elle gönderilir; havuz e-postası bu yolda çalışmaz.
-2. **Müşteri numarası havuza girmez** (havuz yalnızca bizim numaralarımız içindir). Havuz stoğunu etkilemez, karantina uygulanmaz.
-3. **Gelen SIP kapısı** (ElevenLabs izin listesi) açıksa aynı risk geçerlidir. Netgsm kaynak IP'leri doğrulanınca izin listesine yazın.
-4. **İnsana aktarma (giden bacak) bu numarada çalışmaz:** ElevenLabs'e girilen giden SIP kimliği **bizim** Netgsm hesabımızdır; müşterinin numarası bizim hesabımızdan arayan numara olarak büyük olasılıkla kullanılamaz (operatörler arayan numara doğrulaması ister) `[DOĞRULA]`. İlk sürümde bu müşteriler için **aktarmayı kapatıp geri arama kaydına** düşürün. Müşterinin kendi SIP şifresini bizde tutmak güvenlik ve sorumluluk yükü getirir, karar verilmeden yapılmaz.
-5. **Müşteri hesabı kapanınca:** numarayı firmadan kaldırın (Yönet), ElevenLabs'ten silinmesi için Hat havuzu dışı olduğundan `phone/connect` yerine ElevenLabs panelinden elle kaldırın. Numara müşterinindir, karantina yok.
-6. **Yetkili kişi doğrulaması:** Müşterinin gerçekten numaranın sahibi olduğunu (Netgsm onay SMS'i ya da sözleşme ekranı görüntüsü) kayıt altına alın.
+1. **Başvuru gelince:** Yönetim > Başvurular > başvuruyu açın. Müşterinin bildirdiği numara, abonelik türü ve SIP onayı çekmecede görünür. **Onayla ve firmayı oluştur** numarayı firmaya yazar (alanı doldurursanız o numara yazılır). Numara başka bir firmada kayıtlıysa firma oluşmaz ve hata mesajı hangi firma olduğunu söyler.
+2. **Asistanı kurun** (Müşteriler > Asistanı kur): numara ElevenLabs'e SIP trunk olarak bağlanır; başvuruyla gelen firmaya "Numaranız asistana bağlandı" e-postası bir kez gider.
+3. **Doğrulayın:** numarayı arayın; asistan açmalı. Açmazsa Netgsm SIP ayarı (adres, TCP, +90) ya da etkinleşme eksiktir; müşteriye yazın.
+4. **Numarayı değiştirme talebi:** müşteri panelinden talep gelir (yöneticiye e-posta). Doğrulayın, Müşteriler > Yönet'te numarayı değiştirin; kaldırılan numara ElevenLabs'ten silinir.
+5. **Gelen SIP kapısı (P0):** ElevenLabs'te numaraların izin listesi açıksa (0.0.0.0/0) aynı risk geçerlidir. Netgsm TCP kullandığı için izin listesi çalışır; Netgsm'in kaynak IP'leri doğrulanınca listeyi kısıtlayın. Yanlış IP çağrıları düşürür, doğrulamadan yazmayın.
+6. **İnsana aktarma (giden bacak) müşterinin numarasında çalışmayabilir:** ElevenLabs'e girilen giden SIP kimliği bizim Netgsm hesabımızdır; operatör müşterinin numarasını arayan numara olarak kabul etmeyebilir `[DOĞRULA]`. Aktarma çalışmazsa geri arama kaydına düşürün. Müşterinin SIP şifresini tutmayız.
+7. **Hizmet sonu:** hesap kapanırken `scripts/erase-tenant.ts` asistana bağlı numaraları listeler; ElevenLabs panelinden bağlantıyı kaldırın. Numara müşterinin Netgsm aboneliğinde kalır.

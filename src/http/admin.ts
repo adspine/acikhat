@@ -12,8 +12,7 @@ import { mailSuspension, mailTenantReady } from "../notify/emails.ts";
 import { sampleUrl } from "./panel/settings.ts";
 import { loadVertical } from "../domain/vertical.ts";
 import { DemoCalls } from "../store/demo-calls.ts";
-import { POOL } from "../domain/phone-pool.ts";
-import { assignLine, assignManualLine, assignWaiting, checkManualNumber, checkPoolStock, connectTenantLine, poolOf, releaseLine, syncPoolWithTenantNumbers, waitingTenants } from "./phone-line.ts";
+import { assignLine, checkLineNumber, connectTenantLine, disconnectRemovedNumbers } from "./phone-line.ts";
 
 /** Başlayıp bu kadar süre sonuç gelmeyen test görüşmesi "sonuç alınamadı" sayılır (en uzun görüşme 2 dk) */
 const STALE_DEMO_MS = 6 * 60_000;
@@ -158,13 +157,15 @@ export function adminRoutes(deps: Deps) {
     if (row.tenant_id) return c.json({ error: "Bu başvuru için firma zaten oluşturuldu" }, 409);
     const form = OnboardingSchema.safeParse(JSON.parse(row.payload_json));
     if (!form.success) return c.json({ error: "Başvuru verisi okunamadı" }, 422);
-    // İsteğe bağlı elle numara: dolu ise havuzdan otomatik atama yapılmaz. Firma oluşmadan önce denetlenir, hatalıysa hiçbir şey oluşmaz.
+    // Hat numarası: yöneticinin yazdığı, yoksa müşterinin başvuruda bildirdiği numara. Firma oluşmadan önce denetlenir, hatalıysa hiçbir şey oluşmaz.
     const body = z.object({ phoneNumber: z.string().trim().max(32).optional() }).safeParse(await c.req.json().catch(() => ({})));
-    let manual: { number: string } | null = null;
-    if (body.success && body.data.phoneNumber) {
-      const chk = checkManualNumber(deps, body.data.phoneNumber);
+    const declared = (JSON.parse(row.payload_json) as { line?: { number?: string } }).line?.number;
+    const wanted = (body.success && body.data.phoneNumber) || declared || "";
+    let lineNumber: string | null = null;
+    if (wanted) {
+      const chk = checkLineNumber(deps, wanted, { revealOwner: true });
       if (!chk.ok) return c.json({ error: chk.error }, chk.status);
-      manual = { number: chk.number };
+      lineNumber = chk.number;
     }
     const { parsed, todo } = buildTenantDraft(form.data);
     if (!parsed) return c.json({ error: "Firma ayarı doğrulamadan geçmedi", checklist: todo }, 422);
@@ -181,11 +182,11 @@ export function adminRoutes(deps: Deps) {
     if (row.user_id) deps.users.assignTenant(row.user_id, id);
     mailTenantReady(deps, tenant);
     db.prepare("UPDATE onboarding_submissions SET status = 'approved', tenant_id = ? WHERE reference = ?").run(id, ref);
-    // Ödemesi doğrulanmış üyenin firmasına hat havuzundan numara atanır (asistan kurulunca ElevenLabs'e bağlanır)
-    const line = manual ? await assignManualLine(deps, tenant, manual.number, c.get("admin").id) : await assignLine(deps, tenant, { requirePaid: true, actorId: c.get("admin").id });
+    // Müşterinin kendi Netgsm numarası firmaya yazılır (asistan kurulunca ElevenLabs'e bağlanır)
+    const line = lineNumber ? await assignLine(deps, tenant, lineNumber, c.get("admin").id) : null;
     return c.json({
       ok: true, tenantId: id, linkedMember: !!row.user_id, checklist: todo,
-      line: line.ok ? { number: line.number, connected: line.connected, ...(line.note && { note: line.note }) } : { reason: line.reason, error: line.message },
+      line: line ? { number: line.number, connected: line.connected, ...(line.note && { note: line.note }) } : { reason: "none", error: "Müşteri henüz numara bildirmedi" },
     });
   });
 
@@ -277,7 +278,7 @@ export function adminRoutes(deps: Deps) {
       if (editable?.hasDraft) deps.tenantStore.saveDraft(id, { ...(editable.config as Record<string, unknown>), agentIds: [pushed.agentId] });
     }
     deps.store.audit({ tenantId: id, userId: c.get("admin").id, action: "admin.assistant", target: id, detail: { created: pushed.created } });
-    // Asistan ilk kez kurulduysa ve firmanın numarası varsa (havuzdan atanmış olabilir) hat da bağlanır
+    // Asistan ilk kez kurulduysa ve firmanın numarası varsa hat da bağlanır
     const phone = pushed.created && deps.tenants.get(id)?.phoneNumbers.length ? await connectTenantLine(deps, deps.tenants.get(id)!) : undefined;
     return c.json({ ok: true, created: pushed.created, ...(phone && { phone }) });
   });
@@ -333,7 +334,7 @@ export function adminRoutes(deps: Deps) {
     if (p.phoneNumbers) {
       phones = [];
       for (const raw of p.phoneNumbers.map((x) => x.trim()).filter(Boolean)) {
-        const chk = checkManualNumber(deps, raw, id);
+        const chk = checkLineNumber(deps, raw, { tenantId: id, revealOwner: true });
         if (!chk.ok) return c.json({ error: chk.error }, chk.status);
         if (!phones.includes(chk.number)) phones.push(chk.number);
       }
@@ -386,82 +387,10 @@ export function adminRoutes(deps: Deps) {
     deps.store.audit({ tenantId: id, userId: c.get("admin").id, action: "admin.tenant", target: id, detail: p });
 
     // Numara gönderildiyse (değişmemiş olsa da) ElevenLabs tarafı da kurulur/güncellenir; böylece yarım kalan bağlama kaydet düğmesiyle tamamlanır. Başarısız olsa bile numara kaydedilmiştir; panel uyarıyı gösterir, yeniden denenebilir.
-    if (phones) await syncPoolWithTenantNumbers(deps, id, tenant.phoneNumbers, phones, c.get("admin").id);
+    if (phones) await disconnectRemovedNumbers(deps, id, tenant.phoneNumbers, phones, c.get("admin").id);
     let phone: { connected: boolean; error?: string } | undefined;
     if (phones?.length) phone = await connectTenantLine(deps, next.data);
     return c.json({ ok: true, ...(phone && { phone }) });
-  });
-
-  /* ---------------- hat havuzu ---------------- */
-
-  /** Havuz envanteri: durum sayıları, numaralar, hat bekleyen firmalar */
-  app.get("/phone-pool", (c) => {
-    const pool = poolOf(deps);
-    pool.promoteExpired(deps.now().epochMilliseconds);
-    const names = new Map(deps.tenants.all().map((t) => [t.id, t.name]));
-    return c.json({
-      stats: pool.stats(),
-      lowStockAt: POOL.lowStockAt,
-      quarantineDays: POOL.quarantineDays,
-      initialSize: POOL.initialSize,
-      numbers: pool.list().map((r) => ({ ...r, tenantName: r.tenantId ? (names.get(r.tenantId) ?? null) : null })),
-      waiting: waitingTenants(deps).map((t) => ({ id: t.id, name: t.name })),
-    });
-  });
-
-  /** Netgsm'den alınan numaraları havuza ekler; hat bekleyen (ödemiş) firmalar varsa kendiliğinden atanır */
-  app.post("/phone-pool", async (c) => {
-    const parsed = z
-      .object({ numbers: z.string().min(1).max(5000), note: z.string().trim().max(200).optional(), renewAt: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional() })
-      .safeParse(await c.req.json().catch(() => ({})));
-    if (!parsed.success) return c.json({ error: "Numaraları her satıra bir tane yazın; yenileme tarihi YYYY-AA-GG olmalı" }, 400);
-    const raws = parsed.data.numbers.split(/[\n,;]+/).map((x) => x.trim()).filter(Boolean);
-    if (raws.length > 50) return c.json({ error: "Tek seferde en fazla 50 numara eklenebilir" }, 422);
-    const renewAt = parsed.data.renewAt ? Temporal.PlainDate.from(parsed.data.renewAt).toZonedDateTime(deps.now().timeZoneId).epochMilliseconds : undefined;
-    const r = poolOf(deps).add(raws, { nowMs: deps.now().epochMilliseconds, note: parsed.data.note, renewAt, inUse: (n) => deps.tenants.all().some((t) => t.phoneNumbers.includes(n)) });
-    deps.store.audit({ tenantId: null, userId: c.get("admin").id, action: "pool.add", detail: { added: r.added.length, skipped: r.skipped.length } });
-    const assigned = r.added.length ? await assignWaiting(deps) : [];
-    checkPoolStock(deps);
-    return c.json({ ok: true, added: r.added, skipped: r.skipped, assigned });
-  });
-
-  /** Firmaya havuzdan elle numara ata (ödeme şartı aranmaz: yönetici kararıdır) */
-  app.post("/tenants/:id/assign-number", async (c) => {
-    const tenant = deps.tenants.get(c.req.param("id"));
-    if (!tenant) return c.json({ error: "Firma bulunamadı" }, 404);
-    // test: true → canlı satın alma akışını gerçek numara almadan denemek için sanal "deneme numarası" (ElevenLabs'e bağlanmaz)
-    const body = z.object({ test: z.boolean().optional() }).safeParse(await c.req.json().catch(() => ({})));
-    const test = body.success && body.data.test === true;
-    const r = await assignLine(deps, tenant, { requirePaid: false, actorId: c.get("admin").id, ...(test && { test: true }) });
-    if (!r.ok) return c.json({ error: r.message, reason: r.reason }, r.reason === "no_tenant" ? 404 : 409);
-    return c.json({ ok: true, number: r.number, connected: r.connected, ...(test && { test: true }), ...(r.note && { note: r.note }) });
-  });
-
-  /** Atanmış numarayı bırak: karantinaya alınır, firmadan ve ElevenLabs'ten kaldırılır */
-  app.post("/phone-pool/:number/release", async (c) => {
-    const r = await releaseLine(deps, c.req.param("number"), c.get("admin").id);
-    if (!r.ok) return c.json({ error: r.error }, 409);
-    return c.json({ ok: true, disconnected: r.disconnected, ...(r.warning && { warning: r.warning }) });
-  });
-
-  /** Müsait ya da karantinadaki numarayı havuzdan kalıcı çıkar (Netgsm'de abonelik bırakıldığında) */
-  app.post("/phone-pool/:number/retire", (c) => {
-    const n = c.req.param("number");
-    if (!poolOf(deps).retire(n)) return c.json({ error: "Yalnızca müsait ya da karantinadaki numara emekli edilebilir" }, 409);
-    deps.store.audit({ tenantId: null, userId: c.get("admin").id, action: "pool.retire", target: n });
-    checkPoolStock(deps);
-    return c.json({ ok: true });
-  });
-
-  /** Not ve yıllık yenileme tarihi */
-  app.patch("/phone-pool/:number", async (c) => {
-    const parsed = z
-      .object({ note: z.string().trim().max(200).nullable().optional(), renewAt: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable().optional() })
-      .safeParse(await c.req.json().catch(() => ({})));
-    if (!parsed.success) return c.json({ error: "Geçersiz değer" }, 400);
-    const renewAt = parsed.data.renewAt === undefined ? undefined : parsed.data.renewAt === null ? null : Temporal.PlainDate.from(parsed.data.renewAt).toZonedDateTime(deps.now().timeZoneId).epochMilliseconds;
-    if (!poolOf(deps).setMeta(c.req.param("number"), { ...(parsed.data.note !== undefined && { note: parsed.data.note }), ...(renewAt !== undefined && { renewAt }) })) return c.json({ error: "Numara havuzda yok" }, 404);
-    return c.json({ ok: true });
   });
 
   return app;

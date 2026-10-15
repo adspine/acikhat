@@ -128,10 +128,9 @@ describe("e-posta bildirimleri", () => {
     const { reference } = (await sub.json()) as { reference: string };
     mailbox.length = 0;
     expect(await admin("POST", `/api/admin/submissions/${reference}/create-tenant`)).toBe(200);
-    // Hat havuzu boş olduğu için yöneticiye "hat bekleyen firma" uyarısı da gider
-    expect(mailbox.map((m) => m.subject)).toEqual(["Deniz Emlak panelinize erişebilirsiniz", "Hat bekleyen firma: Deniz Emlak"]);
+    // Müşteri numara bildirmediği için hat e-postası yok; yalnızca panel erişim e-postası gider
+    expect(mailbox.map((m) => m.subject)).toEqual(["Deniz Emlak panelinize erişebilirsiniz"]);
     expect(mailbox[0]!.to).toEqual(["uye@ornek.com"]);
-    expect(mailbox[1]!.to).toEqual(["admin@ornek.com"]);
     void member;
 
     mailbox.length = 0;

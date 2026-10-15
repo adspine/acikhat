@@ -1,6 +1,5 @@
 import type { DatabaseSync } from "node:sqlite";
 import { RETENTION } from "../domain/retention.ts";
-import { POOL } from "../domain/phone-pool.ts";
 
 const DAY = 86_400_000;
 /** Anonimleştirilen randevularda ad yerine yazılır; ikinci çalıştırmada tekrar işlenmesin diye de işaret görevi görür */
@@ -51,8 +50,8 @@ export interface EraseResult {
   submissions: number;
   notices: number;
   tenant: number;
-  /** Karantinaya alınan hat havuzu numaraları (ElevenLabs bağlantısı elle kaldırılmalı) */
-  poolNumbers: string[];
+  /** Firmanın asistana bağlı numaraları (ElevenLabs bağlantısı elle kaldırılmalı; numara müşterinindir, Netgsm'de onda kalır) */
+  phoneNumbers: string[];
 }
 
 /**
@@ -75,11 +74,15 @@ export function eraseTenantData(db: DatabaseSync, tenantId: string, confirm: str
   const run = (sql: string) => Number(db.prepare(sql).run(tenantId).changes);
   db.exec("BEGIN");
   try {
-    // Hat havuzu numaraları kimseye verilmez, karantinaya alınır (eski yönlendirmeler hâlâ o numarayı arıyor olabilir)
-    const poolNumbers = (db.prepare("SELECT number FROM phone_pool WHERE tenant_id = ? AND status = 'assigned'").all(tenantId) as { number: string }[]).map((r) => r.number);
-    db.prepare("UPDATE phone_pool SET status = 'quarantine', tenant_id = NULL, released_at = ?, quarantine_until = ? WHERE tenant_id = ? AND status = 'assigned'").run(nowMs, nowMs + POOL.quarantineDays * 86_400_000, tenantId);
+    // Numara müşterinin Netgsm aboneliğindedir; yalnızca asistan bağlantısı kaldırılacağı için numaralar bildirilir
+    let phoneNumbers: string[] = [];
+    try {
+      phoneNumbers = (JSON.parse(row.config_live) as { phoneNumbers?: string[] }).phoneNumbers ?? [];
+    } catch {
+      /* bozuk kayıt: numara listesi alınamaz */
+    }
     const result: EraseResult = {
-      poolNumbers,
+      phoneNumbers,
       sessions: run("DELETE FROM sessions WHERE user_id IN (SELECT id FROM users WHERE tenant_id = ?)"),
       users: run("DELETE FROM users WHERE tenant_id = ?"),
       appointments: run("DELETE FROM appointments WHERE tenant_id = ?"),

@@ -1,4 +1,5 @@
-// Açık Hat: üye onboarding ekranı (hesap görünümü): paket seç → ödeme → (kurulum formu) → hazırlık.
+// Açık Hat: üye onboarding ekranı (hesap görünümü): 1 paket + ödeme → 2 kurulum formu → 3 numara alma (Netgsm) → 4 onay bekleniyor.
+// Adım sunucuda tutulur: çıkış yapıp dönen üye kaldığı adımdan devam eder.
 // Fiyat ve dakika sunucuda src/domain/plans.ts'te tutulur; buradakiler yalnızca gösterim içindir.
 const PLANS = {
   baslangic: { name: "Başlangıç", price: 149, list: 199, minutes: 400 },
@@ -117,6 +118,50 @@ async function awaitPayment(root, account, ctx) {
   box.textContent = "Ödemeniz alındıysa birkaç dakika içinde hesabınıza yansır. Sayfayı yenileyin; sorun sürerse bize yazın.";
 }
 
+const showPhone = (e164) => {
+  const d = (e164 ?? "").replace("+90", "");
+  return d.length === 10 ? `0${d.slice(0, 3)} ${d.slice(3, 6)} ${d.slice(6, 8)} ${d.slice(8)}` : e164 ?? "";
+};
+
+/** 3. adım: numara formu. Üye numarasını aldıktan sonra numara ve onaylarla gönderir; başarılıysa 4. adıma geçer. */
+function bindLine(root, account, ctx) {
+  const form = $("[data-line-form]", root);
+  if (form.dataset.bound) return;
+  form.dataset.bound = "1";
+  const errorEl = $("[data-line-error]", root);
+  const say = (t) => {
+    errorEl.hidden = !t;
+    errorEl.textContent = t ?? "";
+  };
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    say("");
+    const btn = $("[data-line-submit]", root);
+    btn.disabled = true;
+    try {
+      const { res, data } = await post("/api/onboarding/line", {
+        number: form.elements.number.value,
+        subscriptionType: form.elements.subscriptionType.value,
+        sipConfigured: form.elements.sipConfigured.checked,
+        ownerConfirmed: form.elements.ownerConfirmed.checked,
+      });
+      if (!res.ok) return say(data.error ?? "Numara gönderilemedi. Bağlantınızı kontrol edip tekrar deneyin.");
+      account.editLine = false;
+      await ctx.refresh();
+      showHesap(account, ctx);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    } catch {
+      say("Numara gönderilemedi. Bağlantınızı kontrol edip tekrar deneyin.");
+    } finally {
+      btn.disabled = false;
+    }
+  });
+  $("[data-line-edit]", root).addEventListener("click", () => {
+    account.editLine = true;
+    showHesap(account, ctx);
+  });
+}
+
 /** hesap görünümü: giriş ve yönlendirme kontrolleri site.js'te yapılır, burası yalnızca içeriği doldurur */
 export function showHesap(account, ctx) {
   const root = $('[data-view="hesap"]');
@@ -125,7 +170,9 @@ export function showHesap(account, ctx) {
   $("[data-account-mail]", root).textContent = account.user.email;
   $("[data-panel-link]", root).hidden = !account.hasTenant;
 
-  const which = account.hasTenant ? "done" : account.onboarding?.step === 3 ? "3" : "1";
+  const step = account.onboarding?.step;
+  // 4. adımdaki üye "numarayı değiştir" derse numara formu yeniden açılır
+  const which = account.hasTenant ? "done" : step === 4 ? (account.editLine ? "3" : "4") : step === 3 ? "3" : "1";
   for (const p of $$("[data-onb-panel]", root)) p.hidden = p.dataset.onbPanel !== which;
   $(".onb-hello", root).hidden = which === "done";
 
@@ -135,9 +182,17 @@ export function showHesap(account, ctx) {
     applyRememberedPlan(root, account);
     awaitPayment(root, account, ctx);
   }
+  if (which === "3" || which === "4") {
+    for (const el of $$("[data-onb-ref]", root)) el.textContent = account.onboarding.reference ?? "—";
+    bindLine(root, account, ctx);
+  }
   if (which === "3") {
-    $("[data-onb-ref]", root).textContent = account.onboarding.reference ?? "—";
+    const form = $("[data-line-form]", root);
+    if (account.onboarding.lineNumber && !form.elements.number.value) form.elements.number.value = showPhone(account.onboarding.lineNumber);
+  }
+  if (which === "4") {
     const plan = PLANS[account.onboarding.plan];
     $("[data-onb-plan]", root).textContent = plan ? `${plan.name}: ${fmtMinutes(plan.minutes)} dk yapay zekâ kullanımı, aylık $${plan.price}` : "";
+    $("[data-onb-line]", root).textContent = account.onboarding.lineNumber ? `${showPhone(account.onboarding.lineNumber)}. Kontrol edip asistana bağlayacağız.` : "—";
   }
 }

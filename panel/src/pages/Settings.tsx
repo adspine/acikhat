@@ -455,7 +455,7 @@ const showPhone = (e164: string) => {
   return d.length === 10 ? `0${d.slice(0, 3)} ${d.slice(3, 6)} ${d.slice(6, 8)} ${d.slice(8)}` : e164;
 };
 
-/** Müşteri kendi 0850 numarasını kullanmak isterse yöneticiye talep iletir; numara kendiliğinden değişmez */
+/** Müşteri numarasını değiştirmek isterse yöneticiye talep iletir; numara kendiliğinden değişmez */
 function OwnNumberRequest() {
   const toast = useToast();
   const [open, setOpen] = useState(false);
@@ -476,10 +476,10 @@ function OwnNumberRequest() {
       setBusy(false);
     }
   };
-  if (!open) return <div className="row-actions"><Button variant="quiet" onClick={() => setOpen(true)}>Kendi 0850 numaramı kullanmak istiyorum</Button></div>;
+  if (!open) return <div className="row-actions"><Button variant="quiet" onClick={() => setOpen(true)}>Numaramı değiştirmek istiyorum</Button></div>;
   return (
     <div className="phone-block">
-      <p className="muted small">Kendi aboneliğinizde bir 0850 numaranız varsa bildirin. Ekibimiz numarayı doğrular ve tanımlar; numara kendiliğinden değişmez.</p>
+      <p className="muted small">Netgsm aboneliğinizdeki yeni numarayı yazın. Ekibimiz numarayı doğrular ve asistana bağlar; numara kendiliğinden değişmez. Eski numaranızın SIP ayarını yeni numarada da yapmayı unutmayın.</p>
       <Field label="Numaranız">{(id) => <Input id={id} type="tel" placeholder="0850 000 00 00" value={number} onChange={(e) => setNumber(e.target.value)} />}</Field>
       <Field label="Not (isteğe bağlı)">{(id) => <Input id={id} maxLength={300} value={note} onChange={(e) => setNote(e.target.value)} />}</Field>
       <div className="row-actions">
@@ -562,7 +562,7 @@ function AssistantNumber({ tenantId, numbers, canEdit, onSaved }: { tenantId: st
       <h3 className="phone-sub">Asistanın numarası</h3>
       {canEdit ? (
         <>
-          <Field label="0850 numarası" hint="Birden fazla numara varsa virgülle ayırın. Kaydedince asistana bağlanır; bu değişiklik taslağı beklemeden canlıya uygulanır.">
+          <Field label="Asistan numarası (müşterinin Netgsm numarası)" hint="Birden fazla numara varsa virgülle ayırın. Kaydedince asistana bağlanır; bu değişiklik taslağı beklemeden canlıya uygulanır.">
             {(id, d) => <Input id={id} aria-describedby={d} type="tel" placeholder="0850 000 00 00" value={value} onChange={(e) => setValue(e.target.value)} />}
           </Field>
           <div className="row-actions"><Button variant="quiet" onClick={() => void save()} busy={busy}>Numarayı kaydet ve bağla</Button></div>
@@ -574,9 +574,9 @@ function AssistantNumber({ tenantId, numbers, canEdit, onSaved }: { tenantId: st
           <OwnNumberRequest />
         </>
       ) : (
-        <p className="muted">Henüz bağlanmadı. Hat açıldığında numara burada görünür.</p>
+        <p className="muted">Numaranız henüz asistana bağlanmadı. Numaranızı Netgsm'den alıp bildirdiyseniz ekibimiz kontrol edip bağlayacak ve numara burada görünecek. Numaranız yoksa <a href="/#/numara-al" target="_blank" rel="noreferrer">numara alma rehberine</a> bakın.</p>
       )}
-      <p className="muted small">Müşterileriniz bu numarayı aradığında ya da numaranız buraya yönlendirildiğinde asistan cevap verir.</p>
+      <p className="muted small">Müşterileriniz bu numarayı aradığında ya da mevcut numaranız buraya yönlendirildiğinde asistan cevap verir. Numara sizin Netgsm aboneliğinizdedir; yıllık yenilemeyi ve bakiyeyi Netgsm'de takip edin.</p>
     </div>
   );
 }

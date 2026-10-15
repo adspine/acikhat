@@ -68,22 +68,6 @@ CREATE TABLE IF NOT EXISTS webhook_events (
   received_at INTEGER NOT NULL
 );
 
--- Hat havuzu: Netgsm'den toplu alınan 0850 numaralarının envanteri. Çağrı eşlemesinin kaynağı yine tenant.phoneNumbers'tır;
--- bu tablo hangi numaranın boş, atanmış ya da karantinada olduğunu ve yıllık yenileme tarihini tutar.
-CREATE TABLE IF NOT EXISTS phone_pool (
-  number           TEXT PRIMARY KEY,                 -- E.164
-  status           TEXT NOT NULL DEFAULT 'available', -- available | assigned | quarantine | retired
-  tenant_id        TEXT,
-  note             TEXT,
-  added_at         INTEGER NOT NULL,
-  assigned_at      INTEGER,
-  released_at      INTEGER,
-  quarantine_until INTEGER,
-  renew_at         INTEGER,
-  kind             TEXT NOT NULL DEFAULT 'real'       -- real | test (deneme numarası: gerçek değil, ElevenLabs'e bağlanmaz)
-);
-CREATE INDEX IF NOT EXISTS phone_pool_status ON phone_pool (status, added_at);
-CREATE INDEX IF NOT EXISTS phone_pool_tenant ON phone_pool (tenant_id);
 
 -- Müşteriye gönderilen tekrarsız bildirimler (kota uyarısı gibi): aynı uyarı aynı dönemde bir kez gider
 CREATE TABLE IF NOT EXISTS notice_log (
@@ -254,7 +238,6 @@ export class Store {
       after_hours: "INTEGER",
     });
     this.addColumns("users", { firebase_uid: "TEXT", plan: "TEXT", plan_paid_at: "INTEGER", onboarding_ref: "TEXT", notify_email: "INTEGER NOT NULL DEFAULT 1", polar_subscription_id: "TEXT" });
-    this.addColumns("phone_pool", { kind: "TEXT NOT NULL DEFAULT 'real'" });
     this.addColumns("onboarding_submissions", { user_id: "TEXT", plan: "TEXT", tenant_id: "TEXT", admin_note: "TEXT" });
     this.db.exec("CREATE UNIQUE INDEX IF NOT EXISTS users_firebase_uid ON users (firebase_uid) WHERE firebase_uid IS NOT NULL");
     this.db.exec("CREATE INDEX IF NOT EXISTS calls_tenant_time ON calls (tenant_id, started_at)");

@@ -17,6 +17,20 @@ export function isTrMobile(e164: string): boolean {
   return /^\+905\d{9}$/.test(e164);
 }
 
+/** "+90 850 ..." yazımını da kabul eden E.164 normalleştirme; geçersizse null */
+export function normalizeLineNumber(raw: string): string | null {
+  const compact = raw.replace(/\s/g, "");
+  return /^\+\d{10,15}$/.test(compact) ? compact : normalizeTrPhone(raw);
+}
+
+/**
+ * Müşterinin asistan hattı olabilecek numara: 0850 işletme numarası ya da şehir kodlu sabit hat (0212, 0374 ...).
+ * Cep numarası olamaz (operatör cep hattını SIP'e yönlendirmez).
+ */
+export function isCustomerLineNumber(e164: string): boolean {
+  return /^\+90(850\d{7}|[234]\d{9})$/.test(e164);
+}
+
 const DIGIT_WORDS = ["sıfır", "bir", "iki", "üç", "dört", "beş", "altı", "yedi", "sekiz", "dokuz"];
 
 /**

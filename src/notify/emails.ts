@@ -91,7 +91,7 @@ export function mailSubmission(deps: Deps, s: { reference: string; businessName:
 export function mailTenantReady(deps: Deps, tenant: Tenant) {
   send(deps, ownerEmails(deps, tenant.id), `${tenant.name} panelinize erişebilirsiniz`, {
     title: "Firmanız oluşturuldu",
-    lines: [`${tenant.name} için başvurunuz onaylandı ve panelinizi açtık. Randevuları, çağrıları ve kullanımınızı panelden takip edebilir, asistanın ayarlarını düzenleyebilirsiniz.`, "Asistanınızın telefon hattı ve son ayarları ekibimiz tarafından tamamlanıyor; canlıya alınınca ayrıca haber vereceğiz."],
+    lines: [`${tenant.name} için başvurunuz onaylandı ve panelinizi açtık. Randevuları, çağrıları ve kullanımınızı panelden takip edebilir, asistanın ayarlarını düzenleyebilirsiniz.`, "Numaranızı asistana bağlıyor ve son ayarları tamamlıyoruz; numara bağlanınca ayrıca haber vereceğiz."],
     cta: { label: "Panele git", url: panelUrl(deps) },
   });
 }
@@ -195,51 +195,42 @@ export function mailBillingSuspension(deps: Deps, tenant: Tenant, suspended: boo
   });
 }
 
-/* ---------------- telefon hattı ve havuz ---------------- */
+/* ---------------- telefon hattı ---------------- */
 
 const lineText = (e164: string) => spokenPhone(e164);
 
-/** Havuzdan atanan hat hazır olunca müşteriye (numara başına bir kez): ne olduğunu, ne yapacağını ve maliyet notunu söyler */
-export function mailLineReady(deps: Deps, tenant: Tenant, number: string, opts: { test?: boolean } = {}) {
-  const tag = opts.test ? "[DENEME] " : "";
-  send(deps, ownerEmails(deps, tenant.id), `${tag}Telefon hattınız hazır: ${tenant.name}`, {
-    title: "Asistanınızın telefon hattı hazır",
+/** Numara asistana bağlandığında müşteriye (numara başına bir kez): ne olduğunu ve sıradaki adımı söyler */
+export function mailLineReady(deps: Deps, tenant: Tenant, number: string) {
+  send(deps, ownerEmails(deps, tenant.id), `Numaranız asistana bağlandı: ${tenant.name}`, {
+    title: "Numaranız asistana bağlandı",
     lines: [
-      ...(opts.test ? ["Bu bir DENEME numarasıdır: gerçek bir hat değildir ve aramaları karşılamaz. Satın alma ve kurulum akışını denemek içindir."] : []),
-      `${tenant.name} için asistanın hattı hazırlandı. Bu numara yalnızca bir yönlendirme hedefidir: müşterileriniz bildikleri numarayı aramaya devam eder, siz açamadığınızda çağrı bu numaraya geçer.`,
-      "Önerdiğimiz kurulum koşullu yönlendirmedir (meşgul, cevapsız, kapalı): telefonu siz açarsınız, yalnızca açamadığınız çağrıları asistan karşılar.",
-      "Yönlendirilen her çağrı hattınızın operatörü tarafından ücretlendirilebilir (örneğin Turkcell yönlendirme servis ücreti alabiliyor). Güncel ücreti operatörünüzden öğrenin.",
-      "Yönlendirmeyi açmadan önce asistanı panelden deneyin.",
+      `${tenant.name} için ${lineText(number)} numarası asistana bağlandı. Panelinizde asistanı deneyebilirsiniz.`,
+      "Numaranızda Netgsm SIP yönlendirmesini rehberdeki gibi yaptıysanız, numarayı arayıp asistanı deneyin. Yapmadıysanız rehberin son adımını tamamlayın.",
+      "Numarayı yalnızca yönlendirme hedefi olarak kullanıyorsanız: telefonunuzu açamadığınızda çağrıyı bu numaraya yönlendirin (koşullu yönlendirme önerilir). Yönlendirilen çağrıyı hattınızın operatörü ücretlendirebilir; güncel ücreti operatörünüzden öğrenin.",
     ],
-    facts: [["Yönlendirme numarası", lineText(number)], ["Önerilen yönlendirme", "Koşullu: meşgul, cevapsız, kapalı"]],
-    cta: { label: "Yönlendirme rehberini aç", url: `${deps.baseUrl ?? ""}/#/rehber` },
+    facts: [["Asistan numaranız", lineText(number)]],
+    cta: { label: "Rehberi aç", url: `${deps.baseUrl ?? ""}/#/numara-al` },
   });
-  send(deps, admins(deps), `${tag}Hat atandı ve bağlandı: ${tenant.name}`, {
-    title: "Hat havuzundan numara atandı",
-    lines: [`${tenant.name} firmasına ${lineText(number)} numarası atandı ve asistana bağlandı. Müşteriye yönlendirme rehberi gönderildi.`],
-  });
-}
-
-export function mailPoolLow(deps: Deps, available: number) {
-  send(deps, admins(deps), available ? `Hat havuzunda ${available} numara kaldı` : "Hat havuzu boş", {
-    title: available ? "Hat havuzu azaldı" : "Hat havuzu boş",
-    lines: [available ? `Müsait numara sayısı ${available}. Yeni müşteriler için Netgsm'den numara alıp havuza ekleyin (önerilen: her zaman en az 3 yedek).` : "Müsait numara yok. Yeni firmalara hat atanamaz; Netgsm'den numara alıp havuza ekleyin. Havuza eklenince bekleyen firmalar kendiliğinden atanır."],
-    cta: { label: "Hat havuzu", url: panelUrl(deps, "hat-havuzu") },
+  send(deps, admins(deps), `Hat bağlandı: ${tenant.name}`, {
+    title: "Numara asistana bağlandı",
+    lines: [`${tenant.name} firmasının ${lineText(number)} numarası asistana bağlandı; müşteriye bilgi e-postası gönderildi.`],
   });
 }
 
-export function mailPoolEmpty(deps: Deps, tenant: Tenant) {
-  send(deps, admins(deps), `Hat bekleyen firma: ${tenant.name}`, {
-    title: "Hat havuzu boş, firma hat bekliyor",
-    lines: [`${tenant.name} ödemesini yaptı ama havuzda müsait numara yok. Netgsm'den numara alıp havuza eklediğinizde bu firmaya kendiliğinden atanır.`],
-    cta: { label: "Hat havuzu", url: panelUrl(deps, "hat-havuzu") },
+/** Üye kurulumun 3. adımında numarasını ve bilgilerini gönderdi: yönetici firmayı oluşturup numarayı bağlar */
+export function mailLineSubmitted(deps: Deps, s: { reference: string; number: string; memberEmail: string; subscriptionType: string }) {
+  send(deps, admins(deps), `Numara bildirildi: ${s.reference}`, {
+    title: "Üye asistan numarasını bildirdi",
+    lines: ["Üye Netgsm'den numarasını alıp SIP ayarını yaptığını bildirdi. Başvuruyu kontrol edip firmayı oluşturun; numara firmaya yazılır ve asistan kurulunca bağlanır."],
+    facts: [["Başvuru", s.reference], ["Üye", s.memberEmail], ["Numara", lineText(s.number)], ["Abonelik", s.subscriptionType === "onodemeli" ? "Ön ödemeli" : "Faturalı"]],
+    cta: { label: "Başvurular", url: panelUrl(deps, "basvurular") },
   });
 }
 
-/** Müşteri kendi 0850 numarasını kullanmak istediğini bildirdi: yönetici doğrulayıp elle tanımlar */
+/** Müşteri numarasını değiştirmek istediğini bildirdi: yönetici doğrulayıp elle tanımlar */
 export function mailOwnNumberRequest(deps: Deps, tenant: Tenant, requester: string, number: string, note: string) {
-  send(deps, admins(deps), `Kendi numarasını kullanmak istiyor: ${tenant.name}`, {
-    title: "Müşteri kendi numarasını bildirdi",
+  send(deps, admins(deps), `Numara değişikliği talebi: ${tenant.name}`, {
+    title: "Müşteri numara değişikliği istiyor",
     lines: [
       "Numara müşterinin kendi aboneliğinde olmalı (numara kontrol listesi). Doğruladıktan sonra Müşteriler > Yönet ekranından numarayı firmaya yazın; müşteri kendi başına değiştiremez.",
       ...(note ? [`Müşterinin notu: ${note}`] : []),
@@ -249,12 +240,3 @@ export function mailOwnNumberRequest(deps: Deps, tenant: Tenant, requester: stri
   });
 }
 
-export function mailPoolRenewal(deps: Deps, rows: { number: string; renewAt: number | null; tenantName: string | null }[]) {
-  const fmt = (ms: number | null) => (ms ? new Date(ms).toLocaleDateString("tr-TR") : "?");
-  send(deps, admins(deps), `Numara yenilemesi yaklaşıyor (${rows.length})`, {
-    title: "Netgsm numara yenilemesi yaklaşıyor",
-    lines: ["Yıllık numara ücreti ödenmezse numara düşer ve o numaraya yönlendiren müşterilerin çağrıları kaybolur. Netgsm hesabınızda bakiye ve yenileme tarihini kontrol edin."],
-    facts: rows.slice(0, 10).map((r) => [lineText(r.number), `Yenileme ${fmt(r.renewAt)}${r.tenantName ? ` · ${r.tenantName}` : ""}`] as [string, string]),
-    cta: { label: "Hat havuzu", url: panelUrl(deps, "hat-havuzu") },
-  });
-}

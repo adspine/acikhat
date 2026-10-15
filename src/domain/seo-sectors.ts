@@ -33,7 +33,7 @@ const minutes = planList.map((p) => p.minutes.toLocaleString("tr-TR")).join(", "
 
 const priceAnswer = `Planlar aylık $${fromPrice}'dan başlar. Paketlere ${minutes} dakika yapay zekâ kullanımı dahildir; kullanım hakkı bitince her ek dakika $0,30'dur. Fiyatlar USD cinsindendir ve KDV dahildir. Kurulum bedeli yoktur. Güncel fiyatlar fiyatlandırma bölümünde.`;
 const numberAnswer =
-  "Hayır. Mevcut numaranızı, açamadığınızda ya da her aramada asistana yönlendirirsiniz; müşterileriniz aynı numarayı aramaya devam eder. Yönlendirme için size teknik bir 0850 numarası tanımlanır, arayanlar bunu görmez. Yönlendirilen çağrılar hattınızın operatör tarifesine tabidir, bunu operatörünüzden öğrenin.";
+  "Hayır. Mevcut numaranızı, açamadığınızda ya da her aramada asistana yönlendirirsiniz; müşterileriniz aynı numarayı aramaya devam eder. Asistanın numarasını (0850 ya da sabit hat) Netgsm'den kendi adınıza alırsınız; rehberimiz adım adım anlatır. Yönlendirilen çağrılar hattınızın operatör tarifesine tabidir, bunu operatörünüzden öğrenin.";
 
 export const SECTOR_PAGES: SectorPage[] = [
   {

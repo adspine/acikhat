@@ -883,3 +883,15 @@ select[hidden] { display: none !important; }
 @media (max-width: 560px) {
   .try-after .btn { flex: 1 1 100%; }
 }
+
+/* Numara alma rehberi ve kurulumun 3. adımı */
+.guide-why { padding: 24px 28px; margin: 0 0 24px; display: grid; gap: 12px; max-width: 46rem; }
+.guide-why h2 { font-size: clamp(1.1rem, 2vw, 1.3rem); }
+.guide-why ul { margin: 0; padding-left: 1.2rem; display: grid; gap: 8px; }
+.guide-cta { margin: 0 0 40px; }
+.guide-sub { margin: 4px 0 8px; padding-left: 1.3rem; display: grid; gap: 6px; max-width: 40rem; }
+.guide-h { margin: 8px 0 16px; font-size: clamp(1.2rem, 2.2vw, 1.5rem); }
+.onb-line { text-align: left; display: grid; gap: 18px; }
+.onb-line .auth-actions { justify-content: flex-start; }
+.onb-line-form { display: grid; gap: 18px; padding-top: 20px; border-top: 1px solid var(--cizgi); }
+.onb-line-form h3 { font-size: 1.1rem; }

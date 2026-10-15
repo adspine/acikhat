@@ -5,7 +5,7 @@ import { TenantSchema, type Tenant } from "../../domain/tenant.ts";
 import { PLANS, isPlanId, type PlanId } from "../../domain/plans.ts";
 import { findAddon, periodKey, planChange, upgradeCharge } from "../../domain/billing.ts";
 import { spokenDate } from "../../domain/time.ts";
-import { normalizePoolNumber, isTestNumber } from "../../store/phone-pool.ts";
+import { checkLineNumber } from "../phone-line.ts";
 import { mailOwnNumberRequest, mailPlanApplied, mailPlanScheduled, mailPurchase, mailQuota } from "../../notify/emails.ts";
 
 export interface OrderRow {
@@ -217,13 +217,14 @@ export function billingRoutes(deps: Deps) {
     }
   });
 
-  /** Müşteri kendi 0850 numarasını kullanmak istediğini bildirir. Numara kendiliğinden değişmez; yöneticiye e-posta gider ve kayda geçer. */
+  /** Müşteri numarasını değiştirmek istediğini bildirir. Numara kendiliğinden değişmez; yöneticiye e-posta gider ve kayda geçer. */
   app.post("/phone-request", requirePermission("settings.edit"), async (c) => {
     const tenant = c.get("tenant");
     const user = c.get("user");
     const body = (await c.req.json().catch(() => null)) as { number?: unknown; note?: unknown } | null;
-    const number = typeof body?.number === "string" ? normalizePoolNumber(body.number) : null;
-    if (!number || isTestNumber(number)) return c.json({ error: "Geçerli bir numara yazın (örneğin 0850 000 00 00)" }, 422);
+    const chk = typeof body?.number === "string" ? checkLineNumber(deps, body.number, { tenantId: tenant.id, strict: true }) : null;
+    if (!chk?.ok) return c.json({ error: chk ? chk.error : "Geçerli bir numara yazın (örneğin 0850 000 00 00)" }, chk && !chk.ok ? chk.status : 422);
+    const number = chk.number;
     const note = typeof body?.note === "string" ? body.note.replace(/\s+/g, " ").trim().slice(0, 300) : "";
     // günde en fazla bir talep: yöneticiye e-posta yağdırılamasın
     const today = deps.now().toPlainDate().toString();

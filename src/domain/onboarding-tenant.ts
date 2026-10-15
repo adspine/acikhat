@@ -114,7 +114,7 @@ export function buildTenantDraft(f: OnboardingForm): { tenant: Record<string, un
     todo.push("Randevuları Google Takvim'de tutuyor: takvimi servis hesabıyla paylaşmasını iste, takvim kimliğini calendar.google.calendarId alanına yaz ve npm run calendar:check -- <id> --yazma-testi çalıştır (docs/google-takvim-kurulumu.md). Bağlanmadan yayına alma: asistan dolu saate randevu verebilir.");
   if (f.calendar.current === "yazilim") todo.push(`Randevu programı kullanıyor: ${f.calendar.software ?? "adı yok"}. Çift takvim riski, entegrasyonu konuş.`);
   if (f.phone.languages && !/^\s*(sadece |yalnızca )?türkçe\s*$/i.test(f.phone.languages)) todo.push(`Dil notu: ${f.phone.languages}`);
-  todo.push("Telefon hattı: ödemesi doğrulanmış üyenin firmasına Hat havuzundan otomatik atanır (havuz boşsa numara eklenince atanır). Asistanı kurunca hat ElevenLabs'e bağlanır; elle değiştirmek için Müşteriler > Yönet.");
+  todo.push("Telefon hattı: numara müşterinin kendi Netgsm aboneliğindedir. Başvuruda bildirdiği numara firma oluşturulunca firmaya yazılır (yoksa 3. adımda bildirir; elle girmek için Müşteriler > Yönet). Asistanı kurunca hat ElevenLabs'e bağlanır. Müşterinin Netgsm SIP ayarını yaptığını doğrulamak için numarayı arayıp deneyin.");
 
   const faq = [
     f.business.address && { q: "Adres", a: f.business.address },

@@ -37,7 +37,7 @@ export interface Deps {
   /** Demo firmanın hattından verilen numarayı arar (testlerde sahte verilir) */
   startDemoCall?: (tenant: Tenant, call: { phone: string; demoId: string }) => Promise<DemoCallStart>;
   connectPhone?: (tenant: Tenant) => Promise<PhoneConnectResult>;
-  /** Bırakılan hattı ElevenLabs'ten kaldırır (karantinadaki numara eski firmanın asistanına çağrı düşürmesin) */
+  /** Firmadan çıkarılan numarayı ElevenLabs'ten kaldırır (eski firmanın asistanına çağrı düşmesin) */
   disconnectPhone?: (number: string) => Promise<PhoneDisconnectResult>;
   /** Araç çağrılarındaki Bearer token */
   toolSecret: string;

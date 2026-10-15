@@ -283,11 +283,19 @@ function SubmissionDrawer({ reference, onClose }: { reference: string; onClose: 
               </div>
             </div>
             <Field label="Not (yalnızca yöneticiler görür)">{(id) => <Textarea id={id} rows={2} value={note} onChange={(e) => setNote(e.target.value)} />}</Field>
-            {!d.tenantId && (
-              <Field label="Telefon hattı (isteğe bağlı)" hint="Boş bırakırsanız ödemesi doğrulanmış üyeye Hat havuzundan numara otomatik atanır. Müşterinin kendi aldığı 0850 numarasını ya da havuz dışı bir numarayı yazmak için doldurun.">
-                {(id, dd) => <Input id={id} aria-describedby={dd} type="tel" placeholder="0850 000 00 00" value={phoneNumber} onChange={(e) => setPhoneNumber(e.target.value)} />}
-              </Field>
-            )}
+            {!d.tenantId && (() => {
+              const line = (d.payload?.line ?? null) as { number?: string; subscriptionType?: string; sipConfigured?: boolean } | null;
+              return (
+                <>
+                  <p className="muted small">
+                    <strong>Müşterinin bildirdiği hat:</strong> {line?.number ? `${showPhone(line.number)}${line.subscriptionType ? ` · ${line.subscriptionType === "onodemeli" ? "ön ödemeli" : "faturalı"}` : ""}${line.sipConfigured ? " · SIP ayarını yaptığını bildirdi" : " · SIP ayarı doğrulanmadı"}` : "henüz numara bildirmedi (3. adımda)"}
+                  </p>
+                  <Field label="Telefon hattı (isteğe bağlı)" hint="Boş bırakırsanız müşterinin bildirdiği numara yazılır. Numara müşterinin kendi Netgsm aboneliğinde olmalı; farklı bir numara yazmak için doldurun.">
+                    {(id, dd) => <Input id={id} aria-describedby={dd} type="tel" placeholder={line?.number ? showPhone(line.number) : "0850 000 00 00"} value={phoneNumber} onChange={(e) => setPhoneNumber(e.target.value)} />}
+                  </Field>
+                </>
+              );
+            })()}
             <div className="row-actions">
               <Button variant="quiet" onClick={save} busy={busy}>Durumu kaydet</Button>
               {d.tenantId ? (
@@ -302,7 +310,7 @@ function SubmissionDrawer({ reference, onClose }: { reference: string; onClose: 
                 {created.line?.number ? (
                   <p><strong>Telefon hattı:</strong> {showPhone(created.line.number)}{created.line.connected ? " atandı ve asistana bağlandı." : ` atandı. ${created.line.note ?? "Asistan kurulunca asistana bağlanır."}`}</p>
                 ) : created.line?.error ? (
-                  <p className="admin-over"><strong>Telefon hattı atanmadı:</strong> {created.line.error}{created.line.reason === "empty" ? " Hat havuzuna numara eklenince bu firmaya kendiliğinden atanır." : ""}</p>
+                  <p className="admin-over"><strong>Telefon hattı yazılmadı:</strong> {created.line.error}. Numara geldiğinde Müşteriler &gt; Yönet ekranından yazın.</p>
                 ) : null}
               </div>
             )}
@@ -567,15 +575,6 @@ export function AdminCustomersPage() {
       toast(e instanceof ApiError ? e.message : "Asistan kurulamadı", "error");
     }
   };
-  const assignLine = async (t: TenantItem, test = false) => {
-    try {
-      const r = await api<{ number: string; connected: boolean; note?: string }>(`/api/admin/tenants/${t.id}/assign-number`, { method: "POST", ...(test && { body: { test: true } }) });
-      toast(r.connected ? `${t.name} firmasına ${test ? "deneme numarası " : ""}${r.number} atandı${test ? " (gerçek hat değil)" : " ve asistana bağlandı"}` : `${t.name} firmasına ${r.number} atandı. ${r.note ?? ""}`, r.connected ? "ok" : "error");
-      await qc.invalidateQueries({ queryKey: ["admin"] });
-    } catch (e) {
-      toast(e instanceof ApiError ? e.message : "Hat atanamadı", "error");
-    }
-  };
   const open = rows.find((t) => t.id === openId) ?? null;
   const assistantTenant = rows.find((t) => t.id === assistantId) ?? null;
   return (
@@ -608,7 +607,7 @@ export function AdminCustomersPage() {
                     {t.plan ? PLAN_LABELS[t.plan] : <span className="muted">—</span>}
                     {t.pendingPlan && <span className="pill admin-status admin-status-reviewing">Sonra {PLAN_LABELS[t.pendingPlan]}</span>}
                   </td>
-                  <td data-label="Asistan">{t.assistantReady ? (t.hasPhone ? "Hazır" : "Hat bekliyor") : <span className="muted">Kurulacak</span>}</td>
+                  <td data-label="Asistan">{t.assistantReady ? (t.hasPhone ? "Hazır" : "Numara bekleniyor") : <span className="muted">Kurulacak</span>}</td>
                   <td data-label="Bu ay kullanım">{t.includedMinutes ? <span className={t.minutesUsed > t.includedMinutes ? "admin-over" : undefined}>{t.minutesUsed} / {t.includedMinutes} dk</span> : <span className="muted">{t.minutesUsed} dk</span>}</td>
                   <td data-label="Çağrı (30 gün)">{t.calls30}</td>
                   <td data-label="Randevu">{t.appointments30}</td>
@@ -618,7 +617,6 @@ export function AdminCustomersPage() {
                       actions={[
                         { label: "Yönet", icon: "settings", onClick: () => setOpenId(t.id) },
                         ...(t.assistantReady ? [{ label: "Asistanı düzenle", icon: "users", onClick: () => setAssistantId(t.id) }] : [{ label: "Asistanı kur", icon: "mic", onClick: () => void setup(t) }]),
-                        ...(!t.hasPhone ? [{ label: "Havuzdan hat ata", icon: "phone", onClick: () => void assignLine(t) }, { label: "Deneme hattı ata (gerçek değil)", icon: "phone", onClick: () => void assignLine(t, true) }] : []),
                         { label: "Müşteri panelini aç", icon: "chart", onClick: () => { setAdminTenant(t.id); location.assign("/panel/"); } },
                       ]}
                     />

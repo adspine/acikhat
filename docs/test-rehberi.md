@@ -1,6 +1,6 @@
 # Satın almadan test rehberi
 
-Amaç: ödeme, firma oluşturma, hat havuzu, e-postalar ve yönlendirme akışını **gerçek abonelik satın almadan** denemek. Dört katman var; soldan sağa gerçeğe yaklaşır, maliyet ve risk artar.
+Amaç: ödeme, kurulum yolculuğu (form, numara adımı, onay), firma oluşturma, e-postalar ve yönlendirme akışını **gerçek abonelik satın almadan** denemek. Dört katman var; soldan sağa gerçeğe yaklaşır, maliyet ve risk artar.
 
 | Katman | Ne test eder | Ücret | Dış sistem | Süre |
 |---|---|---|---|---|
@@ -13,11 +13,11 @@ Amaç: ödeme, firma oluşturma, hat havuzu, e-postalar ve yönlendirme akışı
 Hiçbir dış sisteme gitmez, canlıyı etkilemez.
 ```
 npm test                                   # hepsi (312 test)
-npm test -- test/phone-pool.test.ts        # hat havuzu, atama, karantina, deneme numarası
+npm test -- test/line-journey.test.ts      # kurulum adımları (3. adım numara), numara doğrulama, firma oluşturma, bağlama
 npm test -- test/polar.test.ts             # ödeme webhook'ları, %100 indirimli sıfır tutarlı sipariş, yenileme, iptal
 npm test -- test/journey.test.ts test/admin.test.ts   # üyelik ve yönetici akışı
 ```
-Kapsadığı akışlar: ödeme webhook'u paketi ödenmiş yapar, firma oluşturulunca ödemiş üyeye numara atanır, ödemeyene atanmaz, havuz boşken yöneticiye uyarı, numara eklenince bekleyene atama, bırakma ve karantina, e-postalar, hizmet sonu silme, saklama süreleri.
+Kapsadığı akışlar: ödeme webhook'u paketi ödenmiş yapar; formda numara yoksa üye 3. adımda kalır (çıkıp girince de), numara bildirince 4. adıma geçer; cep numarası ve başka firmanın numarası reddedilir; yönetici onayında numara firmaya yazılır, asistan kurulunca bağlanır ve müşteriye bir kez e-posta gider; e-postalar; hizmet sonu silme; saklama süreleri.
 
 ## Katman 2: yerel test modu (`npm run dev:test`)
 Güvenli ayarla yerelde ikinci bir sunucu açar:
@@ -29,7 +29,7 @@ Adımlar:
 1. `npm run dev:test`, tarayıcıda http://localhost:8790. Üye olun (Google ya da e-posta; yerelde çalışır).
 2. Paket seçin, **Ödemeyi tamamla** (test modu, ücret yok), kurulum formunu doldurun.
 3. Yönetici hesabıyla girin (`.env` içindeki `ADMIN_EMAILS` e-postası). Yönetim > **Başvurular** > başvuruyu açın > **Firma oluştur**.
-4. Yönetim > **Hat havuzu** > "Numara ekle": `0850 300 00 01` gibi uydurma numaralar ekleyin. Hat bekleyen ödemiş firma varsa **kendiliğinden atanır**. Gerçek numara istemeden denemek için Müşteriler > ⋮ > **Deneme hattı ata (gerçek değil)**.
+4. Kurulum formunu doldurun (Telefon adımında numara yazmazsanız 3. adım açılır; `0850 300 00 01` gibi uydurma bir numara yazıp gönderin). Yönetim > Başvurular > başvuruyu açın: bildirilen numara görünür. **Onayla ve firmayı oluştur** numarayı firmaya yazar.
 5. Terminalde `[e-posta:gönderilmedi]` satırlarını izleyin: gitmeyen e-postaların kime ve hangi konuyla gideceğini gösterir.
 6. Sıfırlamak için: sunucuyu durdurun, `rm data/test-akis.db*`.
 
@@ -49,7 +49,7 @@ Polar'ın belgesine göre toplamı sıfır olan siparişler kart istemeden hemen
 
 **Ne olduğunu doğrulayın:**
 ```
-fly logs -a acikhat-resepsiyon --no-tail | grep -E "polar\]|e-posta|hat-havuzu"
+fly logs -a acikhat-resepsiyon --no-tail | grep -E "polar\]|e-posta|onboarding"
 ```
 Beklenen satırlar: `[polar] üyelik ödendi: üye … → Başlangıç`, ardından kurulum formu adımı açılır. Firma oluşturduktan sonra `[e-posta:gönderilmedi] … Telefon hattınız hazır` (Resend bağlanana kadar e-postalar gönderilmez, günlükte görünür).
 
@@ -57,7 +57,7 @@ Beklenen satırlar: `[polar] üyelik ödendi: üye … → Başlangıç`, ardın
 1. Aboneliği iptal edin: Panel > Paketim > **Aboneliği yönet** > iptal (ya da Polar panelinde Subscriptions).
 2. **İndirim kodunu silin** ya da süresini bitirin.
 3. Deneme firmasını silmek için firmayı askıya alıp `fly ssh console -C 'node scripts/erase-tenant.ts <firma-id> <firma-id>'` (firma kullanıcısı da silinir; Firebase hesabı kalır, zararsız).
-4. Gerçek numara tüketmemek için **Deneme hattı** kullanın, havuza gerçek numara koymayın.
+4. Canlıda numara adımında gerçek numara gerekir; deneme için uydurma numara yazmayın, asistan kurulunca ElevenLabs'e bağlanmaya çalışır. Gerçek bir Netgsm numarası yoksa asistanı kurmadan bırakın.
 
 Sınırlar: Polar aynı e-postayı (artı takma adları yok sayarak) ve kartı tanır; ikinci deneme için başka bir e-posta ya da yeni kod gerekir. Bu test, **gerçek kartla ödeme** sayfasını denemez; onu bir kez gerçek 149 dolarlık ödemeyle (sonra iade) ayrıca yapmak gerekir.
 

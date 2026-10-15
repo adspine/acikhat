@@ -492,7 +492,7 @@ function buildPayload() {
     company_fax: f.company_fax,
     business: { sector: f["business.sector"] || undefined, name: clean(f["business.name"]) ?? "", address: clean(f["business.address"]), website: clean(f["business.website"]), operatedBy: clean(f["business.operatedBy"]) },
     contact: { person: clean(f["contact.person"]) ?? "", phone: clean(f["contact.phone"]) ?? "", email: clean(f["contact.email"]) ?? "" },
-    phone: { publicNumber: clean(f["phone.publicNumber"]), when: clean(f["phone.when"]), transferNumber: clean(f["phone.transferNumber"]), languages: state.languages.join(", ") || undefined },
+    phone: { publicNumber: clean(f["phone.publicNumber"]), assistantNumber: clean(f["phone.assistantNumber"]), when: clean(f["phone.when"]), transferNumber: clean(f["phone.transferNumber"]), languages: state.languages.join(", ") || undefined },
     hours: state.hours.map((h) => (h.open ? { day: h.day, open: true, from: h.from, to: h.to } : { day: h.day, open: false })),
     closedDates: state.closed.join(", ") || undefined,
     booking: { minLeadMinutes: num(f["booking.minLeadMinutes"]), maxDaysAhead: num(f["booking.maxDaysAhead"]) },
@@ -650,7 +650,7 @@ function renderReview() {
   section(
     "Telefon",
     "telefon",
-    [p.phone.publicNumber && `Aranan numara: ${p.phone.publicNumber}`, p.phone.when && `Asistan: ${whenText[p.phone.when]}`, p.phone.transferNumber ? `Aktarma: ${p.phone.transferNumber}` : "Aktarma yok, geri arama notu alınacak", p.phone.languages && `Diller: ${p.phone.languages}`],
+    [p.phone.publicNumber && `Bugün aranan numara: ${p.phone.publicNumber}`, p.phone.assistantNumber ? `Asistan numarası: ${p.phone.assistantNumber}` : "Asistan numarası: formdan sonra Netgsm'den alacaksınız", p.phone.when && `Asistan: ${whenText[p.phone.when]}`, p.phone.transferNumber ? `Aktarma: ${p.phone.transferNumber}` : "Aktarma yok, geri arama notu alınacak", p.phone.languages && `Diller: ${p.phone.languages}`],
     !p.phone.publicNumber ? "Müşterilerin aradığı numarayı yazarsanız kurulum hızlanır." : null,
   );
   section("Çalışma saatleri", "saatler", [...p.hours.map((h) => `${DAYS[h.day - 1]}: ${h.open ? `${h.from}–${h.to}` : "kapalı"}`), p.closedDates && `Kapalı günler: ${p.closedDates}`]);

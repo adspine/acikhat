@@ -30,12 +30,17 @@ type Row = {
   plan?: string | null; plan_paid_at?: number | null; onboarding_ref?: string | null;
 };
 
-/** Üyenin kurulum yolculuğu: 1 paket ve ödeme, 2 kurulum formu, 3 hazırlık */
+/**
+ * Üyenin kurulum yolculuğu (sunucuda tutulur; çıkış yapıp dönünce kaldığı adımdan devam eder):
+ * 1 paket ve ödeme, 2 kurulum formu, 3 numara alma (numarası yoksa), 4 onay bekleniyor. Firma oluşunca yolculuk biter.
+ */
 export interface Onboarding {
   plan: PlanId | null;
   paidAt: number | null;
   reference: string | null;
-  step: 1 | 2 | 3;
+  /** Üyenin bildirdiği asistan hattı (E.164); henüz bildirmediyse null */
+  lineNumber: string | null;
+  step: 1 | 2 | 3 | 4;
 }
 const toUser = (r: Row): User => ({
   id: r.id, tenantId: r.tenant_id, email: r.email, name: r.name, role: r.role,
@@ -129,7 +134,20 @@ export class Users {
     const plan = r && isPlanId(r.plan) ? r.plan : null;
     const paidAt = r?.plan_paid_at ?? null;
     const reference = r?.onboarding_ref ?? null;
-    return { plan, paidAt, reference, step: !paidAt ? 1 : !reference ? 2 : 3 };
+    const lineNumber = reference ? this.declaredLine(reference) : null;
+    return { plan, paidAt, reference, lineNumber, step: !paidAt ? 1 : !reference ? 2 : !lineNumber ? 3 : 4 };
+  }
+
+  /** Başvuruda üyenin bildirdiği hat numarası (payload.line.number) */
+  private declaredLine(reference: string): string | null {
+    const r = this.db.prepare("SELECT payload_json FROM onboarding_submissions WHERE reference = ?").get(reference) as { payload_json: string } | undefined;
+    if (!r) return null;
+    try {
+      const n = (JSON.parse(r.payload_json) as { line?: { number?: unknown } }).line?.number;
+      return typeof n === "string" && n ? n : null;
+    } catch {
+      return null;
+    }
   }
 
   /** Ödeme yapılana kadar plan değiştirilebilir */
