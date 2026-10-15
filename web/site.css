@@ -895,3 +895,4 @@ select[hidden] { display: none !important; }
 .onb-line .auth-actions { justify-content: flex-start; }
 .onb-line-form { display: grid; gap: 18px; padding-top: 20px; border-top: 1px solid var(--cizgi); }
 .onb-line-form h3 { font-size: 1.1rem; }
+.onb-need { padding: 16px 20px; border-radius: var(--r, 14px); background: color-mix(in srgb, var(--gol, #c9a24a) 14%, transparent); border: 1px solid color-mix(in srgb, var(--gol, #c9a24a) 45%, transparent); font-size: 0.98rem; line-height: 1.55; }
