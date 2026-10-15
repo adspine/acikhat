@@ -15,7 +15,7 @@ import { authRoutes } from "./panel/session.ts";
 import { serveStatic } from "@hono/node-server/serve-static";
 import { compress } from "hono/compress";
 import { sectorRoutes } from "./sector-pages.ts";
-import { canonicalHost, legalRoutes, noindexPrivate, notFoundHtml } from "./seo.ts";
+import { appPageRoutes, canonicalHost, legalRoutes, noindexPrivate, notFoundHtml } from "./seo.ts";
 import { cspReportRoutes, limitBody, noStore, rateLimit, securityHeaders } from "./security.ts";
 
 export function createApp(deps: Deps) {
@@ -81,21 +81,9 @@ export function createApp(deps: Deps) {
   app.route("/", legalRoutes(deps.baseUrl));
   // Sektör iniş sayfaları (/spa, /klinik, /otel)
   app.route("/", sectorRoutes(deps.baseUrl));
-  // Tanıtım sitesinin sayfa içi adresleri (/hesap, /rehber ...) index.html'e düşer; sayfayı tarayıcıdaki yönlendirici açar.
-  // Giriş ve hesap adresleri arama motoruna kapalıdır.
-  for (const path of ["/hesap", "/kurulum", "/giris", "/uye-ol", "/tamam"]) {
-    app.get(path, async (c, next) => {
-      c.header("x-robots-tag", "noindex, nofollow");
-      c.header("cache-control", "no-cache");
-      return serveStatic({ path: "./web/index.html" })(c, next);
-    });
-  }
-  for (const path of ["/rehber", "/numara-al", "/nasil", "/ozellikler", "/fiyatlandirma", "/sss", "/iletisim"]) {
-    app.get(path, async (c, next) => {
-      c.header("cache-control", "no-cache");
-      return serveStatic({ path: "./web/index.html" })(c, next);
-    });
-  }
+  // Tanıtım sitesinin sayfa içi adresleri (/hesap, /rehber ...): aynı index.html, her adres için kendi başlık, açıklama ve canonical'ı
+  // sunucuda yazılır; sayfayı tarayıcıdaki yönlendirici açar. Giriş ve hesap adresleri arama motoruna kapalıdır.
+  app.route("/", appPageRoutes(deps.baseUrl));
   app.use("/*", serveStatic({ root: "./web" }));
   // Firma paneli (panel/ derlemesi web/panel/ altında): kendi yönlendiricisi olduğu için bilinmeyen alt yollar panele düşer
   app.get("/panel", (c) => c.redirect("/panel/"));

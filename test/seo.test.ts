@@ -170,3 +170,48 @@ describe("sayfa içi adresler (hash olmadan)", () => {
     expect(boot).toContain('indexOf("#/")');
   });
 });
+
+describe("sayfa içi adreslerin başlık ve canonical'ı sunucuda yazılır", () => {
+  const tag = (html: string, re: RegExp) => re.exec(html)?.[1] ?? null;
+
+  it("rehber sayfaları kendi başlığı, açıklaması ve canonical'ı ile indekslenir; ana sayfanın yapılandırılmış verisi yinelenmez", async () => {
+    const { app } = makeApp(MONDAY_9AM);
+    for (const [path, titlePart, descPart] of [["/rehber", "Çağrı yönlendirme rehberi", "meşgulken"], ["/numara-al", "Netgsm'den 0850", "SIP ayarı"]] as const) {
+      const html = await (await app.request(path)).text();
+      expect(tag(html, /<title>([^<]*)<\/title>/), path).toContain(titlePart);
+      expect(tag(html, /<meta name="description" content="([^"]*)">/), path).toContain(descPart);
+      expect(new URL(tag(html, /<link rel="canonical" href="([^"]+)">/)!).pathname, path).toBe(path);
+      expect(new URL(tag(html, /<meta property="og:url" content="([^"]+)">/)!).pathname, path).toBe(path);
+      expect(tag(html, /<meta property="og:title" content="([^"]*)">/), path).toContain(titlePart);
+      expect(html, path).toContain('<meta name="robots" content="index, follow, max-image-preview:large">');
+      expect(html, path).not.toContain("application/ld+json");
+      expect(new URL(tag(html, /<link rel="alternate" hreflang="tr" href="([^"]+)">/)!).pathname, path).toBe(path);
+    }
+  });
+
+  it("bölüm adresleri ana sayfayı canonical gösterir ve ana sayfanın başlığını korur; ana sayfa değişmez", async () => {
+    const { app } = makeApp(MONDAY_9AM);
+    const home = await (await app.request("/")).text();
+    const homeTitle = tag(home, /<title>([^<]*)<\/title>/);
+    expect(home).toContain("application/ld+json");
+    for (const path of ["/fiyatlandirma", "/sss", "/nasil", "/ozellikler", "/iletisim"]) {
+      const html = await (await app.request(path)).text();
+      expect(tag(html, /<title>([^<]*)<\/title>/), path).toBe(homeTitle);
+      expect(new URL(tag(html, /<link rel="canonical" href="([^"]+)">/)!).pathname, path).toBe("/");
+      expect(html, path).not.toContain("application/ld+json");
+    }
+  });
+
+  it("hesap ve giriş adresleri hem başlıkta hem meta'da noindex olur, canonical ve hreflang taşımaz", async () => {
+    const { app } = makeApp(MONDAY_9AM);
+    for (const [path, title] of [["/hesap", "Hesabım"], ["/giris", "Giriş yap"], ["/uye-ol", "Üye ol"], ["/kurulum", "Kurulum formu"], ["/tamam", "Bilgileriniz alındı"]] as const) {
+      const res = await app.request(path);
+      const html = await res.text();
+      expect(tag(html, /<title>([^<]*)<\/title>/), path).toContain(title);
+      expect(html, path).toContain('<meta name="robots" content="noindex, nofollow">');
+      expect(res.headers.get("x-robots-tag"), path).toBe("noindex, nofollow");
+      expect(html, path).not.toContain('rel="canonical"');
+      expect(html, path).not.toContain("hreflang");
+    }
+  });
+});

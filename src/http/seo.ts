@@ -128,3 +128,91 @@ export function legalRoutes(baseUrl: string | undefined) {
   });
   return app;
 }
+
+
+/* ---------- Tek sayfalık sitenin sayfa içi adresleri (/rehber, /hesap ...): başlık, açıklama, canonical sunucuda verilir ---------- */
+
+interface AppMeta {
+  title: string;
+  description?: string;
+  /** "self": kendi adresi; "home": ana sayfa (bölüm adresleri aynı içeriktir); null: canonical yok (indekslenmeyen sayfa) */
+  canonical: "self" | "home" | null;
+  robots: string;
+}
+const NOINDEX = "noindex, nofollow";
+const INDEX = "index, follow, max-image-preview:large";
+const SECTION: AppMeta = { title: "", canonical: "home", robots: INDEX };
+
+/** Yol → meta. Boş başlık: ana sayfanın başlığı ve açıklaması korunur */
+export const APP_PAGES: Record<string, AppMeta> = {
+  "/rehber": {
+    title: `Çağrı yönlendirme rehberi: Turkcell, Vodafone, Türk Telekom | ${BRAND}`,
+    description: "Mevcut numaranızı Açık Hat asistanına yönlendirmenin adımları: meşgulken, cevapsızken ve kapalıyken kodları, iptal ve operatör ücreti notları.",
+    canonical: "self",
+    robots: INDEX,
+  },
+  "/numara-al": {
+    title: `Netgsm'den 0850 ve sabit hat numarası alma rehberi | ${BRAND}`,
+    description: "Asistan numaranızı Netgsm'den kendi adınıza alma adımları: başvuru, belgeler, SIP ayarı ve numarayı bildirme. 0850 işletme numarası ya da şehir kodlu sabit hat.",
+    canonical: "self",
+    robots: INDEX,
+  },
+  "/nasil": SECTION,
+  "/ozellikler": SECTION,
+  "/fiyatlandirma": SECTION,
+  "/sss": SECTION,
+  "/iletisim": SECTION,
+  "/hesap": { title: `Hesabım | ${BRAND}`, canonical: null, robots: NOINDEX },
+  "/kurulum": { title: `Kurulum formu | ${BRAND}`, canonical: null, robots: NOINDEX },
+  "/giris": { title: `Giriş yap | ${BRAND}`, canonical: null, robots: NOINDEX },
+  "/uye-ol": { title: `Üye ol | ${BRAND}`, canonical: null, robots: NOINDEX },
+  "/tamam": { title: `Bilgileriniz alındı | ${BRAND}`, canonical: null, robots: NOINDEX },
+};
+
+/** index.html'in head etiketlerini bir sayfa için yeniden yazar (betik ve içerik aynı kalır) */
+export function renderAppPage(html: string, origin: string, path: string, meta: AppMeta): string {
+  let out = html;
+  const own = meta.title !== "";
+  const url = `${origin}${path}`;
+  const attr = (v: string) => esc(v);
+  if (own) {
+    out = out.replace(/<title>[\s\S]*?<\/title>/, `<title>${attr(meta.title)}</title>`);
+    const desc = meta.description;
+    const sets: [RegExp, string][] = [
+      [/<meta property="og:title" content="[^"]*">/, `<meta property="og:title" content="${attr(meta.title)}">`],
+      [/<meta name="twitter:title" content="[^"]*">/, `<meta name="twitter:title" content="${attr(meta.title)}">`],
+    ];
+    if (desc) {
+      sets.push(
+        [/<meta name="description" content="[^"]*">/, `<meta name="description" content="${attr(desc)}">`],
+        [/<meta property="og:description" content="[^"]*">/, `<meta property="og:description" content="${attr(desc)}">`],
+        [/<meta name="twitter:description" content="[^"]*">/, `<meta name="twitter:description" content="${attr(desc)}">`],
+      );
+    }
+    for (const [re, to] of sets) out = out.replace(re, to);
+  }
+  out = out.replace(/<meta name="robots" content="[^"]*">/, `<meta name="robots" content="${meta.robots}">`);
+  const canonical = meta.canonical === "self" ? url : meta.canonical === "home" ? `${origin}/` : null;
+  out = out.replace(/<link rel="canonical" href="[^"]*">\n?/, canonical ? `<link rel="canonical" href="${canonical}">\n` : "");
+  out = out.replace(/<meta property="og:url" content="[^"]*">/, canonical ? `<meta property="og:url" content="${canonical}">` : "");
+  // hreflang yalnızca kendi canonical'ı olan sayfada anlamlıdır
+  out = out.replace(/<link rel="alternate" hreflang="(tr|x-default)" href="[^"]*">\n?/g, (_m, lang: string) => (meta.canonical === "self" ? `<link rel="alternate" hreflang="${lang}" href="${url}">\n` : ""));
+  // Yapılandırılmış veri (kurum, ürün, SSS) ana sayfaya aittir; başka adreste yinelenmez
+  out = out.replace(/<script type="application\/ld\+json">[\s\S]*?<\/script>\n?/g, "");
+  return out;
+}
+
+export function appPageRoutes(baseUrl: string | undefined, path = "./web/index.html") {
+  const app = new Hono();
+  const origin = (baseUrl ?? "https://acikhat.si").replace(/\/$/, "");
+  let cache: string | null = null;
+  for (const [route, meta] of Object.entries(APP_PAGES)) {
+    app.get(route, (c) => {
+      cache ??= readFileSync(path, "utf8");
+      c.header("cache-control", "no-cache");
+      if (meta.robots === NOINDEX) c.header("x-robots-tag", NOINDEX);
+      return c.html(renderAppPage(cache, origin, route, meta));
+    });
+  }
+  return app;
+}

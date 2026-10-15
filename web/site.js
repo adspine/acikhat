@@ -138,14 +138,14 @@ const sections = ["nasil", "ozellikler", "fiyatlandirma", "sss", "iletisim"];
 const routes = { "": "home", kurulum: "kurulum", rehber: "rehber", "numara-al": "numara-al", tamam: "tamam", yasal: "yasal", giris: "giris", "uye-ol": "uye-ol", hesap: "hesap", ...Object.fromEntries(sections.map((k) => [k, "home"])) };
 const titles = {
   home: "Yapay Zeka Telefon Asistanı, Sesli Resepsiyonist | Açık Hat",
-  kurulum: `Kurulum formu — ${BRAND}`,
-  rehber: `Kurulum rehberi — ${BRAND}`,
-  "numara-al": `Netgsm'den numara alma rehberi — ${BRAND}`,
-  tamam: `Bilgileriniz alındı — ${BRAND}`,
+  kurulum: `Kurulum formu | ${BRAND}`,
+  rehber: `Çağrı yönlendirme rehberi: Turkcell, Vodafone, Türk Telekom | ${BRAND}`,
+  "numara-al": `Netgsm'den 0850 ve sabit hat numarası alma rehberi | ${BRAND}`,
+  tamam: `Bilgileriniz alındı | ${BRAND}`,
   yasal: `Yasal — ${BRAND}`,
-  giris: `Giriş yap — ${BRAND}`,
-  "uye-ol": `Üye ol — ${BRAND}`,
-  hesap: `Hesabım — ${BRAND}`,
+  giris: `Giriş yap | ${BRAND}`,
+  "uye-ol": `Üye ol | ${BRAND}`,
+  hesap: `Hesabım | ${BRAND}`,
 };
 const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)");
 let currentView = null;
