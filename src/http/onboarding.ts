@@ -3,6 +3,7 @@ import { z } from "zod";
 import type { Deps } from "./deps.ts";
 import { normalizeTrPhone } from "../domain/phone.ts";
 import { checkLineNumber } from "./phone-line.ts";
+import { createTenantFromSubmission } from "./tenant-create.ts";
 import { SECTOR_IDS } from "../domain/sectors.ts";
 import { userFromCookie } from "./panel/session.ts";
 import { mailLineSubmitted, mailSubmission } from "../notify/emails.ts";
@@ -168,6 +169,13 @@ export function onboardingRoutes(deps: Deps) {
       contactEmail: parsed.data.contact.email || undefined,
       plan: owner ? (journey.plan ?? null) : null,
     });
+    // Ödemiş üyenin firması hemen oluşturulur: üye panele girer ve numara adımını panelde rehberle tamamlar.
+    // Firma canlı sayılmaz (asistan ve numara yönetici onayıyla bağlanır). Oluşturulamazsa başvuru yönetici inceleyene kadar bekler.
+    if (owner) {
+      const made = createTenantFromSubmission(deps, { reference, userId: owner.id, form: parsed.data });
+      if (made.ok) return c.json({ ok: true, reference, tenantCreated: true });
+      console.error(`[onboarding] firma otomatik oluşturulamadı (${reference}): ${made.error}`);
+    }
     return c.json({ ok: true, reference });
   });
 

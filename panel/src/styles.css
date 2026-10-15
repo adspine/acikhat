@@ -565,3 +565,22 @@ details.note code { padding: 1px 6px; border-radius: 6px; background: rgba(127, 
 .phone-block:first-child { padding-top: 0; border-top: 0; }
 .phone-sub { margin: 0; font-size: 15px; font-weight: 700; }
 .phone-number { margin: 0; font-size: 22px; font-weight: 700; letter-spacing: 0.01em; }
+
+/* Numara rehberi */
+.line-progress { list-style: none; margin: 0 0 20px; padding: 0; display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+.line-progress li { display: flex; align-items: center; gap: 8px; padding: 10px 12px; border-radius: 12px; background: var(--gol-acik); color: var(--cam-soluk); font-size: 0.92rem; font-weight: 500; }
+.line-progress li.is-current { background: var(--lamba-acik); color: var(--cam); box-shadow: inset 0 0 0 2px var(--lamba); }
+.line-progress li.is-done { color: inherit; }
+.line-progress-no { display: inline-grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; background: var(--cizgi); font-size: 0.8rem; flex: none; }
+.line-progress li.is-done .line-progress-no { background: var(--tamam); color: #fff; }
+.line-page .card { margin-bottom: 18px; display: grid; gap: 14px; }
+.line-number { font-size: 1.6rem; font-weight: 700; letter-spacing: 0.02em; }
+.line-steps { list-style: none; counter-reset: ls; margin: 4px 0 0; padding: 0; display: grid; gap: 18px; }
+.line-steps > li { counter-increment: ls; position: relative; padding-left: 44px; display: grid; gap: 6px; }
+.line-steps > li::before { content: counter(ls); position: absolute; left: 0; top: 0; width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; background: var(--lamba-acik); font-weight: 700; }
+.line-steps h3 { font-size: 1.05rem; }
+.line-sub { margin: 4px 0; padding-left: 1.2rem; display: grid; gap: 4px; }
+.line-why { border: 1px solid var(--cizgi); border-radius: 12px; padding: 10px 14px; }
+.line-why summary { cursor: pointer; font-weight: 600; }
+.line-why ul, .line-use { margin: 10px 0 0; padding-left: 1.2rem; display: grid; gap: 6px; }
+@media (max-width: 720px) { .line-progress { grid-template-columns: 1fr 1fr; } }

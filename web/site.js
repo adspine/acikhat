@@ -407,7 +407,7 @@ for (const d of $$(".faq details")) {
 /* ======================= Kurulum formu ======================= */
 // Form büyük olduğu için yalnızca açılınca yüklenir (web/form.js)
 function openForm() {
-  import("/form.js?v=34").then((m) => {
+  import("/form.js?v=35").then((m) => {
     m.initForm({ isMember: () => !!account.user && !account.hasTenant, refresh: loadAccount });
     m.showForm();
   });

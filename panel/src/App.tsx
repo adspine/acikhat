@@ -14,6 +14,7 @@ import { ReportsPage } from "./pages/Reports.tsx";
 import { SettingsPage } from "./pages/Settings.tsx";
 import { UsersPage } from "./pages/Users.tsx";
 import { UsagePage } from "./pages/Usage.tsx";
+import { LinePage } from "./pages/Line.tsx";
 import { AdminCustomersPage, AdminDemoCallsPage, AdminOverviewPage, AdminSubmissionsPage } from "./pages/Admin.tsx";
 // Ses kütüphanesi büyük: yalnızca "Asistanı dene" açılınca yüklenir
 const TestCallPage = lazy(() => import("./pages/TestCall.tsx").then((m) => ({ default: m.TestCallPage })));
@@ -299,6 +300,7 @@ function Shell() {
     { to: "/cagrilar", label: "Çağrılar", icon: "phone", perm: "calls.view", mobile: true },
     { to: "/geri-aramalar", label: "Geri aramalar", icon: "callback", perm: "calls.view", mobile: true, badge: openCallbacks },
     { to: "/raporlar", label: "Raporlar", icon: "chart", perm: "reports.view" },
+    { to: "/numara", label: "Numara rehberi", icon: "phone", perm: "settings.edit" },
     { to: "/paketim", label: "Paketim", icon: "gauge", perm: "settings.edit" },
     { to: "/kurulum", label: "Kurulum", icon: "settings", perm: "settings.edit" },
     { to: "/kullanicilar", label: "Kullanıcılar", icon: "users", perm: "users.manage" },
@@ -318,6 +320,7 @@ function Shell() {
     if (p.startsWith("/cagrilar")) return <CallsPage />;
     if (p.startsWith("/geri-aramalar")) return <CallbacksPage />;
     if (p.startsWith("/raporlar")) return <ReportsPage />;
+    if (p.startsWith("/numara")) return <LinePage />;
     if (p.startsWith("/paketim")) return <UsagePage />;
     if (p.startsWith("/kurulum") || p.startsWith("/ayarlar")) return <SettingsPage />;
     if (p.startsWith("/kullanicilar")) return <UsersPage />;

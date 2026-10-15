@@ -247,6 +247,19 @@ function SubmissionDrawer({ reference, onClose }: { reference: string; onClose: 
       setJsonErrors(["JSON okunamadı: parantez veya tırnak hatası olabilir."]);
     }
   };
+  const approveLine = async () => {
+    setBusy(true);
+    try {
+      const r = await api<{ line: { number: string; connected: boolean; note?: string } }>(`/api/admin/submissions/${reference}/approve-line`, { method: "POST", body: phoneNumber.trim() ? { phoneNumber: phoneNumber.trim() } : {} });
+      toast(r.line.connected ? `${showPhone(r.line.number)} firmaya yazıldı ve asistana bağlandı` : `${showPhone(r.line.number)} firmaya yazıldı. ${r.line.note ?? "Asistan kurulunca bağlanır."}`);
+      setPhoneNumber("");
+      refresh();
+    } catch (e) {
+      toast(e instanceof ApiError ? e.message : "Numara onaylanamadı", "error");
+    } finally {
+      setBusy(false);
+    }
+  };
   const createTenant = async () => {
     setBusy(true);
     try {
@@ -315,6 +328,28 @@ function SubmissionDrawer({ reference, onClose }: { reference: string; onClose: 
               </div>
             )}
           </div>
+
+          {d.tenantId && (() => {
+            const line = (d.payload?.line ?? null) as { number?: string; subscriptionType?: string; sipConfigured?: boolean; approvedAt?: number } | null;
+            return (
+              <div className="admin-actions card">
+                <h3>Telefon hattı</h3>
+                {line?.approvedAt ? (
+                  <p>Onaylandı ve firmaya yazıldı: <strong>{showPhone(line.number ?? "")}</strong></p>
+                ) : (
+                  <>
+                    <p className="muted small">
+                      {line?.number ? `Müşterinin bildirdiği numara: ${showPhone(line.number)}${line.subscriptionType ? ` · ${line.subscriptionType === "onodemeli" ? "ön ödemeli" : "faturalı"}` : ""}${line.sipConfigured ? " · SIP ayarını yaptığını bildirdi" : " · SIP ayarı doğrulanmadı"}` : "Müşteri henüz numara bildirmedi (panelde Numara rehberi). İsterseniz numarayı elle yazabilirsiniz."}
+                    </p>
+                    <Field label="Numara" hint="Boş bırakırsanız müşterinin bildirdiği numara yazılır. Numara müşterinin kendi Netgsm aboneliğinde olmalı.">
+                      {(id, dd) => <Input id={id} aria-describedby={dd} type="tel" placeholder={line?.number ? showPhone(line.number) : "0850 000 00 00"} value={phoneNumber} onChange={(e) => setPhoneNumber(e.target.value)} />}
+                    </Field>
+                    <div className="row-actions"><Button onClick={approveLine} busy={busy}>Numarayı onayla ve bağla</Button></div>
+                  </>
+                )}
+              </div>
+            );
+          })()}
 
           {!d.tenantId && (
             <div className="row-actions">

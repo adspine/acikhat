@@ -8,7 +8,8 @@ import { buildTenantDraft } from "../domain/onboarding-tenant.ts";
 import { PLANS, isPlanId } from "../domain/plans.ts";
 import { normalizeTrPhone } from "../domain/phone.ts";
 import { TenantSchema } from "../domain/tenant.ts";
-import { mailSuspension, mailTenantReady } from "../notify/emails.ts";
+import { mailSuspension } from "../notify/emails.ts";
+import { createTenantFromSubmission } from "./tenant-create.ts";
 import { sampleUrl } from "./panel/settings.ts";
 import { loadVertical } from "../domain/vertical.ts";
 import { DemoCalls } from "../store/demo-calls.ts";
@@ -167,27 +168,38 @@ export function adminRoutes(deps: Deps) {
       if (!chk.ok) return c.json({ error: chk.error }, chk.status);
       lineNumber = chk.number;
     }
-    const { parsed, todo } = buildTenantDraft(form.data);
-    if (!parsed) return c.json({ error: "Firma ayarı doğrulamadan geçmedi", checklist: todo }, 422);
-
-    // Aynı adda firma varsa sonuna sayı eklenir
-    let id = parsed.id;
-    for (let i = 2; deps.tenants.get(id) || deps.tenantStore.getEditable(id); i++) id = `${parsed.id}-${i}`;
-    // Üyenin ödediği paketin dakikası firmanın planına işlenir (panelde kullanım buna göre gösterilir)
-    const paid = row.user_id ? deps.users.onboardingOf(row.user_id) : null;
-    const plan = paid?.paidAt && paid.plan ? { includedMinutes: PLANS[paid.plan].minutes, id: paid.plan } : parsed.plan;
-    const tenant = { ...parsed, id, plan };
-    deps.tenantStore.create(tenant);
-    deps.tenants.set(tenant);
-    if (row.user_id) deps.users.assignTenant(row.user_id, id);
-    mailTenantReady(deps, tenant);
-    db.prepare("UPDATE onboarding_submissions SET status = 'approved', tenant_id = ? WHERE reference = ?").run(id, ref);
+    const made = createTenantFromSubmission(deps, { reference: ref, userId: row.user_id, form: form.data, approve: true });
+    if (!made.ok) return c.json({ error: made.error, checklist: made.checklist }, 422);
+    const { tenantId: id, checklist: todo } = made;
+    const tenant = deps.tenants.get(id)!;
     // Müşterinin kendi Netgsm numarası firmaya yazılır (asistan kurulunca ElevenLabs'e bağlanır)
     const line = lineNumber ? await assignLine(deps, tenant, lineNumber, c.get("admin").id) : null;
     return c.json({
       ok: true, tenantId: id, linkedMember: !!row.user_id, checklist: todo,
       line: line ? { number: line.number, connected: line.connected, ...(line.note && { note: line.note }) } : { reason: "none", error: "Müşteri henüz numara bildirmedi" },
     });
+  });
+
+  /**
+   * Müşterinin bildirdiği hattı onayla: numara firmaya yazılır ve (asistan kuruluysa) ElevenLabs'e bağlanır.
+   * Numara, yöneticinin yazdığı ya da müşterinin başvuruda/panelde bildirdiği numaradır.
+   */
+  app.post("/submissions/:ref/approve-line", async (c) => {
+    const ref = c.req.param("ref");
+    const row = db.prepare(`${SUBMISSION_SQL} WHERE s.reference = ?`).get(ref) as SubmissionRow | undefined;
+    if (!row) return c.json({ error: "Başvuru bulunamadı" }, 404);
+    const tenant = row.tenant_id ? deps.tenants.get(row.tenant_id) : undefined;
+    if (!tenant) return c.json({ error: "Önce firma oluşturulmalı" }, 409);
+    const body = z.object({ phoneNumber: z.string().trim().max(32).optional() }).safeParse(await c.req.json().catch(() => ({})));
+    const payload = JSON.parse(row.payload_json) as { line?: { number?: string; approvedAt?: number } };
+    const wanted = (body.success && body.data.phoneNumber) || payload.line?.number || "";
+    if (!wanted) return c.json({ error: "Müşteri henüz numara bildirmedi; numarayı elle yazın" }, 422);
+    const chk = checkLineNumber(deps, wanted, { tenantId: tenant.id, revealOwner: true });
+    if (!chk.ok) return c.json({ error: chk.error }, chk.status);
+    const line = await assignLine(deps, tenant, chk.number, c.get("admin").id);
+    payload.line = { ...(payload.line ?? {}), number: chk.number, approvedAt: Date.now() };
+    db.prepare("UPDATE onboarding_submissions SET payload_json = ?, status = 'approved' WHERE reference = ?").run(JSON.stringify(payload), ref);
+    return c.json({ ok: true, line: { number: line.number, connected: line.connected, ...(line.note && { note: line.note }) } });
   });
 
   /** Müşteri firmaları ve son 30 günlük kullanım */

@@ -79,18 +79,21 @@ describe("yönetici hesabı ve admin API", () => {
     expect((await admin("PATCH", `/api/admin/submissions/${reference}`, { status: "uçtu" })).status).toBe(400);
   });
 
-  it("onaylayınca firma oluşur, üye firmaya bağlanır ve kendi panosunu görür", async () => {
+  it("ödemiş üye formu gönderince firma kendiliğinden oluşur, üye bağlanır ve panosunu görür; yönetici hattı onaylayınca başvuru onaylanır", async () => {
     const { admin, asMember, reference, deps } = await setup();
-    const r = await admin("POST", `/api/admin/submissions/${reference}/create-tenant`);
-    expect(r.status).toBe(200);
-    expect(r.body).toMatchObject({ ok: true, tenantId: "deniz-emlak", linkedMember: true });
+    expect(deps.tenants.get("deniz-emlak")?.phoneNumbers).toEqual([]); // numara yönetici onayına kadar yazılmaz
     expect(deps.tenants.get("deniz-emlak")?.name).toBe("Deniz Emlak");
     expect(deps.tenants.get("deniz-emlak")).toMatchObject({ vertical: "emlak" });
     expect(deps.tenants.get("deniz-emlak")?.rooms).toEqual([{ id: "ofis-1", type: "ofis" }]);
     expect(deps.tenants.get("deniz-emlak")?.services[0]?.roomType).toBe("ofis");
     expect((await asMember("GET", "/api/panel/me")).body.tenant.id).toBe("deniz-emlak");
-    expect((await admin("GET", `/api/admin/submissions/${reference}`)).body).toMatchObject({ status: "approved", tenantId: "deniz-emlak" });
+    expect((await admin("GET", `/api/admin/submissions/${reference}`)).body).toMatchObject({ status: "new", tenantId: "deniz-emlak" });
     expect((await admin("POST", `/api/admin/submissions/${reference}/create-tenant`)).status).toBe(409);
+    expect((await admin("POST", `/api/admin/submissions/${reference}/approve-line`)).status).toBe(422); // müşteri numara bildirmedi
+    const ok = await admin("POST", `/api/admin/submissions/${reference}/approve-line`, { phoneNumber: "0850 300 00 01" });
+    expect(ok).toMatchObject({ status: 200, body: { line: { number: "+908503000001" } } });
+    expect(deps.tenants.get("deniz-emlak")?.phoneNumbers).toEqual(["+908503000001"]);
+    expect((await admin("GET", `/api/admin/submissions/${reference}`)).body.status).toBe("approved");
     const tenants = (await admin("GET", "/api/admin/tenants")).body.tenants;
     expect(tenants.find((t: any) => t.id === "deniz-emlak")).toMatchObject({ owner: "uye@ornek.com", plan: "standart" });
   });
@@ -104,43 +107,46 @@ describe("yönetici hesabı ve admin API", () => {
   });
 });
 
+/** Üyesiz, firması olmayan başvuru (ör. siteden gelen potansiyel müşteri) */
+const lead = (deps: { store: { saveOnboarding: (s: { businessName: string; contactPhone: string; payload: unknown }) => string } }) =>
+  deps.store.saveOnboarding({ businessName: "Deniz Emlak", contactPhone: "+905321112233", payload: form() });
+
 describe("başvuru verisi düzenleme", () => {
   it("geçerli veri kaydedilir, işletme adı listeye yansır", async () => {
-    const { admin, reference } = await setup();
+    const { admin, deps } = await setup();
+    const reference = lead(deps);
     const d = (await admin("GET", `/api/admin/submissions/${reference}`)).body;
     const payload = { ...d.payload, business: { ...d.payload.business, name: "Deniz Gayrimenkul" } };
     expect((await admin("PATCH", `/api/admin/submissions/${reference}`, { payload })).status).toBe(200);
     const list = (await admin("GET", "/api/admin/submissions")).body.submissions;
-    expect(list[0].businessName).toBe("Deniz Gayrimenkul");
+    expect(list.find((x: any) => x.reference === reference).businessName).toBe("Deniz Gayrimenkul");
   });
 
   it("geçersiz veri reddedilir ve sebepleri döner", async () => {
-    const { admin, reference } = await setup();
+    const { admin, deps } = await setup();
+    const reference = lead(deps);
     const r = await admin("PATCH", `/api/admin/submissions/${reference}`, { payload: { business: { name: "X" } } });
     expect(r.status).toBe(422);
     expect(r.body.issues.length).toBeGreaterThan(0);
   });
 
   it("firma oluşturulduktan sonra değiştirilemez", async () => {
-    const { admin, reference } = await setup();
-    await admin("POST", `/api/admin/submissions/${reference}/create-tenant`);
+    const { admin, reference } = await setup(); // üyenin firması form gönderilince oluştu
     const d = (await admin("GET", `/api/admin/submissions/${reference}`)).body;
     expect((await admin("PATCH", `/api/admin/submissions/${reference}`, { payload: d.payload })).status).toBe(409);
   });
 
-  it("onaylanan firmaya üyenin ödediği paketin dakikası yazılır", async () => {
-    const { admin, reference, deps } = await setup();
-    await admin("POST", `/api/admin/submissions/${reference}/create-tenant`);
+  it("üyenin ödediği paketin dakikası firmaya yazılır; yönetici elle oluşturunca da firma onaylı olur", async () => {
+    const { admin, deps } = await setup();
+    const ref = lead(deps);
+    expect((await admin("POST", `/api/admin/submissions/${ref}/create-tenant`)).status).toBe(200);
+    expect((await admin("GET", `/api/admin/submissions/${ref}`)).body.status).toBe("approved");
     expect(deps.tenants.get("deniz-emlak")?.plan).toMatchObject({ includedMinutes: 1000, id: "standart" });
   });
 });
 
 describe("yönetici firma işlemleri ve paket talebi", () => {
-  const approve = async () => {
-    const ctx = await setup();
-    await ctx.admin("POST", `/api/admin/submissions/${ctx.reference}/create-tenant`);
-    return ctx;
-  };
+  const approve = async () => setup(); // üyenin firması form gönderilince oluşur
 
   it("paket değiştirilince firma, dakika ve üye paketi güncellenir", async () => {
     const { admin, deps } = await approve();

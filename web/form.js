@@ -701,10 +701,12 @@ form.addEventListener("submit", async (e) => {
     draft.clear();
     const ref = $("[data-ref]");
     if (ref) ref.textContent = json.reference;
-    // Üyeyse yolculuğun 3. adımına, değilse eski "bilgileriniz alındı" sayfasına
+    // Üyeyse panele (ya da firma oluşamadıysa hesap ekranına), değilse "bilgileriniz alındı" sayfasına
     if (api.isMember()) {
       await api.refresh();
-      location.hash = "#/hesap";
+      // Firma kendiliğinden oluştuysa panel açık: numara adımı panelde rehberle tamamlanır
+      if (json.tenantCreated) location.assign("/panel/numara");
+      else location.hash = "#/hesap";
     } else location.hash = "#/tamam";
   } catch {
     errorBox.textContent = "Bilgiler gönderilemedi. İnternet bağlantınızı kontrol edip tekrar deneyin; doldurduklarınız kaybolmadı.";

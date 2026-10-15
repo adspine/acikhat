@@ -66,7 +66,7 @@ export function overviewRoutes(deps: Deps) {
       : [];
 
     // Uyarılar: bir şey ters gidiyorsa Bugün ekranının en üstünde gösterilir
-    const alerts: { level: "info" | "warning" | "error"; text: string }[] = [];
+    const alerts: { level: "info" | "warning" | "error"; text: string; link?: { label: string; to: string } }[] = [];
     const unsynced = count(
       "SELECT COUNT(*) n FROM appointments WHERE tenant_id = ? AND status = 'confirmed' AND calendar_event_id IS NULL AND start_ms > ?",
       tenant.id, nowMs,
@@ -74,8 +74,12 @@ export function overviewRoutes(deps: Deps) {
     if (tenant.calendar.provider === "google" && unsynced > 0) {
       alerts.push({ level: "warning", text: `${unsynced} randevu henüz Google Takvim'e yazılamadı. Sistem dakikada bir yeniden deniyor.` });
     }
-    if (!tenant.agentIds.length) alerts.push({ level: "info", text: "Asistanınız hazırlanıyor. Kurulum ekibimiz telefon hattını ve son ayarları tamamlayınca size haber vereceğiz; bu sürede panelden bilgilerinizi gözden geçirebilirsiniz." });
-    else if (!tenant.phoneNumbers.length) alerts.push({ level: "warning", text: "Telefon hattı henüz bağlanmadı; asistan şu an yalnızca test görüşmelerine cevap veriyor." });
+    // Numara yoksa asistan çağrı alamaz: panelde numara rehberine yönlendirilir (herkes için ilk yapılacak iş)
+    if (!tenant.phoneNumbers.length) {
+      alerts.push({ level: "warning", text: "Asistanınız çağrı alabilmek için bir telefon numarasına ihtiyaç duyuyor (Netgsm'den alacağınız 0850 ya da sabit hat). Adım adım rehber hazır.", link: { label: "Numara rehberini aç", to: "/numara" } });
+    } else if (!tenant.agentIds.length) {
+      alerts.push({ level: "info", text: "Numaranız kayıtlı. Ekibimiz asistanınızı hazırlayıp numaraya bağlayınca size haber vereceğiz; bu sürede panelden bilgilerinizi gözden geçirebilirsiniz." });
+    }
 
     return c.json({
       date: today.toString(),

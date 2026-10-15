@@ -143,7 +143,7 @@ export interface Today {
   appointments: Appointment[];
   counts: { openCallbacks: number; missedToday: number; callsToday: number; bookedToday: number; appointmentsToday: number };
   recent: CallItem[];
-  alerts: { level: "info" | "warning" | "error"; text: string }[];
+  alerts: { level: "info" | "warning" | "error"; text: string; link?: { label: string; to: string } }[];
 }
 
 export interface Report {

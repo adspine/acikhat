@@ -91,8 +91,8 @@ export function mailSubmission(deps: Deps, s: { reference: string; businessName:
 export function mailTenantReady(deps: Deps, tenant: Tenant) {
   send(deps, ownerEmails(deps, tenant.id), `${tenant.name} panelinize erişebilirsiniz`, {
     title: "Firmanız oluşturuldu",
-    lines: [`${tenant.name} için başvurunuz onaylandı ve panelinizi açtık. Randevuları, çağrıları ve kullanımınızı panelden takip edebilir, asistanın ayarlarını düzenleyebilirsiniz.`, "Numaranızı asistana bağlıyor ve son ayarları tamamlıyoruz; numara bağlanınca ayrıca haber vereceğiz."],
-    cta: { label: "Panele git", url: panelUrl(deps) },
+    lines: [`${tenant.name} için başvurunuz onaylandı ve panelinizi açtık. Randevuları, çağrıları ve kullanımınızı panelden takip edebilir, asistanın ayarlarını düzenleyebilirsiniz.`, "İlk adım: panelde \"Numara rehberi\" sayfasından asistanınızın telefon numarasını Netgsm'den alıp bize bildirin. Numarayı kontrol edip asistana bağladığımızda ayrıca haber vereceğiz."],
+    cta: { label: "Numara rehberini aç", url: panelUrl(deps, "numara") },
   });
 }
 
@@ -218,11 +218,11 @@ export function mailLineReady(deps: Deps, tenant: Tenant, number: string) {
 }
 
 /** Üye kurulumun 3. adımında numarasını ve bilgilerini gönderdi: yönetici firmayı oluşturup numarayı bağlar */
-export function mailLineSubmitted(deps: Deps, s: { reference: string; number: string; memberEmail: string; subscriptionType: string }) {
+export function mailLineSubmitted(deps: Deps, s: { reference: string; number: string; memberEmail: string; subscriptionType: string; tenantName?: string }) {
   send(deps, admins(deps), `Numara bildirildi: ${s.reference}`, {
     title: "Üye asistan numarasını bildirdi",
-    lines: ["Üye Netgsm'den numarasını alıp SIP ayarını yaptığını bildirdi. Başvuruyu kontrol edip firmayı oluşturun; numara firmaya yazılır ve asistan kurulunca bağlanır."],
-    facts: [["Başvuru", s.reference], ["Üye", s.memberEmail], ["Numara", lineText(s.number)], ["Abonelik", s.subscriptionType === "onodemeli" ? "Ön ödemeli" : "Faturalı"]],
+    lines: ["Üye Netgsm'den numarasını alıp SIP ayarını yaptığını bildirdi. Başvurular ekranından numarayı kontrol edip \"Numarayı onayla ve bağla\" deyin; numara firmaya yazılır ve asistan kuruluysa ElevenLabs'e bağlanır."],
+    facts: [...(s.tenantName ? [["Firma", s.tenantName] as [string, string]] : []), ["Başvuru", s.reference], ["Üye", s.memberEmail], ["Numara", lineText(s.number)], ["Abonelik", s.subscriptionType === "onodemeli" ? "Ön ödemeli" : "Faturalı"]],
     cta: { label: "Başvurular", url: panelUrl(deps, "basvurular") },
   });
 }

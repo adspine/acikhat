@@ -38,7 +38,7 @@ export function TodayPage() {
       </header>
 
       {t.alerts.map((a, i) => (
-        <div key={i} className={`banner banner-${a.level}`} role={a.level === "error" ? "alert" : undefined}>{a.text}</div>
+        <div key={i} className={`banner banner-${a.level}`} role={a.level === "error" ? "alert" : undefined}>{a.text}{a.link && <> <Link to={a.link.to}>{a.link.label}</Link></>}</div>
       ))}
 
       <div className="today-grid">

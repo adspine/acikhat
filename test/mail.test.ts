@@ -124,13 +124,13 @@ describe("e-posta bildirimleri", () => {
     expect(mailbox.map((m) => m.to[0]).sort()).toEqual(["admin@ornek.com", "uye@ornek.com"]);
     expect(mailbox.find((m) => m.to[0] === "uye@ornek.com")!.subject).toContain("Pro");
 
+    mailbox.length = 0;
     const sub = await app.request("/api/onboarding", { method: "POST", headers: { "content-type": "application/json", cookie }, body: JSON.stringify({ business: { name: "Deniz Emlak", sector: "emlak" }, contact: { person: "Emre Can", phone: "0532 111 22 33" }, services: [{ name: "Danışmanlık" }], staff: [{ name: "Ali" }], consent: { kvkk: true } }) });
     const { reference } = (await sub.json()) as { reference: string };
-    mailbox.length = 0;
-    expect(await admin("POST", `/api/admin/submissions/${reference}/create-tenant`)).toBe(200);
-    // Müşteri numara bildirmediği için hat e-postası yok; yalnızca panel erişim e-postası gider
-    expect(mailbox.map((m) => m.subject)).toEqual(["Deniz Emlak panelinize erişebilirsiniz"]);
-    expect(mailbox[0]!.to).toEqual(["uye@ornek.com"]);
+    // Form gönderilince firma kendiliğinden açılır: üyeye panel erişimi, yöneticiye yeni başvuru e-postası gider; hat e-postası yok
+    expect(mailbox.map((m) => m.subject).sort()).toEqual(["Başvurunuzu aldık", "Deniz Emlak panelinize erişebilirsiniz", "Yeni başvuru: Deniz Emlak"]);
+    expect(mailbox.find((m) => m.subject.includes("panelinize"))!.to).toEqual(["uye@ornek.com"]);
+    void reference;
     void member;
 
     mailbox.length = 0;
